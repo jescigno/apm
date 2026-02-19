@@ -32,6 +32,12 @@ function App() {
     return () => document.removeEventListener('click', handleClickOutside, true);
   }, [dropdownOpen]);
 
+  useEffect(() => {
+    if (!soundsLikePanelOpen) {
+      setSoundsLikePanelWidth(PANEL_MIN_WIDTH);
+    }
+  }, [soundsLikePanelOpen]);
+
   const visibleFolders = folders.filter((f) => f.visible || f.locked);
 
   const toggleFolder = (id) => {
