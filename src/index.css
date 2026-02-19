@@ -1380,6 +1380,10 @@ body {
     flex-direction: column;
   }
 
+  .project-visuals {
+    display: none;
+  }
+
   .sounds-like-box {
     margin-left: 0;
   }
