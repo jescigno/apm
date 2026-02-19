@@ -8,7 +8,7 @@ import SoundsLikePanel from './components/SoundsLikePanel';
 const FOLDER_HIERARCHY = [
   { id: 'music-for-sports', label: 'Music for Sports', visible: true },
   { id: 'nfl', label: 'NFL', visible: true },
-  { id: 'mnf', label: 'Monday Night Football', visible: true, locked: true },
+  { id: 'mnf', label: 'Monday Night Football', visible: true },
 ];
 
 const PANEL_MIN_WIDTH = 263;
@@ -33,7 +33,6 @@ function App() {
   }, [dropdownOpen]);
 
   const visibleFolders = folders.filter((f) => f.visible || f.locked);
-  const breadcrumbText = visibleFolders.map((f) => f.label).join(' > ');
 
   const toggleFolder = (id) => {
     const folder = folders.find((f) => f.id === id);
@@ -62,12 +61,19 @@ function App() {
               onKeyDown={(e) => e.key === 'Enter' && setDropdownOpen(!dropdownOpen)}
             >
               <span className="breadcrumb-highlight">
-                {breadcrumbText || 'My Projects'}
-                {!breadcrumbText && (
-                  <svg className="breadcrumb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M7 10l5 5 5-5"/>
-                  </svg>
+                {visibleFolders.length ? (
+                  visibleFolders.map((folder, i) => (
+                    <span key={folder.id}>
+                      {i > 0 && <span className="breadcrumb-sep"> / </span>}
+                      {folder.label}
+                    </span>
+                  ))
+                ) : (
+                  'My Projects'
                 )}
+                <svg className="breadcrumb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M7 10l5 5 5-5"/>
+                </svg>
               </span>
             </span>
             {dropdownOpen && (

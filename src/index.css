@@ -248,6 +248,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
   height: 48px;
   margin-bottom: 16px;
   padding: 0 24px;
@@ -255,14 +256,24 @@ body {
   box-sizing: border-box;
 }
 
-.breadcrumb-row .breadcrumb-wrapper,
+.breadcrumb-row .breadcrumb-wrapper {
+  transform: translateY(-1px);
+}
+
 .breadcrumb-row .project-collabs {
   transform: translateY(-2px);
 }
 
 .breadcrumb {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-secondary);
+}
+
+.breadcrumb .breadcrumb-sep {
+  font-size: 0.65em;
+  opacity: 0.8;
+  margin-left: 2px;
+  margin-right: 6px;
 }
 
 .breadcrumb .breadcrumb-highlight {
@@ -296,13 +307,16 @@ body {
 }
 
 .breadcrumb-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  min-width: 320px;
+  min-width: 360px;
   background: #2a2a2a;
   border-radius: 10px;
-  padding: 8px 0;
+  padding: 12px 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   z-index: 100;
 }
@@ -311,7 +325,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 6px 16px;
   font-size: 14px;
   color: var(--text-primary);
 }
@@ -324,10 +338,6 @@ body {
   padding-left: 32px;
 }
 
-.breadcrumb-dropdown-item:nth-child(3) .breadcrumb-toggle {
-  display: none;
-}
-
 .breadcrumb-dropdown-item .folder-icon {
   width: 20px;
   height: 20px;
@@ -337,10 +347,14 @@ body {
 
 .breadcrumb-dropdown-item span {
   flex: 1;
+  min-width: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .breadcrumb-toggle {
+  flex-shrink: 0;
   width: 34px;
   height: 18px;
   border-radius: 9px;
@@ -393,7 +407,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 6px;
   margin-top: 4px;
+  margin-left: 6px;
 }
 
 .project-collabs-icons {
@@ -408,11 +424,12 @@ body {
   border-radius: 12px;
   padding: 16px 24px;
   margin-top: -8px;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .project-visuals {
   flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .image-grid {
@@ -946,7 +963,7 @@ body {
 
 /* ========== Tracks Section ========== */
 .tracks-section {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .tracks-header {
@@ -1008,7 +1025,7 @@ body {
   margin-left: auto;
   margin-top: 4px;
   display: flex;
-  gap: 8px;
+  gap: 2px;
   padding-right: 14px;
 }
 
