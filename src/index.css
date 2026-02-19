@@ -234,7 +234,7 @@ body {
   flex: 1;
   min-width: 0;
   padding: 0 0 40px 0;
-  max-width: 1600px;
+  max-width: 1920px;
   background: #232323;
   min-height: calc(100vh - var(--header-height));
 }
