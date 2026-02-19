@@ -20,8 +20,11 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
       <div className="project-details">
         <div className="project-content-row">
           <div className="project-text-block">
-            <div className="project-actions project-actions-inline">
-              <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
+            <div className="project-title-row">
+              <h2 className="project-title">Monday Night Football</h2>
+              <div className="project-actions project-actions-inline">
+                <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
+              </div>
             </div>
             <div className="project-description">
               <p>Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.</p>

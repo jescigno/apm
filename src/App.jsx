@@ -6,8 +6,8 @@ import TrackList from './components/TrackList';
 import SoundsLikePanel from './components/SoundsLikePanel';
 
 const FOLDER_HIERARCHY = [
-  { id: 'music-for-sports', label: 'Music for Sports', visible: false },
-  { id: 'nfl', label: 'NFL', visible: false },
+  { id: 'music-for-sports', label: 'Music for Sports', visible: true },
+  { id: 'nfl', label: 'NFL', visible: true },
   { id: 'mnf', label: 'Monday Night Football', visible: true, locked: true },
 ];
 
