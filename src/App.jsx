@@ -6,9 +6,9 @@ import TrackList from './components/TrackList';
 import SoundsLikePanel from './components/SoundsLikePanel';
 
 const FOLDER_HIERARCHY = [
-  { id: 'music-for-sports', label: 'Music for Sports', visible: true },
-  { id: 'nfl', label: 'NFL', visible: true },
-  { id: 'mnf', label: 'Monday Night Football', visible: true },
+  { id: 'music-for-sports', label: 'APM MARKETING 2', visible: true },
+  { id: 'nfl', label: '2026 Milan Olympics Updates', visible: true },
+  { id: 'mnf', label: 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)', visible: true },
 ];
 
 const PANEL_MIN_WIDTH = 263;
