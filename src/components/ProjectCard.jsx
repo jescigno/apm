@@ -21,7 +21,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
         <div className="project-content-row">
           <div className="project-text-block">
             <div className="project-title-row">
-              <h2 className="project-title">Monday Night Football</h2>
+              <h2 className="project-title">Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)</h2>
               <div className="project-actions project-actions-inline">
                 <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
               </div>
