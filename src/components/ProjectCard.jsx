@@ -5,6 +5,9 @@ const PROJECT_IMAGES = [
   '/project-thumb-4.png',
 ];
 
+const PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
+const PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
+
 const KEYWORDS = ['Sound Design', 'Menacing', 'Ponderous/Heavy', 'Ponderous/Heavy', 'Aggressive', 'Flowing'];
 
 function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
@@ -21,7 +24,10 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
         <div className="project-content-row">
           <div className="project-text-block">
             <div className="project-title-row">
-              <h2 className="project-title">Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)</h2>
+              <div className="project-title-wrap">
+                <h2 className="project-title">{PROJECT_TITLE}</h2>
+                <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+              </div>
               <div className="project-actions project-actions-inline">
                 <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
               </div>

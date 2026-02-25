@@ -67,16 +67,18 @@ function App() {
               onKeyDown={(e) => e.key === 'Enter' && setDropdownOpen(!dropdownOpen)}
             >
               <span className="breadcrumb-highlight">
-                {visibleFolders.length ? (
-                  visibleFolders.map((folder, i) => (
-                    <span key={folder.id}>
-                      {i > 0 && <span className="breadcrumb-sep"> / </span>}
-                      {folder.label}
-                    </span>
-                  ))
-                ) : (
-                  'My Projects'
-                )}
+                <span className="breadcrumb-text">
+                  {visibleFolders.length ? (
+                    visibleFolders.map((folder, i) => (
+                      <span key={folder.id}>
+                        {i > 0 && <span className="breadcrumb-sep"> / </span>}
+                        {folder.label}
+                      </span>
+                    ))
+                  ) : (
+                    'My Projects'
+                  )}
+                </span>
                 <svg className="breadcrumb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M7 10l5 5 5-5"/>
                 </svg>

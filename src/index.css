@@ -278,9 +278,20 @@ body {
 
 .breadcrumb .breadcrumb-highlight {
   color: #ffffff;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.breadcrumb .breadcrumb-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .breadcrumb-chevron {
@@ -291,15 +302,21 @@ body {
 
 .breadcrumb-wrapper {
   position: relative;
+  z-index: 1001;
   display: flex;
   align-items: center;
   gap: 12px;
   margin-top: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .breadcrumb-clickable {
   cursor: pointer;
-  display: inline-block;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 .breadcrumb-clickable:hover .breadcrumb-highlight {
@@ -318,7 +335,7 @@ body {
   border-radius: 10px;
   padding: 12px 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  z-index: 100;
+  z-index: 1000;
 }
 
 .breadcrumb-dropdown-item {
@@ -481,6 +498,38 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.project-title-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.project-title-wrap:hover .project-title-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.project-title-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  background: #2a2a2a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 400;
+  white-space: pre-line;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+  z-index: 100;
 }
 
 .project-title {
