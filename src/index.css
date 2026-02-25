@@ -282,12 +282,12 @@ body {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
   overflow: hidden;
 }
 
 .breadcrumb .breadcrumb-text {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -529,7 +529,7 @@ body {
   visibility: hidden;
   transition: opacity 0.15s ease, visibility 0.15s ease;
   pointer-events: none;
-  z-index: 100;
+  z-index: 1100;
 }
 
 .project-title {
