@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProjectCard from './components/ProjectCard';
@@ -14,39 +15,102 @@ const FOLDER_HIERARCHY = [
 const PANEL_MIN_WIDTH = 263;
 const PANEL_MAX_WIDTH = 600;
 
-function App() {
-  const [folders, setFolders] = useState(FOLDER_HIERARCHY);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [soundsLikePanelOpen, setSoundsLikePanelOpen] = useState(false);
-  const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
-  const breadcrumbRef = useRef(null);
+function BreadcrumbSegment({ label }) {
+  const containerRef = useRef(null);
+  const measureRef = useRef(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipRect, setTooltipRect] = useState(null);
 
   useEffect(() => {
-    if (!dropdownOpen) return;
-    function handleClickOutside(e) {
-      if (breadcrumbRef.current && !breadcrumbRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
+    const container = containerRef.current;
+    const measure = measureRef.current;
+    if (!container || !measure) return;
+    const check = () => {
+      const containerWidth = container.offsetWidth;
+      const contentWidth = measure.scrollWidth;
+      setIsTruncated(contentWidth > containerWidth);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [label]);
+
+  const updateTooltipRect = () => {
+    const el = containerRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setTooltipRect({ left: r.left, bottom: r.top });
     }
-    document.addEventListener('click', handleClickOutside, true);
-    return () => document.removeEventListener('click', handleClickOutside, true);
-  }, [dropdownOpen]);
+  };
+
+  useEffect(() => {
+    if (!isHovered || !isTruncated) return;
+    updateTooltipRect();
+    const onUpdate = () => updateTooltipRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [isHovered, isTruncated]);
+
+  const tooltip = isTruncated && isHovered && tooltipRect && createPortal(
+    <span
+      className="breadcrumb-tooltip breadcrumb-tooltip-portal"
+      role="tooltip"
+      style={{
+        left: tooltipRect.left,
+        bottom: window.innerHeight - tooltipRect.bottom + 6,
+      }}
+    >
+      {label}
+    </span>,
+    document.body
+  );
+
+  return (
+    <>
+      <span
+        ref={containerRef}
+        className="breadcrumb-segment-wrap"
+        onMouseEnter={() => {
+          setIsHovered(true);
+          updateTooltipRect();
+        }}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <span className="breadcrumb-segment">{label}</span>
+        <span ref={measureRef} className="breadcrumb-segment-measure" aria-hidden="true">
+          {label}
+        </span>
+      </span>
+      {tooltip}
+    </>
+  );
+}
+
+function BreadcrumbText({ children }) {
+  return (
+    <span className="breadcrumb-text-wrap">
+      <span className="breadcrumb-text">{children}</span>
+    </span>
+  );
+}
+
+function App() {
+  const [soundsLikePanelOpen, setSoundsLikePanelOpen] = useState(false);
+  const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
+
+  const visibleFolders = FOLDER_HIERARCHY.filter((f) => f.visible || f.locked);
 
   useEffect(() => {
     if (!soundsLikePanelOpen) {
       setSoundsLikePanelWidth(PANEL_MIN_WIDTH);
     }
   }, [soundsLikePanelOpen]);
-
-  const visibleFolders = folders.filter((f) => f.visible || f.locked);
-
-  const toggleFolder = (id) => {
-    const folder = folders.find((f) => f.id === id);
-    if (folder?.locked) return;
-    setFolders((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, visible: !f.visible } : f))
-    );
-  };
 
   return (
     <>
@@ -58,56 +122,26 @@ function App() {
       >
         <main className="main-content">
         <div className="breadcrumb-row">
-          <div className="breadcrumb-wrapper" ref={breadcrumbRef}>
-            <span
-              className="breadcrumb breadcrumb-clickable"
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setDropdownOpen(!dropdownOpen)}
-            >
+          <div className="breadcrumb-wrapper">
+            <span className="breadcrumb">
               <span className="breadcrumb-highlight">
-                <span className="breadcrumb-text">
+                <BreadcrumbText>
                   {visibleFolders.length ? (
                     visibleFolders.map((folder, i) => (
-                      <span key={folder.id}>
+                      <span key={folder.id} style={{ display: 'contents' }}>
                         {i > 0 && <span className="breadcrumb-sep"> / </span>}
-                        {folder.label}
+                        <BreadcrumbSegment label={folder.label} />
                       </span>
                     ))
                   ) : (
-                    'My Projects'
+                    <BreadcrumbSegment label="My Projects" />
                   )}
-                </span>
-                <svg className="breadcrumb-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M7 10l5 5 5-5"/>
-                </svg>
+                </BreadcrumbText>
               </span>
             </span>
-            {dropdownOpen && (
-              <div className="breadcrumb-dropdown">
-                {folders.map((folder) => (
-                  <div key={folder.id} className="breadcrumb-dropdown-item">
-                    <svg className="folder-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                    </svg>
-                    <span>{folder.label}</span>
-                    <button
-                      type="button"
-                      className={`breadcrumb-toggle ${folder.visible ? 'on' : ''} ${folder.locked ? 'locked' : ''}`}
-                      onClick={() => toggleFolder(folder.id)}
-                      disabled={folder.locked}
-                      aria-label={folder.locked ? `${folder.label} (always visible)` : `${folder.visible ? 'Hide' : 'Show'} ${folder.label} in breadcrumb`}
-                    >
-                      <span className="breadcrumb-toggle-slider" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
           <div className="project-collabs">
-            <img src="/Collabs.svg" alt="Collaborators" className="project-collabs-icons" />
+            <img src="/BC-icons.svg" alt="Breadcrumb icons" className="project-collabs-icons" />
           </div>
         </div>
 

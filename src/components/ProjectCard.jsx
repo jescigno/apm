@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from 'react';
+
 const PROJECT_IMAGES = [
   '/project-thumb-1.png',
   '/project-thumb-2.png',
@@ -10,7 +12,60 @@ const PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Updat
 
 const KEYWORDS = ['Sound Design', 'Menacing', 'Ponderous/Heavy', 'Ponderous/Heavy', 'Aggressive', 'Flowing'];
 
+const GRID_HEIGHTS = [
+  { mq: '(max-width: 880px)', height: 110 },
+  { mq: '(max-width: 1000px)', height: 130 },
+  { mq: '(max-width: 1140px)', height: 150 },
+  { mq: '(max-width: 1280px)', height: 170 },
+  { mq: '', height: 220 },
+];
+
 function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
+  const contentRef = useRef(null);
+  const measureRef = useRef(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [gridHeight, setGridHeight] = useState(220);
+
+  useEffect(() => {
+    const update = () => {
+      for (const { mq, height } of GRID_HEIGHTS) {
+        if (!mq || window.matchMedia(mq).matches) {
+          setGridHeight(height);
+          break;
+        }
+      }
+    };
+    update();
+    const mql = GRID_HEIGHTS.filter((g) => g.mq).map((g) => window.matchMedia(g.mq));
+    mql.forEach((m) => m.addEventListener('change', update));
+    return () => mql.forEach((m) => m.removeEventListener('change', update));
+  }, []);
+
+  useEffect(() => {
+    const measureEl = measureRef.current;
+    if (!measureEl) return;
+    const VIEW_FULL_DETAILS_HEIGHT = 32;
+    const check = () => {
+      const maxContentHeight = gridHeight - VIEW_FULL_DETAILS_HEIGHT;
+      setIsTruncated(measureEl.scrollHeight > maxContentHeight);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(measureEl);
+    return () => ro.disconnect();
+  }, [isExpanded, gridHeight]);
+
+  useEffect(() => {
+    if (!isOverlayOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setIsOverlayOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOverlayOpen]);
+
   return (
     <div className="project-card">
       <div className="project-visuals">
@@ -26,22 +81,78 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
       <div className="project-details">
         <div className="project-content-row">
           <div className="project-text-block">
-            <div className="project-title-row">
-              <div className="project-title-wrap">
-                <h2 className="project-title">{PROJECT_TITLE}</h2>
-                <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+            {!isExpanded ? (
+              <div
+                className="project-info-wrapper"
+                style={{ maxHeight: gridHeight }}
+              >
+                <div
+                  ref={measureRef}
+                  className="project-info-measure"
+                  aria-hidden="true"
+                >
+                  <div className="project-title-row">
+                    <div className="project-title-wrap">
+                      <h2 className="project-title">{PROJECT_TITLE}</h2>
+                    </div>
+                  </div>
+                  <div className="project-description">
+                    <p>Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.</p>
+                  </div>
+                  <div className="keywords">
+                    {KEYWORDS.map((kw, i) => (
+                      <span key={i} className="keyword">
+                        {kw} <button type="button" className="remove">×</button>
+                      </span>
+                    ))}
+                    <button type="button" className="add-keyword">+ Add Keyword</button>
+                  </div>
+                </div>
+                <div ref={contentRef} className="project-info-content project-info-content-constrained">
+                  <div className="project-title-row">
+                    <div className="project-title-wrap">
+                      <h2 className="project-title">{PROJECT_TITLE}</h2>
+                      <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+                    </div>
+                  </div>
+                  <div className="project-description">
+                    <p>Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.</p>
+                  </div>
+                  {!isTruncated && (
+                    <div className="keywords">
+                      {KEYWORDS.map((kw, i) => (
+                        <span key={i} className="keyword">
+                          {kw} <button type="button" className="remove">×</button>
+                        </span>
+                      ))}
+                      <button type="button" className="add-keyword">+ Add Keyword</button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="project-description">
-              <p>Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.</p>
-            </div>
-            <div className="keywords">
-              {KEYWORDS.map((kw, i) => (
-                <span key={i} className="keyword">
-                  {kw} <button type="button" className="remove">×</button>
-                </span>
-              ))}
-              <button type="button" className="add-keyword">+ Add Keyword</button>
+            ) : (
+              <div ref={contentRef} className="project-info-content">
+                <div className="project-title-row">
+                  <div className="project-title-wrap">
+                    <h2 className="project-title">{PROJECT_TITLE}</h2>
+                    <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+                  </div>
+                </div>
+                <div className="project-description">
+                  <p>Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.</p>
+                </div>
+                <div className="keywords">
+                  {KEYWORDS.map((kw, i) => (
+                    <span key={i} className="keyword">
+                      {kw} <button type="button" className="remove">×</button>
+                    </span>
+                  ))}
+                  <button type="button" className="add-keyword">+ Add Keyword</button>
+                </div>
+              </div>
+            )}
+            <div className="metadata">
+              Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
             </div>
           </div>
           {!soundsLikePanelOpen && (
@@ -54,9 +165,59 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
             </div>
           )}
         </div>
-        <div className="metadata">
-          Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
-        </div>
+        {isTruncated && !isExpanded && (
+          <div className="project-view-full-details-wrap">
+            <button
+              type="button"
+              className="project-view-full-details"
+              onClick={() => setIsOverlayOpen(true)}
+            >
+              View full details
+            </button>
+            {isOverlayOpen && (
+              <div className="project-details-overlay">
+                <div
+                  className="project-details-overlay-backdrop"
+                  onClick={() => setIsOverlayOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsOverlayOpen(false);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Close overlay"
+                />
+                <div className="project-details-overlay-panel">
+                  <button
+                    type="button"
+                    className="project-details-overlay-close"
+                    onClick={() => setIsOverlayOpen(false)}
+                    aria-label="Close overlay"
+                  >
+                    <img src="/icons/Close.svg" alt="" />
+                  </button>
+                  <h3 className="project-details-overlay-title">{PROJECT_TITLE}</h3>
+                  <p className="project-details-overlay-description">
+                    Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.
+                  </p>
+                  <div className="project-details-overlay-keywords">
+                    {KEYWORDS.map((kw, i) => (
+                      <span key={i} className="keyword">
+                        {kw} <button type="button" className="remove">×</button>
+                      </span>
+                    ))}
+                    <button type="button" className="add-keyword">+ Add Keyword</button>
+                  </div>
+                  <div className="project-details-overlay-metadata metadata">
+                    Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
