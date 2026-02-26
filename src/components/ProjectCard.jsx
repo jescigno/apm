@@ -19,6 +19,9 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
             <img key={i} className="grid-img" src={src} alt="" />
           ))}
         </div>
+        <div className="project-actions project-actions-inline">
+          <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
+        </div>
       </div>
       <div className="project-details">
         <div className="project-content-row">
@@ -27,9 +30,6 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
               <div className="project-title-wrap">
                 <h2 className="project-title">{PROJECT_TITLE}</h2>
                 <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
-              </div>
-              <div className="project-actions project-actions-inline">
-                <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
               </div>
             </div>
             <div className="project-description">

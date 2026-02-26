@@ -447,6 +447,9 @@ body {
 .project-visuals {
   flex-shrink: 0;
   margin-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .image-grid {
@@ -543,8 +546,8 @@ body {
   white-space: nowrap;
 }
 
-.project-title-row .project-actions {
-  flex-shrink: 0;
+.project-visuals .project-actions {
+  justify-content: center;
 }
 
 .project-description p {
