@@ -10,6 +10,7 @@ export function PlayerProvider({ children }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [loopSegment, setLoopSegment] = useState(null);
 
   const currentTrack = currentIndex >= 0 && queue[currentIndex] ? queue[currentIndex] : null;
 
@@ -67,6 +68,7 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
+    setLoopSegment(null);
     const src = currentTrack.audioUrl || currentTrack.src;
     if (src) {
       audio.src = src;
@@ -87,9 +89,17 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onTimeUpdate = () => {
+      const t = audio.currentTime;
+      if (loopSegment && t >= loopSegment.end - 0.05) {
+        audio.currentTime = loopSegment.start;
+      }
+      setCurrentTime(audio.currentTime);
+    };
     const onDurationChange = () => setDuration(audio.duration || 0);
-    const onEnded = () => playNext();
+    const onEnded = () => {
+      if (!loopSegment) playNext();
+    };
     const onError = () => setIsPlaying(false);
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('durationchange', onDurationChange);
@@ -101,7 +111,7 @@ export function PlayerProvider({ children }) {
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
     };
-  }, [playNext]);
+  }, [playNext, loopSegment]);
 
   const value = {
     queue,
@@ -118,6 +128,8 @@ export function PlayerProvider({ children }) {
     playPrev,
     seek,
     setVolume: setVolumeLevel,
+    setLoopSegment,
+    loopSegment,
     audioRef,
   };
 

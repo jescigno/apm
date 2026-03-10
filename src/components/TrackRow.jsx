@@ -1,9 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
+
+const PlayingAudioIcon = memo(function PlayingAudioIcon() {
+  return (
+    <span className="track-playing-icon" aria-label="Now playing">
+      <span className="track-playing-waves">
+        <span className="track-wave" key="eq1" />
+        <span className="track-wave" key="eq2" />
+        <span className="track-wave" key="eq3" />
+        <span className="track-wave" key="eq4" />
+      </span>
+    </span>
+  );
+});
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, trackList }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -31,31 +44,97 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     : (item.num - 1) % TRACK_THUMBNAILS.length;
   const thumbSrc = TRACK_THUMBNAILS[thumbIndex];
   const canPlay = item.audioUrl && onPlay;
+  const showPlayingIcon = isCurrentTrack && isPlaying;
+  const showPauseIcon = isCurrentTrack && !isPlaying;
   const handlePlay = (e) => {
     e?.stopPropagation?.();
     if (canPlay && trackList) onPlay(item, trackList);
     else if (canPlay) onPlay(item);
   };
+
+  const handlePause = (e) => {
+    e?.stopPropagation?.();
+    onTogglePause?.();
+  };
+
   return (
     <div
-      className="track-row"
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <span className="track-num">
-        {canPlay && isHovered ? (
-          <button
-            type="button"
-            className="track-play-btn"
-            onClick={handlePlay}
-            aria-label={`Play ${item.title}`}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </button>
+        {showPlayingIcon && isHovered ? (
+          <>
+            <input
+              type="checkbox"
+              className="track-checkbox"
+              aria-label={`Select ${item.title}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              className="track-play-btn track-pause-btn"
+              onClick={handlePause}
+              aria-label={`Pause ${item.title}`}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            </button>
+          </>
+        ) : showPlayingIcon ? (
+          <>
+            <span className="track-num-spacer" aria-hidden="true" />
+            <PlayingAudioIcon />
+          </>
+        ) : showPauseIcon ? (
+          <>
+            {isHovered ? (
+              <input
+                type="checkbox"
+                className="track-checkbox"
+                aria-label={`Select ${item.title}`}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span className="track-num-spacer-checkbox" aria-hidden="true" />
+            )}
+            <button
+              type="button"
+              className="track-play-btn"
+              onClick={handlePause}
+              aria-label={`Play ${item.title}`}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          </>
+        ) : canPlay && isHovered ? (
+          <>
+            <input
+              type="checkbox"
+              className="track-checkbox"
+              aria-label={`Select ${item.title}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              type="button"
+              className="track-play-btn"
+              onClick={handlePlay}
+              aria-label={`Play ${item.title}`}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+          </>
         ) : (
-          item.num
+          <>
+            <span className="track-num-spacer" aria-hidden="true" />
+            {item.num}
+          </>
         )}
       </span>
       <div className="track-thumb-col">

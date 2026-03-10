@@ -26,10 +26,13 @@ const ALBUMS = [
 
 function TrackList({ soundsLikePanelOpen, onSoundsLikeClick }) {
   const [activeTab, setActiveTab] = useState('tracks');
-  const { playTrack, playQueue } = usePlayer();
+  const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const currentTracks = activeTab === 'tracks' ? TRACKS : ALBUMS;
 
   const handlePlayAll = () => playQueue(currentTracks, 0);
+
+  const isCurrentTrack = (item) =>
+    currentTrack && ((item.id && item.id === currentTrack.id) || (item.num === currentTrack.num));
 
   return (
     <div className="tracks-section">
@@ -74,6 +77,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick }) {
                 soundsLikePanelOpen={soundsLikePanelOpen}
                 onSoundsLikeClick={onSoundsLikeClick}
                 onPlay={playTrack}
+                onTogglePause={togglePlayPause}
+                isCurrentTrack={isCurrentTrack(track)}
+                isPlaying={isPlaying}
               />
             ))
           : ALBUMS.map((album) => (
@@ -86,6 +92,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick }) {
                 soundsLikePanelOpen={soundsLikePanelOpen}
                 onSoundsLikeClick={onSoundsLikeClick}
                 onPlay={playTrack}
+                onTogglePause={togglePlayPause}
+                isCurrentTrack={isCurrentTrack(album)}
+                isPlaying={isPlaying}
               />
             ))}
       </div>
