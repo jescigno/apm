@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProjectCard from './components/ProjectCard';
 import TrackList from './components/TrackList';
 import SoundsLikePanel from './components/SoundsLikePanel';
+import AudioPlayer from './components/AudioPlayer';
 
 const FOLDER_HIERARCHY = [
   { id: 'music-for-sports', label: 'APM MARKETING 2', visible: true },
@@ -100,9 +102,10 @@ function BreadcrumbText({ children }) {
   );
 }
 
-function App() {
+function AppContent() {
   const [soundsLikePanelOpen, setSoundsLikePanelOpen] = useState(false);
   const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
+  const { currentTrack } = usePlayer();
 
   const visibleFolders = FOLDER_HIERARCHY.filter((f) => f.visible || f.locked);
 
@@ -113,7 +116,7 @@ function App() {
   }, [soundsLikePanelOpen]);
 
   return (
-    <>
+    <div className={currentTrack ? 'app-root player-visible' : 'app-root'}>
       <Header />
       <Sidebar />
       <div
@@ -163,7 +166,16 @@ function App() {
         minWidth={PANEL_MIN_WIDTH}
         maxWidth={PANEL_MAX_WIDTH}
       />
-    </>
+      <AudioPlayer onSoundsLikeClick={() => setSoundsLikePanelOpen(true)} />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <PlayerProvider>
+      <AppContent />
+    </PlayerProvider>
   );
 }
 

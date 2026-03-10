@@ -3,9 +3,10 @@ import { useState, useRef, useEffect } from 'react';
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, trackList }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
+  const [isHovered, setIsHovered] = useState(false);
   const overflowRef = useRef(null);
 
   const toggleLike = (e) => {
@@ -29,9 +30,34 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     ? ALBUM_THUMB_ORDER[(item.num - 1) % ALBUM_THUMB_ORDER.length]
     : (item.num - 1) % TRACK_THUMBNAILS.length;
   const thumbSrc = TRACK_THUMBNAILS[thumbIndex];
+  const canPlay = item.audioUrl && onPlay;
+  const handlePlay = (e) => {
+    e?.stopPropagation?.();
+    if (canPlay && trackList) onPlay(item, trackList);
+    else if (canPlay) onPlay(item);
+  };
   return (
-    <div className="track-row">
-      <span className="track-num">{item.num}</span>
+    <div
+      className="track-row"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span className="track-num">
+        {canPlay && isHovered ? (
+          <button
+            type="button"
+            className="track-play-btn"
+            onClick={handlePlay}
+            aria-label={`Play ${item.title}`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+        ) : (
+          item.num
+        )}
+      </span>
       <div className="track-thumb-col">
         <div
           className="track-thumb"
