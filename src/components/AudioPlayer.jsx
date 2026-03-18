@@ -363,13 +363,18 @@ function AudioPlayer({ onSoundsLikeClick }) {
               {hasSelection && (
                 <>
                   <div
-                    className="audio-player-selection-wrap"
+                    className={`audio-player-selection-wrap${dragState?.phase === 'resize' || dragState?.phase === 'selecting' ? ' audio-player-selection-wrap--active' : ''}`}
                     style={{
                       left: `${selectionStartPct}%`,
                       width: `${selectionEndPct - selectionStartPct}%`,
                     }}
                     onMouseDown={handleSelectionMoveDown}
                   >
+                    {dragState?.phase === 'resize' && (
+                      <div className="audio-player-selection-timecodes">
+                        {formatTime((selectionStartPct / 100) * duration)} – {formatTime((selectionEndPct / 100) * duration)}
+                      </div>
+                    )}
                     <div
                       className="audio-player-waveform-selection"
                     />
@@ -379,14 +384,28 @@ function AudioPlayer({ onSoundsLikeClick }) {
                         className="audio-player-selection-options"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => setOptionsMenuOpen((o) => !o)}
+                        aria-label="Options"
                       >
-                        Options
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                          <circle cx="4" cy="8" r="1.5" />
+                          <circle cx="8" cy="8" r="1.5" />
+                          <circle cx="12" cy="8" r="1.5" />
                         </svg>
                       </button>
                       {optionsMenuOpen && (
                         <div className="audio-player-selection-menu" onMouseDown={(e) => e.stopPropagation()}>
+                          <div className="audio-player-selection-menu-label">Segment</div>
+                          <button
+                            type="button"
+                            className="audio-player-selection-menu-item"
+                            onClick={() => {
+                              onSoundsLikeClick?.();
+                              setOptionsMenuOpen(false);
+                            }}
+                          >
+                            <img src="/player-actions/SoundsLike.svg" alt="" />
+                            Sounds Like
+                          </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setSelectionFavorited((f) => !f)}>
                             <img src={selectionFavorited ? '/icons/Favorite.svg' : '/player-actions/Favorite.svg'} alt="" />
                             {selectionFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
@@ -405,7 +424,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                             Loop Segment
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setOptionsMenuOpen(false)}>
-                            <img src="/icons/Upload.svg" alt="" className="audio-player-selection-menu-item-icon-share" />
+                            <img src="/icons/Upload.svg" alt="" />
                             Share
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setOptionsMenuOpen(false)}>

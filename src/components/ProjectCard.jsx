@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 const PROJECT_IMAGES = [
   '/project-thumb-1.png',
@@ -23,10 +24,13 @@ const GRID_HEIGHTS = [
 function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
+  const titleRef = useRef(null);
   const [isTruncated, setIsTruncated] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [gridHeight, setGridHeight] = useState(220);
+  const [isTitleHovered, setIsTitleHovered] = useState(false);
+  const [titleTooltipRect, setTitleTooltipRect] = useState(null);
 
   useEffect(() => {
     const update = () => {
@@ -65,6 +69,26 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOverlayOpen]);
+
+  const updateTitleTooltipRect = () => {
+    const el = titleRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setTitleTooltipRect({ left: r.left, bottom: r.top });
+    }
+  };
+
+  useEffect(() => {
+    if (!isTitleHovered) return;
+    updateTitleTooltipRect();
+    const onUpdate = () => updateTitleTooltipRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [isTitleHovered]);
 
   return (
     <div className="project-card">
@@ -110,9 +134,26 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
                 </div>
                 <div ref={contentRef} className="project-info-content project-info-content-constrained">
                   <div className="project-title-row">
-                    <div className="project-title-wrap">
+                    <div
+                      ref={titleRef}
+                      className="project-title-wrap"
+                      onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
+                      onMouseLeave={() => setIsTitleHovered(false)}
+                    >
                       <h2 className="project-title">{PROJECT_TITLE}</h2>
-                      <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+                      {isTitleHovered && titleTooltipRect && createPortal(
+                        <span
+                          className="project-title-tooltip project-title-tooltip-portal"
+                          role="tooltip"
+                          style={{
+                            left: titleTooltipRect.left,
+                            bottom: window.innerHeight - titleTooltipRect.bottom + 6,
+                          }}
+                        >
+                          {PROJECT_TITLE_TOOLTIP}
+                        </span>,
+                        document.body
+                      )}
                     </div>
                   </div>
                   <div className="project-description">
@@ -133,9 +174,26 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
             ) : (
               <div ref={contentRef} className="project-info-content">
                 <div className="project-title-row">
-                  <div className="project-title-wrap">
+                  <div
+                    ref={titleRef}
+                    className="project-title-wrap"
+                    onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
+                    onMouseLeave={() => setIsTitleHovered(false)}
+                  >
                     <h2 className="project-title">{PROJECT_TITLE}</h2>
-                    <span className="project-title-tooltip" role="tooltip">{PROJECT_TITLE_TOOLTIP}</span>
+                    {isTitleHovered && titleTooltipRect && createPortal(
+                      <span
+                        className="project-title-tooltip project-title-tooltip-portal"
+                        role="tooltip"
+                        style={{
+                          left: titleTooltipRect.left,
+                          bottom: window.innerHeight - titleTooltipRect.bottom + 6,
+                        }}
+                      >
+                        {PROJECT_TITLE_TOOLTIP}
+                      </span>,
+                      document.body
+                    )}
                   </div>
                 </div>
                 <div className="project-description">
@@ -174,7 +232,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
             >
               View full details
             </button>
-            {isOverlayOpen && (
+            {isOverlayOpen && createPortal(
               <div className="project-details-overlay">
                 <div
                   className="project-details-overlay-backdrop"
@@ -189,7 +247,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
                   tabIndex={0}
                   aria-label="Close overlay"
                 />
-                <div className="project-details-overlay-panel">
+                <div className="project-details-overlay-panel-wrap">
                   <button
                     type="button"
                     className="project-details-overlay-close"
@@ -198,23 +256,28 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
                   >
                     <img src="/icons/Close.svg" alt="" />
                   </button>
-                  <h3 className="project-details-overlay-title">{PROJECT_TITLE}</h3>
-                  <p className="project-details-overlay-description">
-                    Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.
-                  </p>
-                  <div className="project-details-overlay-keywords">
-                    {KEYWORDS.map((kw, i) => (
-                      <span key={i} className="keyword">
-                        {kw} <button type="button" className="remove">×</button>
-                      </span>
-                    ))}
-                    <button type="button" className="add-keyword">+ Add Keyword</button>
-                  </div>
-                  <div className="project-details-overlay-metadata metadata">
-                    Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+                  <div className="project-details-overlay-panel">
+                    <div className="project-details-overlay-panel-scroll">
+                      <h3 className="project-details-overlay-title">{PROJECT_TITLE}</h3>
+                      <p className="project-details-overlay-description">
+                        Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.
+                      </p>
+                      <div className="project-details-overlay-keywords">
+                        {KEYWORDS.map((kw, i) => (
+                          <span key={i} className="keyword">
+                            {kw} <button type="button" className="remove">×</button>
+                          </span>
+                        ))}
+                        <button type="button" className="add-keyword">+ Add Keyword</button>
+                      </div>
+                      <div className="project-details-overlay-metadata metadata">
+                        Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         )}
