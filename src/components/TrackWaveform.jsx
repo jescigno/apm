@@ -14,7 +14,7 @@ const SEGMENT_PX = BAR_WIDTH_PX + GAP_PX;
 
 const HOVER_DELAY_MS = 150;
 
-function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange, accentRanges, outlineRange, outlineHeightScale = 1, outlineOverlayText, outlineOverlayTimestamp, outlineOverlaySegmentTime, overlayThumbnail, overlayTitle, overlaySubtitle }) {
+function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange, accentRanges, outlineRange, outlineHeightScale = 1, outlineColor, outlineOverlayText, outlineOverlayTimestamp, outlineOverlaySegmentTime, overlayThumbnail, overlayTitle, overlaySubtitle }) {
   const containerRef = useRef(null);
   const hideTimeoutRef = useRef(null);
   const outlineHideTimeoutRef = useRef(null);
@@ -187,7 +187,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
 
   const getBarFill = (i) => {
     if (inAccentRange(i)) return accentColor;
-    if (shouldGrayNonHighlighted && !inOutlineRange(i)) return 'rgba(255, 255, 255, 0.25)';
+    if (shouldGrayNonHighlighted && !inOutlineRange(i)) return 'rgba(255, 255, 255, 0.12)';
     return 'currentColor';
   };
 
@@ -225,6 +225,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
   );
 
   const strokeRectValid = outlineOverlayRect && outlineOverlayRect.leftEdge != null && typeof outlineOverlayRect.topEdge === 'number' && outlineOverlayRect.rightEdge > outlineOverlayRect.leftEdge && outlineOverlayRect.bottomEdge > outlineOverlayRect.topEdge;
+  const outlineStrokeColor = outlineColor || '#ffffff';
   const outlineStrokeOverlay = outlineHovered && outlineRange && strokeRectValid && createPortal(
     <div
       style={{
@@ -244,7 +245,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
           top: 0,
           width: 2,
           height: '100%',
-          background: '#ffffff',
+          background: outlineStrokeColor,
         }}
       />
       <div
@@ -254,7 +255,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
           top: 0,
           width: 2,
           height: '100%',
-          background: '#ffffff',
+          background: outlineStrokeColor,
         }}
       />
     </div>,
@@ -326,7 +327,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
               y={-maxHeight * (outlineHeightScale - 1) / 2}
               width={(outlineRange[1] - outlineRange[0]) * SEGMENT_PX}
               height={maxHeight * outlineHeightScale}
-              fill="rgba(255, 255, 255, 0.2)"
+              fill={outlineColor === '#841FCC' ? 'rgba(132, 31, 204, 0.3)' : 'rgba(255, 255, 255, 0.2)'}
               style={outlineOverlayText ? { cursor: 'pointer' } : undefined}
               onMouseEnter={outlineOverlayText ? showOutlineOverlay : undefined}
               onMouseLeave={outlineOverlayText ? scheduleOutlineHide : undefined}
