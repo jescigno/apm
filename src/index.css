@@ -346,12 +346,10 @@ body {
 
 .header-menu-bar .header-menu-item.header-menu-myapm-subitem {
   padding-left: 40px;
-  padding-top: 4px;
-  padding-bottom: 4px;
 }
 
 .header-menu-bar .header-menu-myapm-btn + .header-menu-item.header-menu-myapm-subitem {
-  margin-top: -8px;
+  margin-top: -6px;
 }
 
 .header-menu-mode-row {
