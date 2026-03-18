@@ -223,7 +223,6 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               outlineHeightScale: 3,
               outlineColor: '#841FCC',
               outlineOverlayText: '0:28 - 1:08',
-              outlineOverlayTimestamp: 'Favorited 3/16/26',
               outlineOverlaySegmentTime: '0:28 - 1:08',
             })}
             {...(item.num === 3 && {
@@ -231,20 +230,17 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               accentRanges: [[30, 55]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
-              overlaySubtitle: 'Favorited 3/16/26',
             })}
             {...(item.num === 6 && {
               accentColor: '#841FCC',
               accentRanges: [[10, 25], [55, 85], [270, 315]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
-              overlaySubtitle: 'Favorited 3/16/26',
             })}
             {...(item.num === 5 && {
               outlineRange: [122, 222],
               outlineHeightScale: 3,
               outlineOverlayText: '0:45 - 1:30',
-              outlineOverlayTimestamp: 'Favorited 3/12/26',
               outlineOverlaySegmentTime: '0:45 - 1:30',
             })}
           />

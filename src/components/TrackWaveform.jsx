@@ -213,7 +213,9 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
         <div className="track-waveform-sounds-like-overlay-content">
           <div className="track-waveform-sounds-like-row">
             <span className="track-waveform-sounds-like-tag">SOUNDS LIKE</span>
-            <span className="track-waveform-sounds-like-title">{overlayTitle || ''}</span>
+            {overlayTitle && (
+              <span className="track-waveform-sounds-like-title">{overlayTitle}</span>
+            )}
           </div>
           {overlaySubtitle && (
             <span className="track-waveform-sounds-like-subtitle">{overlaySubtitle}</span>
