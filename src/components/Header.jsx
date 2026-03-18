@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 
 const HEADER_MENU_OPTIONS = [
   { label: 'Discover', href: '#' },
@@ -8,14 +9,14 @@ const HEADER_MENU_OPTIONS = [
 ];
 
 const MY_APM_OPTIONS = [
-  { label: 'Projects', href: '#' },
-  { label: 'Favorites', href: '#' },
-  { label: 'History', href: '#' },
+  { label: 'Projects', to: '/projects' },
+  { label: 'Favorites', to: '/favorites' },
+  { label: 'History', to: '/history' },
 ];
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [myApmOpen, setMyApmOpen] = useState(false);
+  const [myApmOpen, setMyApmOpen] = useState(true);
   const menuRef = useRef(null);
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('apm-theme');
@@ -27,6 +28,12 @@ function Header() {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     localStorage.setItem('apm-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  useEffect(() => {
+    if (menuOpen) {
+      setMyApmOpen(true);
+    }
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -112,10 +119,10 @@ function Header() {
               <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          {myApmOpen && MY_APM_OPTIONS.map(({ label, href }) => (
-            <a key={label} href={href} className="header-menu-item header-menu-myapm-subitem" onClick={() => { setMyApmOpen(false); setMenuOpen(false); }}>
+          {myApmOpen && MY_APM_OPTIONS.map(({ label, to }) => (
+            <Link key={label} to={to} className="header-menu-item header-menu-myapm-subitem" onClick={() => { setMyApmOpen(false); setMenuOpen(false); }}>
               {label}
-            </a>
+            </Link>
           ))}
           <div className="header-menu-item header-menu-mode-row">
             <span>Mode</span>
