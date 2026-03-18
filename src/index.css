@@ -594,6 +594,13 @@ body {
   flex-shrink: 0;
 }
 
+.breadcrumb-row--favorites {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 40;
+  background: #232323;
+}
+
 .breadcrumb-row--favorites .breadcrumb {
   font-size: 24px;
   font-weight: 500;
