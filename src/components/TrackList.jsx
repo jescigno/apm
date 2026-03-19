@@ -17,7 +17,11 @@ const TRACKS_BASE = [
   { num: 10, title: 'Overtime', id: 'ROCK-0240 #10', versions: 4, commentCount: 9, desc: 'Suspenseful extended tension with dramatic payoff.', audioUrl: SAMPLE_AUDIO },
 ];
 
-const FAVORITES_TRACKS = [...TRACKS_BASE];
+const FAVORITES_TRACKS = TRACKS_BASE.map((t) => {
+  if (t.num === 1) return { ...t, commentCount: 0 };
+  if (t.num === 3) return { ...t, commentCount: 1 };
+  return t;
+});
 
 const PROJECTS_TRACKS = TRACKS_BASE.map((t) => {
   if (t.num === 2) return { ...t, title: 'Stadium Anthem' };
@@ -28,10 +32,16 @@ const PROJECTS_TRACKS = TRACKS_BASE.map((t) => {
 export { PROJECTS_TRACKS, FAVORITES_TRACKS };
 
 const ALBUMS = [
-  { num: 1, title: 'Stadium Anthems', id: 'ALB-001', commentCount: 3, desc: 'Collection of high-energy stadium rock tracks for Monday Night Football.', audioUrl: SAMPLE_AUDIO },
+  { num: 1, title: 'Stadium Anthems', id: 'ALB-001', commentCount: 0, desc: 'Collection of high-energy stadium rock tracks for Monday Night Football.', audioUrl: SAMPLE_AUDIO },
   { num: 2, title: 'Game Day Essentials', id: 'ALB-002', commentCount: 1, desc: 'Essential game day music with anthemic rock and driving percussion.', audioUrl: SAMPLE_AUDIO },
-  { num: 3, title: 'Championship Pack', id: 'ALB-003', commentCount: 5, desc: 'Epic themes and victory marches for championship coverage.', audioUrl: SAMPLE_AUDIO },
+  { num: 3, title: 'Championship Pack', id: 'ALB-003', commentCount: 0, desc: 'Epic themes and victory marches for championship coverage.', audioUrl: SAMPLE_AUDIO },
   { num: 4, title: 'Prime Time Sounds', id: 'ALB-004', commentCount: 0, desc: 'Broadcast-ready tracks with punchy hooks and tight production.', audioUrl: SAMPLE_AUDIO },
+  { num: 5, title: 'Victory Lap', id: 'ALB-005', commentCount: 2, desc: 'Celebratory anthems for winning moments and post-game highlights.', audioUrl: SAMPLE_AUDIO },
+  { num: 6, title: 'Pregame Hype', id: 'ALB-006', commentCount: 4, desc: 'High-octane openers to energize the crowd before kickoff.', audioUrl: SAMPLE_AUDIO },
+  { num: 7, title: 'Halftime Show', id: 'ALB-007', commentCount: 1, desc: 'Dynamic tracks for halftime performances and break segments.', audioUrl: SAMPLE_AUDIO },
+  { num: 8, title: 'Overtime Drama', id: 'ALB-008', commentCount: 6, desc: 'Suspenseful and tense themes for nail-biting overtime moments.', audioUrl: SAMPLE_AUDIO },
+  { num: 9, title: 'Broadcast Bumpers', id: 'ALB-009', commentCount: 0, desc: 'Short stingers and transition cues for commercial breaks.', audioUrl: SAMPLE_AUDIO },
+  { num: 10, title: 'Fan Favorites', id: 'ALB-010', commentCount: 8, desc: 'Crowd-pleasing hits curated from the most requested game day tracks.', audioUrl: SAMPLE_AUDIO },
 ];
 
 export function TrackListTabs({ activeTab, onTabChange, className, showSearchesTab }) {
@@ -109,6 +119,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
           </div>
         </div>
       )}
+      <div className="track-list-boundary track-list-top" aria-hidden="true" />
       <div className="track-list">
         {activeTab === 'tracks' &&
           tracks.map((track) => (

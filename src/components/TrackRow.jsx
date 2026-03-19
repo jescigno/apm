@@ -23,8 +23,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
   const [trackDetailsOverlayOpen, setTrackDetailsOverlayOpen] = useState(false);
+  const [commentOverlayOpen, setCommentOverlayOpen] = useState(false);
+  const [commentButtonRect, setCommentButtonRect] = useState(null);
   const overflowRef = useRef(null);
   const menuBtnRef = useRef(null);
+  const commentBtnRef = useRef(null);
   const [dropdownRect, setDropdownRect] = useState(null);
 
   const toggleLike = (e) => {
@@ -46,6 +49,19 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   }, [overflowMenuOpen]);
 
   useEffect(() => {
+    if (!commentOverlayOpen) return;
+    function handleCommentClickOutside(e) {
+      const inCommentBtn = commentBtnRef.current?.contains(e.target);
+      const inCommentOverlay = e.target.closest('[data-track-comment-overlay]');
+      if (!inCommentBtn && !inCommentOverlay) {
+        setCommentOverlayOpen(false);
+      }
+    }
+    document.addEventListener('click', handleCommentClickOutside, true);
+    return () => document.removeEventListener('click', handleCommentClickOutside, true);
+  }, [commentOverlayOpen]);
+
+  useEffect(() => {
     if (!trackDetailsOverlayOpen) return;
     const onKeyDown = (e) => {
       if (e.key === 'Escape') setTrackDetailsOverlayOpen(false);
@@ -53,6 +69,15 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [trackDetailsOverlayOpen]);
+
+  useEffect(() => {
+    if (!commentOverlayOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setCommentOverlayOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [commentOverlayOpen]);
 
   useEffect(() => {
     if (overflowMenuOpen && compact && menuBtnRef.current) {
@@ -240,9 +265,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {...(item.num === 5 && {
               outlineRange: [122, 222],
               outlineHeightScale: 3,
+              outlineColor: '#841FCC',
               outlineOverlayText: '0:45 - 1:30',
               outlineOverlaySegmentTime: '0:45 - 1:30',
             })}
+            {...(isAlbum && { outlineColor: '#ffffff' })}
           />
         </div>
       ) : (
@@ -280,10 +307,21 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {compact && (
               <>
                 <span className="track-comment-with-count">
-                  <button type="button" className="icon-btn" aria-label="Comment">
+                  <button
+                    ref={commentBtnRef}
+                    type="button"
+                    className="icon-btn"
+                    aria-label="Comment"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const r = e.currentTarget.getBoundingClientRect();
+                      setCommentButtonRect({ left: r.left, top: r.top, width: r.width, height: r.height });
+                      setCommentOverlayOpen(true);
+                    }}
+                  >
                     <img src="/Comment.svg" alt="" />
                   </button>
-                  <span className={`track-comment-count${!isAlbum && [2, 4, 8].includes(item.num) ? ' track-comment-count--hidden' : ''}`}>
+                  <span className={`track-comment-count${!item.commentCount || item.commentCount === 0 || (!isAlbum && [2, 4, 8].includes(item.num)) ? ' track-comment-count--hidden' : ''}`}>
                     {item.commentCount ?? 0}
                   </span>
                 </span>
@@ -395,6 +433,117 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             </div>
           </div>
         </div>,
+        document.body
+      )}
+      {compact && commentOverlayOpen && commentButtonRect && createPortal(
+        (() => {
+          const popoverMaxWidth = 380;
+          const leftPadding = 16;
+          const rightPadding = 24;
+          let left = commentButtonRect.left;
+          if (left + popoverMaxWidth > window.innerWidth - rightPadding) {
+            left = window.innerWidth - popoverMaxWidth - rightPadding;
+          }
+          left = Math.max(leftPadding, left);
+          const spaceAbove = commentButtonRect.top;
+          const spaceBelow = window.innerHeight - commentButtonRect.bottom;
+          const minTopPadding = 16;
+          let top = spaceBelow >= spaceAbove
+            ? commentButtonRect.bottom + 8
+            : undefined;
+          let bottom = spaceBelow >= spaceAbove
+            ? undefined
+            : window.innerHeight - commentButtonRect.top + 8;
+          if (top !== undefined && top < minTopPadding) {
+            top = minTopPadding;
+          }
+          const tooCloseToTop = top === undefined && spaceAbove < 120;
+          return (
+        <div
+          data-track-comment-overlay
+          className="track-comment-popover"
+          style={{
+            position: 'fixed',
+            left,
+            ...(top !== undefined ? { top } : { bottom }),
+            ...(tooCloseToTop ? { transform: `translateY(${minTopPadding}px)` } : {}),
+            zIndex: 1100,
+          }}
+        >
+          <div className="track-comment-popover-inner">
+            {(() => {
+              const countHidden = !isAlbum && [2, 4, 8].includes(item.num);
+              const showOnlyAddField = !item.commentCount || item.commentCount === 0 || countHidden;
+              if (showOnlyAddField) {
+                return (
+                  <>
+                    <h4 className="track-comment-popover-title">Comment</h4>
+                    <input
+                      type="text"
+                      className="track-comment-popover-input track-comment-popover-input-only"
+                      placeholder="Add a comment..."
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </>
+                );
+              }
+              return (
+                <>
+                  <h4 className="track-comment-popover-title">Comment{item.commentCount > 1 ? 's' : ''}</h4>
+                  <div className="track-comment-popover-comments">
+                    {[
+                      { text: 'Great energy for the opening sequence. The build-up around 1:20 works really well.', date: 'Mar 14, 2025 2:34 PM' },
+                      { text: 'Perfect for the climax scene.', date: 'Mar 13, 2025 9:12 AM' },
+                      { text: 'The drums really drive this section.', date: 'Mar 12, 2025 4:55 PM' },
+                      { text: 'Love the guitar riff at 0:45.', date: 'Mar 11, 2025 11:20 AM' },
+                      { text: 'Works well for transition moments.', date: 'Mar 10, 2025 3:08 PM' },
+                      { text: 'Strong finish—use for the outro.', date: 'Mar 9, 2025 7:42 AM' },
+                      { text: 'Good tempo for the montage.', date: 'Mar 8, 2025 1:15 PM' },
+                      { text: 'The synth layer adds nice depth.', date: 'Mar 7, 2025 6:30 PM' },
+                      { text: 'Consider this for the opening credits.', date: 'Mar 6, 2025 10:45 AM' },
+                      { text: 'Great energy throughout.', date: 'Mar 5, 2025 2:22 PM' },
+                    ].slice(0, item.commentCount).map((comment, i) => (
+                      <div key={i}>
+                        {i > 0 && <div className="track-comment-divider" />}
+                        <div className="track-comment-popover-comment-wrap">
+                          <p className="track-comment-overlay-text">{comment.text}</p>
+                          <p className="track-comment-timestamp">{comment.date}</p>
+                          <div className="track-comment-popover-actions">
+                            <button type="button" className="track-comment-popover-action-btn" aria-label="Edit comment">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </button>
+                            <button type="button" className="track-comment-popover-action-btn" aria-label="Delete comment">
+                              <img src="/Trash.svg" alt="" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    className="track-comment-popover-input"
+                    placeholder="Add a comment..."
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </>
+              );
+            })()}
+            <button
+              type="button"
+              className="track-comment-popover-close"
+              onClick={() => setCommentOverlayOpen(false)}
+              aria-label="Close"
+            >
+              <img src="/icons/Close.svg" alt="" />
+            </button>
+          </div>
+        </div>
+          );
+        })(),
         document.body
       )}
     </div>
