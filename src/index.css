@@ -3267,13 +3267,6 @@ body {
   z-index: 10;
 }
 
-.audio-player-selection-menu-label {
-  padding: 8px 16px 4px;
-  color: #888;
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .audio-player-selection-menu-item {
   display: flex;
   align-items: center;

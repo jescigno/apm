@@ -394,7 +394,6 @@ function AudioPlayer({ onSoundsLikeClick }) {
                       </button>
                       {optionsMenuOpen && (
                         <div className="audio-player-selection-menu" onMouseDown={(e) => e.stopPropagation()}>
-                          <div className="audio-player-selection-menu-label">Segment</div>
                           <button
                             type="button"
                             className="audio-player-selection-menu-item"
@@ -421,7 +420,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                             }}
                           >
                             <img src="/player-icons/PlaybackEntireSong.svg" alt="" />
-                            Loop Segment
+                            Loop
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setOptionsMenuOpen(false)}>
                             <img src="/icons/Upload.svg" alt="" />
@@ -435,7 +434,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
-                            Remove Segment
+                            Deselect
                           </button>
                         </div>
                       )}
