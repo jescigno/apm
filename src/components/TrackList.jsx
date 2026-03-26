@@ -84,7 +84,7 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
@@ -136,6 +136,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
               isPlaying={isPlaying}
               compact={tabsInBreadcrumb}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
+              titleBadge={trackTitleBadges?.[track.num]}
             />
           ))}
         {activeTab === 'albums' &&

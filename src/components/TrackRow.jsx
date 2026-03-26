@@ -18,7 +18,7 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
 });
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, enableTrackDetailsOverlay }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, enableTrackDetailsOverlay, titleBadge }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -208,17 +208,22 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         />
         <div className="track-info-dropdowns">
           <div className="track-info">
-            {enableTrackDetailsOverlay ? (
-              <button
-                type="button"
-                className="track-title track-title-clickable"
-                onClick={(e) => { e.stopPropagation(); setTrackDetailsOverlayOpen(true); }}
-              >
-                {item.title}
-              </button>
-            ) : (
-              <span className="track-title">{item.title}</span>
-            )}
+            <div className="track-title-badge-wrap">
+              {titleBadge && (
+                <span className="track-version-badge">{titleBadge}</span>
+              )}
+              {enableTrackDetailsOverlay ? (
+                <button
+                  type="button"
+                  className="track-title track-title-clickable"
+                  onClick={(e) => { e.stopPropagation(); setTrackDetailsOverlayOpen(true); }}
+                >
+                  {item.title}
+                </button>
+              ) : (
+                <span className="track-title">{item.title}</span>
+              )}
+            </div>
             <span className="track-id">
               {item.id}
             </span>

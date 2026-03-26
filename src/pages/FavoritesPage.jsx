@@ -124,6 +124,7 @@ export default function FavoritesPage({ soundsLikePanelOpen, onSoundsLikeClick }
         showSearchesTab
         tracks={FAVORITES_TRACKS}
         enableTrackDetailsOverlay
+        trackTitleBadges={{ 2: 'VERSION', 4: 'STEM' }}
       />
     </>
   );
