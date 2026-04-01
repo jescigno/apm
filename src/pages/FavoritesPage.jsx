@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import TrackList, { TrackListTabs, TrackListTrackCount, FAVORITES_TRACKS } from '../components/TrackList';
+import TrackList, { TrackListTabs, TrackListTrackCount } from '../components/TrackList';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -87,7 +87,13 @@ function BreadcrumbText({ children }) {
   );
 }
 
-export default function FavoritesPage({ soundsLikePanelOpen, onSoundsLikeClick }) {
+export default function FavoritesPage({
+  soundsLikePanelOpen,
+  onSoundsLikeClick,
+  tracks,
+  enterHighlightTrackNum,
+  scrollToBottomSignal,
+}) {
   const [activeTab, setActiveTab] = useState('tracks');
 
   return (
@@ -107,7 +113,7 @@ export default function FavoritesPage({ soundsLikePanelOpen, onSoundsLikeClick }
             className="breadcrumb-tabs"
             showSearchesTab
           />
-          <TrackListTrackCount activeTab={activeTab} tracks={FAVORITES_TRACKS} />
+          <TrackListTrackCount activeTab={activeTab} tracks={tracks} />
         </div>
         <div className="breadcrumb-actions">
           <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
@@ -122,9 +128,12 @@ export default function FavoritesPage({ soundsLikePanelOpen, onSoundsLikeClick }
         onTabChange={setActiveTab}
         tabsInBreadcrumb
         showSearchesTab
-        tracks={FAVORITES_TRACKS}
+        tracks={tracks}
         enableTrackDetailsOverlay
         trackTitleBadges={{ 2: 'VERSION', 4: 'STEM' }}
+        enterHighlightTrackNum={enterHighlightTrackNum}
+        scrollToBottomSignal={scrollToBottomSignal}
+        showVersionsStems
       />
     </>
   );

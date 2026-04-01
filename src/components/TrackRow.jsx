@@ -18,7 +18,7 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
 });
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, enableTrackDetailsOverlay, titleBadge }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -119,7 +119,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   return (
     <div
-      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${compact ? ' track-row-compact' : ''}`}
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems ? ' track-row--compact-versions-stems' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -224,9 +224,17 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 <span className="track-title">{item.title}</span>
               )}
             </div>
-            <span className="track-id">
-              {item.id}
-            </span>
+            <div className="track-id-row">
+              <span className="track-id">{item.id}</span>
+              <button type="button" className="track-id-icon-btn" aria-label="Track info">
+                <img src="/icons/TrackInfo.svg" alt="" />
+              </button>
+              {item.hasLyrics && (
+                <button type="button" className="track-id-icon-btn track-id-icon-btn--lyrics" aria-label="Lyrics">
+                  <img src="/icons/TrackLyrics.svg" alt="" />
+                </button>
+              )}
+            </div>
           </div>
           {isAlbum ? (
             <button type="button" className="show-all-tracks">
@@ -235,10 +243,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 <path d="M6 9l6 6 6-6"/>
               </svg>
             </button>
-          ) : !compact ? (
+          ) : (!compact || showVersionsStems) ? (
             <div className="track-dropdowns">
-              <select><option>Versions ({track.versions})</option></select>
-              <select><option>Stems (4)</option></select>
+              <select aria-label="Versions"><option>Versions ({track.versions})</option></select>
+              <select aria-label="Stems"><option>Stems ({track.stems ?? 4})</option></select>
             </div>
           ) : null}
         </div>

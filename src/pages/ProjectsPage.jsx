@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
-import TrackList, { PROJECTS_TRACKS } from '../components/TrackList';
+import TrackList from '../components/TrackList';
 
 const FOLDER_HIERARCHY = [
   { id: 'music-for-sports', label: 'APM MARKETING 2', visible: true },
@@ -94,7 +94,22 @@ function BreadcrumbText({ children }) {
   );
 }
 
-export default function ProjectsPage({ soundsLikePanelOpen, onSoundsLikeClick }) {
+const DEFAULT_DOC_TITLE = 'apm music';
+
+export default function ProjectsPage({
+  soundsLikePanelOpen,
+  onSoundsLikeClick,
+  tracks,
+  enterHighlightTrackNum,
+  scrollToBottomSignal,
+}) {
+  useEffect(() => {
+    document.title = 'Project-Details';
+    return () => {
+      document.title = DEFAULT_DOC_TITLE;
+    };
+  }, []);
+
   const visibleFolders = FOLDER_HIERARCHY.filter((f) => f.visible || f.locked);
 
   return (
@@ -112,7 +127,7 @@ export default function ProjectsPage({ soundsLikePanelOpen, onSoundsLikeClick })
                     </span>
                   ))
                 ) : (
-                  <BreadcrumbSegment label="My Projects" />
+                  <BreadcrumbSegment label="Project-Details" />
                 )}
               </BreadcrumbText>
             </span>
@@ -130,7 +145,9 @@ export default function ProjectsPage({ soundsLikePanelOpen, onSoundsLikeClick })
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}
         onSoundsLikeClick={onSoundsLikeClick}
-        tracks={PROJECTS_TRACKS}
+        tracks={tracks}
+        enterHighlightTrackNum={enterHighlightTrackNum}
+        scrollToBottomSignal={scrollToBottomSignal}
       />
     </div>
   );

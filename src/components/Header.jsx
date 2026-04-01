@@ -9,12 +9,13 @@ const HEADER_MENU_OPTIONS = [
 ];
 
 const MY_APM_OPTIONS = [
-  { label: 'Projects', to: '/projects' },
+  { label: 'Projects', action: 'projectsPanel' },
+  { label: 'Project Details', to: '/project-details' },
   { label: 'Favorites', to: '/favorites' },
   { label: 'History', to: '/history' },
 ];
 
-function Header() {
+function Header({ onOpenProjectsPanel }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [myApmOpen, setMyApmOpen] = useState(true);
   const menuRef = useRef(null);
@@ -119,11 +120,26 @@ function Header() {
               <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
-          {myApmOpen && MY_APM_OPTIONS.map(({ label, to }) => (
-            <Link key={label} to={to} className="header-menu-item header-menu-myapm-subitem" onClick={() => { setMyApmOpen(false); setMenuOpen(false); }}>
-              {label}
-            </Link>
-          ))}
+          {myApmOpen && MY_APM_OPTIONS.map((opt) =>
+            opt.action === 'projectsPanel' ? (
+              <button
+                key={opt.label}
+                type="button"
+                className="header-menu-item header-menu-myapm-subitem"
+                onClick={() => {
+                  onOpenProjectsPanel?.();
+                  setMyApmOpen(false);
+                  setMenuOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ) : (
+              <Link key={opt.label} to={opt.to} className="header-menu-item header-menu-myapm-subitem" onClick={() => { setMyApmOpen(false); setMenuOpen(false); }}>
+                {opt.label}
+              </Link>
+            )
+          )}
           <div className="header-menu-item header-menu-mode-row">
             <span>Mode</span>
             <button
