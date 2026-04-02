@@ -2638,6 +2638,7 @@ body {
 
 .track-row.track-row--compact-versions-stems .track-dropdowns select {
   padding-bottom: 0;
+  background-position: right calc(50% + 2px);
 }
 
 /* Albums tab: pin "Show all tracks" to bottom of thumbnail column (85px) */
