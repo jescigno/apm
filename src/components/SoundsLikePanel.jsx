@@ -1,3 +1,7 @@
+/**
+ * Right panel for Sounds Like results. Uses only `sounds-like-*` classes in index.css.
+ * Projects panel (ProjectsPanel.jsx) uses `projects-panel-*` — keep namespaces separate.
+ */
 import { useRef, useEffect, useState } from 'react';
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
@@ -24,6 +28,8 @@ function SoundsLikePanel({
   onItemEnterAnimationComplete,
 }) {
   const resizeRef = useRef(null);
+  const widthRef = useRef(width);
+  widthRef.current = width;
   const [exitingId, setExitingId] = useState(null);
   const [revealedIds, setRevealedIds] = useState(() => new Set());
   const scheduledRevealRef = useRef(new Set());
@@ -75,7 +81,7 @@ function SoundsLikePanel({
     const onMouseDown = (e) => {
       e.preventDefault();
       const startX = e.clientX;
-      const startWidth = width;
+      const startWidth = widthRef.current;
 
       const onMouseMove = (e) => {
         const delta = startX - e.clientX;
@@ -98,7 +104,7 @@ function SoundsLikePanel({
 
     handle.addEventListener('mousedown', onMouseDown);
     return () => handle.removeEventListener('mousedown', onMouseDown);
-  }, [isOpen, width, onWidthChange, minWidth, maxWidth]);
+  }, [isOpen, onWidthChange, minWidth, maxWidth]);
 
   const handleAdd = (item) => {
     if (exitingId != null) return;

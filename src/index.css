@@ -558,6 +558,9 @@ body {
   margin-top: var(--header-height);
   min-height: calc(100vh - var(--header-height));
   transition: padding-right 0.2s ease;
+  /* Track layout breakpoints follow *available* width (sidebar + optional right panel padding). */
+  container-type: inline-size;
+  container-name: app-content;
 }
 
 .main-content {
@@ -1338,7 +1341,7 @@ body {
   height: 14px;
 }
 
-/* ========== Sounds Like Panel ========== */
+/* ========== Sounds Like Panel (SoundsLikePanel.jsx only — do not reuse for Projects) ========== */
 .sounds-like-panel {
   width: 0;
   min-width: 0;
@@ -1363,15 +1366,18 @@ body {
   bottom: 0;
   z-index: 85;
   overflow: hidden;
+  overflow-x: hidden;
+  min-width: 0;
+  max-width: 100vw;
   transition: width 0.2s ease;
   border-left: 4px solid #000;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.18);
 }
 
 /* Wider than min: floats over main content (main has no padding) */
 .sounds-like-panel.open.sounds-like-panel--overlay {
   z-index: 90;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
+  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.22);
 }
 
 .sounds-like-panel-resize-handle {
@@ -1490,7 +1496,9 @@ body {
   padding: 0 12px 12px;
   margin-top: -2px;
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1816,6 +1824,588 @@ body {
   object-fit: cover;
 }
 
+/* ========== Projects Panel (ProjectsPanel.jsx only — parallel layout; independent from Sounds Like) ========== */
+.projects-panel {
+  /* Shared horizontal inset so header hovers align with folder rows / column headers */
+  --projects-panel-inline-padding: 8px;
+  --projects-panel-inline-padding-end: 2px;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #232323;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease, min-width 0.25s ease;
+}
+
+.projects-panel:not(.open) {
+  position: absolute;
+  left: -9999px;
+  pointer-events: none;
+}
+
+.projects-panel.open {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
+  z-index: 85;
+  overflow: hidden;
+  overflow-x: hidden;
+  min-width: 0;
+  max-width: 100vw;
+  transition: width 0.2s ease;
+  border-left: 4px solid #000;
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.18);
+}
+
+.projects-panel.open.projects-panel--overlay {
+  z-index: 90;
+  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.22);
+}
+
+.projects-panel-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.projects-panel-resize-handle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.projects-panel.open .projects-panel-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+}
+
+.projects-panel-header {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  padding: 8px 10px 10px;
+}
+
+/* Left inset on header-main so My Projects hover is not flush to the panel edge */
+.projects-panel-header.projects-panel-header--folders {
+  padding: 8px var(--projects-panel-inline-padding-end, 4px) 6px 0;
+}
+
+.projects-panel-header--folders > .projects-panel-header-main {
+  padding-left: var(--projects-panel-inline-padding, 8px);
+  box-sizing: border-box;
+}
+
+.projects-panel--wide-layout .projects-panel-header--folders {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+}
+
+.projects-panel-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.projects-panel-inline-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px 2px 2px;
+}
+
+.projects-panel-inline-nav-item {
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.42);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.projects-panel-inline-nav-item:hover {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.projects-panel-inline-nav-item--current {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.projects-panel-inline-nav-item--current:hover {
+  color: #fff;
+}
+
+.projects-panel--wide-layout .projects-panel-inline-nav-item {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.projects-panel--wide-layout .projects-panel-inline-nav-item--current {
+  text-underline-offset: 5px;
+}
+
+.projects-panel-headline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  padding: 4px 6px 4px 6px;
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.projects-panel-headline-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.projects-panel-headline-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-panel-headline-chevron {
+  flex-shrink: 0;
+  display: flex;
+  color: rgba(255, 255, 255, 0.85);
+  transition: transform 0.2s ease;
+}
+
+.projects-panel-headline-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.projects-panel-headline-chevron--open {
+  transform: rotate(180deg);
+}
+
+.projects-panel-toolbar-icons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.projects-panel-toolbar-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.projects-panel-toolbar-cluster .projects-panel-toolbar-btn + .projects-panel-toolbar-btn {
+  margin-left: -2px;
+}
+
+.projects-panel-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.projects-panel-toolbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.projects-panel-toolbar-btn img {
+  width: 17px;
+  height: 17px;
+  display: block;
+  opacity: 0.95;
+}
+
+.projects-panel-toolbar-btn--close {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
+}
+
+.projects-panel-toolbar-btn--close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.projects-panel-toolbar-btn--close img {
+  width: 12px;
+  height: 12px;
+}
+
+.projects-panel-source-menu {
+  background: #2a2a2a;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 0;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.projects-panel-source-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.projects-panel-source-menu-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.95;
+}
+
+.projects-panel-source-menu-icon-img {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+  opacity: 0.95;
+}
+
+.projects-panel-source-menu-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.projects-panel-source-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.projects-panel-source-menu-item--current {
+  background: none;
+  color: #fff;
+}
+
+.projects-panel-source-menu-item--current:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.projects-panel-folder-more-menu {
+  background: #2a2a2a;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 0;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.projects-panel-folder-more-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.projects-panel-folder-more-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.projects-panel-content {
+  padding: 0 8px 12px;
+  margin-top: 0;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.projects-panel-content--folders {
+  padding-left: var(--projects-panel-inline-padding);
+  /* Match left inset so folder row hovers are symmetric vs panel edges */
+  padding-right: var(--projects-panel-inline-padding);
+  margin-left: 0;
+}
+
+.projects-panel-folder-list {
+  padding-left: 0;
+  min-width: 0;
+}
+
+.projects-panel-column-headers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px var(--projects-panel-inline-padding) 8px 0;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.projects-panel-column-headers--with-meta {
+  gap: 8px;
+}
+
+/* Same width as .projects-panel-folder-more so header columns align with row data */
+.projects-panel-column-headers-spacer {
+  flex-shrink: 0;
+  width: 26px;
+  min-width: 26px;
+  height: 1px;
+  align-self: center;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.projects-panel-column-headers-primary {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.projects-panel-column-header {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 200px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.projects-panel-column-header.projects-panel-column-header--name {
+  text-transform: none;
+  letter-spacing: 0.03em;
+}
+
+.projects-panel-folder-block {
+  width: 100%;
+}
+
+.projects-panel-folder-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  /* Vertical padding only; horizontal inset comes from tree paddingLeft (inline). Avoids extra right padding vs left. */
+  padding: 4px 0;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.projects-panel-folder-row--with-meta {
+  gap: 8px;
+}
+
+.projects-panel-folder-primary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.projects-panel-folder-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.projects-panel-folder-expand-slot {
+  flex-shrink: 0;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.projects-panel-folder-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.projects-panel-folder-chevron svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(0deg);
+}
+
+.projects-panel-folder-chevron--open svg {
+  transform: rotate(90deg);
+}
+
+.projects-panel-folder-expand-slot + .projects-panel-folder-glyph {
+  margin-left: -4px;
+}
+
+.projects-panel-folder-glyph {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.projects-panel-folder-glyph-img {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.projects-panel-folder-name {
+  flex: 1;
+  min-width: 0;
+  padding-right: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-panel-folder-meta {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 200px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.62);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-panel-folder-more {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, background 0.12s;
+}
+
+.projects-panel-folder-row:hover .projects-panel-folder-more,
+.projects-panel-folder-row:focus-within .projects-panel-folder-more {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.projects-panel-folder-more:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.projects-panel-folder-more:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 1px;
+}
+
+.projects-panel-folder-more--always {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.projects-panel-folder-more img {
+  width: 16px;
+  height: 16px;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+.projects-panel-folder-children {
+  width: 100%;
+}
+
 /* ========== Tracks Section ========== */
 .tracks-section {
   margin-top: 0;
@@ -1831,7 +2421,6 @@ body {
   padding: 4px 0 12px;
   background: #232323;
   z-index: 50;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tabs {
@@ -1958,7 +2547,7 @@ body {
   overflow: visible;
 }
 
-.track-row:last-child {
+.track-list > .track-row:nth-last-child(2) {
   border-bottom: none;
 }
 
@@ -2716,13 +3305,14 @@ body {
   gap: 8px;
 }
 
-@media (min-width: 1050px) {
+/* Equivalent to viewport 1050 / 1049 with full-width main: content width = viewport − sidebar (64px) */
+@container app-content (min-width: 986px) {
   .track-actions {
     min-width: 210px;
   }
 }
 
-@media (max-width: 1049px) {
+@container app-content (max-width: 985px) {
   .track-actions-expanded {
     display: none;
   }
@@ -2892,8 +3482,8 @@ body {
   z-index: 1100;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1400px) {
+/* Responsive adjustments — container width = main area (includes effect of right panel padding) */
+@container app-content (max-width: 1336px) {
   .track-row {
     grid-template-columns: 28px 345px 1fr 80px 140px auto;
     gap: 16px;
@@ -3127,7 +3717,7 @@ body {
   }
 }
 
-@media (max-width: 1200px) {
+@container app-content (max-width: 1136px) {
   .track-row {
     grid-template-columns: 28px 280px minmax(0, 280px) auto;
     grid-template-areas: unset;

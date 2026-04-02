@@ -18,7 +18,17 @@ import {
 import { SOUNDS_LIKE_PANEL_INITIAL_ITEMS, createSoundsLikeItems } from './constants/soundsLikePanel';
 
 const PANEL_MIN_WIDTH = 263;
+/** Max width for Sounds Like panel (fixed cap). */
 const PANEL_MAX_WIDTH = 600;
+/** Matches `--sidebar-width`; Projects panel can expand to the sidebar’s right edge. */
+const SIDEBAR_WIDTH = 64;
+/** Fine-tune max width so the panel’s left edge lines up with the main column (layout offset). */
+const PROJECTS_PANEL_MAX_WIDTH_ADJUST = 6;
+
+function getProjectsPanelMaxWidth() {
+  if (typeof window === 'undefined') return 4000;
+  return Math.max(PANEL_MIN_WIDTH, window.innerWidth - SIDEBAR_WIDTH - PROJECTS_PANEL_MAX_WIDTH_ADJUST);
+}
 
 function buildTrackFromSoundsLike(item, mergedTracks) {
   const maxNum = mergedTracks.reduce((m, t) => Math.max(m, t.num), 0);
@@ -41,6 +51,9 @@ function AppContent() {
   const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
   const [projectsPanelWidth, setProjectsPanelWidth] = useState(PANEL_MIN_WIDTH);
+  const [projectsPanelMaxWidth, setProjectsPanelMaxWidth] = useState(() =>
+    getProjectsPanelMaxWidth()
+  );
   const [soundsLikeItems, setSoundsLikeItems] = useState(() => [...SOUNDS_LIKE_PANEL_INITIAL_ITEMS]);
   const [projectsExtraTracks, setProjectsExtraTracks] = useState([]);
   const [favoritesExtraTracks, setFavoritesExtraTracks] = useState([]);
@@ -122,6 +135,17 @@ function AppContent() {
     }
   }, [projectsPanelOpen]);
 
+  useEffect(() => {
+    const onResize = () => {
+      const next = getProjectsPanelMaxWidth();
+      setProjectsPanelMaxWidth(next);
+      setProjectsPanelWidth((w) => Math.min(w, next));
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const rightPanelOpen = soundsLikePanelOpen || projectsPanelOpen;
   const rightPanelWidth = projectsPanelOpen ? projectsPanelWidth : soundsLikePanelOpen ? soundsLikePanelWidth : 0;
   /** Reserve min panel width so main layout stays fixed; wider panel draws on top without reflow. */
@@ -186,7 +210,7 @@ function AppContent() {
         width={projectsPanelWidth}
         onWidthChange={setProjectsPanelWidth}
         minWidth={PANEL_MIN_WIDTH}
-        maxWidth={PANEL_MAX_WIDTH}
+        maxWidth={projectsPanelMaxWidth}
       />
       <AudioPlayer onSoundsLikeClick={openSoundsLikePanel} />
     </div>
