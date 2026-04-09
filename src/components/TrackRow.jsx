@@ -18,7 +18,7 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
 });
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -80,7 +80,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   }, [commentOverlayOpen]);
 
   useEffect(() => {
-    if (overflowMenuOpen && compact && menuBtnRef.current) {
+    if (overflowMenuOpen && (compact || mobileTrackLayout) && menuBtnRef.current) {
       const update = () => {
         if (menuBtnRef.current) {
           const r = menuBtnRef.current.getBoundingClientRect();
@@ -96,7 +96,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
       };
     }
     setDropdownRect(null);
-  }, [overflowMenuOpen, compact]);
+  }, [overflowMenuOpen, compact, mobileTrackLayout]);
   const item = album || track;
   const isAlbum = variant === 'album';
   const thumbIndex = isAlbum
@@ -117,12 +117,157 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     onTogglePause?.();
   };
 
+  if (mobileTrackLayout) {
+    return (
+      <div
+        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
+        <div className="track-row-mobile-media">
+          <div className="track-row-mobile-play">
+            {showPlayingIcon ? (
+              <button type="button" className="track-play-btn track-play-btn--mobile-eq" onClick={handlePause} aria-label={`Pause ${item.title}`}>
+                <PlayingAudioIcon />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="track-play-btn"
+                onClick={handlePlay}
+                disabled={!canPlay}
+                aria-label={`Play ${item.title}`}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <div
+            className="track-thumb track-thumb--mobile"
+            style={{
+              backgroundImage: `url('${thumbSrc}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        </div>
+        <div className="track-mobile-text">
+          <div className="track-title-badge-wrap">
+            {titleBadge && <span className="track-version-badge">{titleBadge}</span>}
+            {enableTrackDetailsOverlay ? (
+              <button
+                type="button"
+                className="track-title track-title-clickable"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTrackDetailsOverlayOpen(true);
+                }}
+              >
+                {item.title}
+              </button>
+            ) : (
+              <span className="track-title">{item.title}</span>
+            )}
+          </div>
+          <p className="track-desc track-desc--mobile-below-title">{item.desc}</p>
+        </div>
+        <div className="track-actions-overflow track-actions-overflow--mobile" ref={overflowRef}>
+          <button
+            ref={menuBtnRef}
+            type="button"
+            className="icon-btn track-actions-menu-btn"
+            onClick={() => setOverflowMenuOpen(!overflowMenuOpen)}
+            aria-label="More actions"
+            aria-expanded={overflowMenuOpen}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="12" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="19" cy="12" r="1.5" />
+            </svg>
+          </button>
+          {overflowMenuOpen && dropdownRect && createPortal(
+            <div
+              data-track-dropdown-portal
+              className="track-actions-overflow-dropdown track-actions-overflow-dropdown--segment-style track-actions-overflow-dropdown--portal"
+              style={{
+                position: 'fixed',
+                right: window.innerWidth - dropdownRect.right,
+                bottom: window.innerHeight - dropdownRect.top + 4,
+              }}
+            >
+              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
+                <img src="/TrackDetails.svg" alt="" />
+                Go to Track
+              </button>
+              <button
+                type="button"
+                className="track-actions-overflow-dropdown-item"
+                onClick={() => {
+                  onSoundsLikeClick?.();
+                  setOverflowMenuOpen(false);
+                }}
+              >
+                <img src="/player-actions/SoundsLike.svg" alt="" />
+                Sounds Like
+              </button>
+              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
+                <img src="/icons/Upload.svg" alt="" />
+                Share
+              </button>
+              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
+                <img src="/icons/Add.svg" alt="" />
+                Add to a Project
+              </button>
+            </div>,
+            document.body
+          )}
+        </div>
+        {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
+          <div className="track-details-overlay">
+            <div
+              className="track-details-overlay-backdrop"
+              onClick={() => setTrackDetailsOverlayOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setTrackDetailsOverlayOpen(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Close overlay"
+            />
+            <div className="track-details-overlay-panel-wrap">
+              <button
+                type="button"
+                className="track-details-overlay-close"
+                onClick={() => setTrackDetailsOverlayOpen(false)}
+                aria-label="Close overlay"
+              >
+                <img src="/icons/Close.svg" alt="" />
+              </button>
+              <div className="track-details-overlay-panel">
+                <h3 className="track-details-overlay-title">Track Details</h3>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems ? ' track-row--compact-versions-stems' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
       <span className="track-num">
         {showPlayingIcon && isHovered ? (
           <>

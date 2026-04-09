@@ -107,13 +107,13 @@ function AppContent() {
   }, [enterHighlightTrackNum]);
 
   const openSoundsLikePanel = useCallback(() => {
-    if (location.pathname !== '/project-details') return;
+    if (location.pathname !== '/project-details' && location.pathname !== '/favorites') return;
     setProjectsPanelOpen(false);
     setSoundsLikePanelOpen(true);
   }, [location.pathname]);
 
   useEffect(() => {
-    if (location.pathname !== '/project-details') {
+    if (location.pathname !== '/project-details' && location.pathname !== '/favorites') {
       setSoundsLikePanelOpen(false);
     }
   }, [location.pathname]);

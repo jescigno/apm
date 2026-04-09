@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import TrackRow from './TrackRow';
 import { usePlayer } from '../context/PlayerContext';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 export const SAMPLE_AUDIO = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
@@ -127,13 +128,22 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
   const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const listEndRef = useRef(null);
+  const [mobileTrackLayout, setMobileTrackLayout] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setMobileTrackLayout(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     if (scrollToBottomSignal == null || scrollToBottomSignal === 0) return;
@@ -148,7 +158,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
   const isCurrentTrack = (item) =>
     currentTrack && ((item.id && item.id === currentTrack.id) || (item.num === currentTrack.num));
 
-  const hasHeaderContent = !tabsInBreadcrumb;
+  const hasHeaderContent = !tabsInBreadcrumb && !hideTracksHeader;
   const currentTracks = activeTab === 'tracks' ? tracks : ALBUMS;
   const handlePlayAll = () => playQueue(currentTracks, 0);
 
@@ -173,7 +183,17 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
           </div>
         </div>
       )}
-      <div className="track-list-boundary track-list-top" aria-hidden="true" />
+      {!(hideTracksHeader && activeTab === 'tracks') && (
+        <div className="track-list-boundary track-list-top" aria-hidden="true" />
+      )}
+      {hideTracksHeader && activeTab === 'tracks' && (
+        <div className="tracks-mobile-toolbar">
+          <span className="tracks-mobile-toolbar-count">{tracks.length} TITLES</span>
+          <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
+            <img src="/Reorder.svg" alt="" /> REORDER
+          </button>
+        </div>
+      )}
       <div className="track-list">
         {activeTab === 'tracks' &&
           tracks.map((track) => (
@@ -189,9 +209,13 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
               isCurrentTrack={isCurrentTrack(track)}
               isPlaying={isPlaying}
               compact={tabsInBreadcrumb}
+              mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               titleBadge={trackTitleBadges?.[track.num]}
-              enterHighlight={enterHighlightTrackNum != null && track.num === enterHighlightTrackNum}
+              enterHighlight={
+                enterHighlightTrackNum != null &&
+                Number(track.num) === Number(enterHighlightTrackNum)
+              }
               showVersionsStems={showVersionsStems}
             />
           ))}
@@ -210,6 +234,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
               isCurrentTrack={isCurrentTrack(album)}
               isPlaying={isPlaying}
               compact={tabsInBreadcrumb}
+              mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               showVersionsStems={showVersionsStems}
             />

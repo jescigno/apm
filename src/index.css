@@ -16,6 +16,8 @@
   --border: #2a2a2a;
   --sidebar-width: 64px;
   --header-height: 64px;
+  /* Total vertical space for fixed header (single row; logo + search hidden on narrow viewports). */
+  --header-stack-height: var(--header-height);
   --player-height: 100px;
 }
 
@@ -281,7 +283,7 @@ body {
 }
 
 .header-menu-bar-inner {
-  padding: calc(var(--header-height) + 16px) 0 16px;
+  padding: calc(var(--header-stack-height) + 16px) 0 16px;
 }
 
 .header-menu-bar .header-menu-item {
@@ -555,8 +557,8 @@ body {
 .app-content-wrapper {
   display: flex;
   margin-left: var(--sidebar-width);
-  margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height));
+  margin-top: var(--header-stack-height);
+  min-height: calc(100vh - var(--header-stack-height));
   transition: padding-right 0.2s ease;
   /* Track layout breakpoints follow *available* width (sidebar + optional right panel padding). */
   container-type: inline-size;
@@ -569,7 +571,303 @@ body {
   padding: 0 0 40px 0;
   max-width: 1920px;
   background: #232323;
-  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100vh - var(--header-stack-height));
+}
+
+/* —— Compact / mobile ONLY (max-width: 768px).
+   Matches `LAYOUT_COMPACT_MAX_WIDTH` in src/constants/layout.js. Put compact header, project hero,
+   track list overrides, and any narrow-viewport tweaks ONLY inside the @media block below — not in
+   the global rules above — so desktop layout is unchanged. In JS, use the same breakpoint:
+   matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`). */
+.project-mobile-hero {
+  display: none;
+}
+
+/* Mobile-only promo; must beat later `.sounds-like-box { display: flex }` or it shows on desktop. */
+.sounds-like-box.project-mobile-hero__sounds-like {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-stack-height: var(--header-height);
+  }
+
+  .header {
+    height: var(--header-height);
+    min-height: var(--header-height);
+    padding: 0 16px;
+    gap: 0;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .header .logo,
+  .header .search-bar {
+    display: none !important;
+  }
+
+  .header-menu-spacer {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  .header-actions-floating {
+    right: 12px;
+    height: var(--header-height);
+    align-items: center;
+    /* Above fixed project title (550) so the menu stays clickable */
+    z-index: 600;
+  }
+
+  .header-menu-bar {
+    z-index: 650;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .app-content-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .breadcrumb-row,
+  .breadcrumb-row--favorites {
+    display: none !important;
+  }
+
+  .tracks-header .tabs {
+    padding-left: 16px;
+  }
+
+  /* Title sits in the fixed header band (same row as the menu); hero content scrolls below. */
+  .projects-page .project-mobile-hero {
+    display: block;
+    padding: 12px 16px 16px;
+    background: #000;
+  }
+
+  /* Full-bleed rule under the header/title row (::before on hero avoids flex ::after issues on the h1). */
+  .projects-page .project-mobile-hero::before {
+    content: '';
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: calc(var(--header-height) - 6px);
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    z-index: 551;
+    pointer-events: none;
+  }
+
+  .projects-page .project-mobile-hero__title {
+    position: fixed;
+    top: 0;
+    left: 16px;
+    right: 52px;
+    height: var(--header-height);
+    margin: 0;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-align: center;
+    border-bottom: none;
+    /* Above .header-wrapper (500) so the title is visible in the header strip */
+    z-index: 550;
+    background: #000;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .project-mobile-hero__row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  /* 2×2 grid matches desktop assets; width ~30% of the hero row (overrides global fixed `.image-grid` widths). */
+  .project-mobile-hero__visuals {
+    flex: 0 0 30%;
+    min-width: 0;
+    max-width: 30%;
+    margin-left: 2px;
+  }
+
+  .project-mobile-hero__visuals .image-grid.single {
+    width: 100% !important; /* beats later breakpoint rules that set fixed px on `.image-grid` */
+  }
+
+  .project-mobile-hero__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 6px;
+  }
+
+  .project-mobile-hero__desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.85);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+  }
+
+  .project-mobile-hero__details {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .project-mobile-hero__actions {
+    margin-top: 4px;
+  }
+
+  .project-mobile-hero__actions .project-actions-icons {
+    height: 24px;
+    width: auto;
+    display: block;
+  }
+
+  .project-card--desktop {
+    display: none !important;
+  }
+
+  .main-content:has(.projects-page) {
+    background: #000;
+  }
+
+  .projects-page {
+    background: #000;
+  }
+
+  .projects-page .tracks-section {
+    background: #000;
+  }
+
+  .projects-page .track-list {
+    background: #232323;
+  }
+
+  /* Below purple Sounds Like (projects mobile): title count + Reorder */
+  .tracks-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px 12px;
+    background: #000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .tracks-mobile-toolbar-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .tracks-mobile-toolbar .btn-secondary.tracks-mobile-toolbar-reorder {
+    transform: translateX(4px);
+  }
+
+  /* Track list (mobile): play + thumb + title / description — no #, checkbox, id, versions, stems, actions */
+  .track-row.track-row--mobile {
+    display: flex !important;
+    flex-direction: row;
+    align-items: flex-start;
+    grid-template-columns: none !important;
+    column-gap: 12px;
+    row-gap: 0;
+    min-height: 0;
+    padding: 10px 16px;
+  }
+
+  .track-row-mobile-media {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .track-row-mobile-play {
+    flex-shrink: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: -4px;
+  }
+
+  .track-row--mobile .track-play-btn--mobile-eq {
+    padding: 4px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .track-row--mobile .track-thumb--mobile {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: 0;
+    background-color: #343434;
+    margin-left: -4px;
+  }
+
+  .track-row--mobile .track-mobile-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: flex-start;
+    text-align: left;
+    margin-left: 4px;
+  }
+
+  .track-row--mobile .track-title-badge-wrap {
+    width: 100%;
+  }
+
+  .track-row--mobile .track-actions-overflow--mobile {
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .track-row--mobile .track-desc--mobile-below-title {
+    margin: 0;
+    padding-top: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+  }
 }
 
 /* Breadcrumb Row */
@@ -888,7 +1186,7 @@ body {
 }
 
 .project-actions-icons {
-  height: 20px;
+  height: 24px;
   width: auto;
 }
 
@@ -1361,7 +1659,7 @@ body {
 
 .sounds-like-panel.open {
   position: fixed;
-  top: var(--header-height);
+  top: var(--header-stack-height);
   right: 0;
   bottom: 0;
   z-index: 85;
@@ -1737,6 +2035,7 @@ body {
   object-fit: cover;
   flex-shrink: 0;
   overflow: hidden;
+  border-radius: 0;
   transition: max-width 0.2s ease, opacity 0.2s ease, margin 0.2s ease;
 }
 
@@ -1847,7 +2146,7 @@ body {
 
 .projects-panel.open {
   position: fixed;
-  top: var(--header-height);
+  top: var(--header-stack-height);
   right: 0;
   bottom: 0;
   z-index: 85;
@@ -2413,7 +2712,7 @@ body {
 
 .tracks-header {
   position: sticky;
-  top: var(--header-height);
+  top: var(--header-stack-height);
   display: flex;
   align-items: center;
   gap: 24px;
@@ -2511,7 +2810,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-radius: 0 12px 12px 12px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -2541,7 +2840,7 @@ body {
   column-gap: 12px;
   row-gap: 20px;
   min-height: 115px;
-  padding: 15px 20px;
+  padding: 11px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-size: 13px;
   overflow: visible;
@@ -2552,25 +2851,40 @@ body {
 }
 
 /*
-  Add-to-list: 2 quick blinks (~first 11%), then slow load-in over ~2s (opacity only).
-  Total 2.25s ≈ 250ms blinks + 2000ms ramp.
+  Add-to-list from Sounds Like: real overlay span (above grid cells; ::after sat under thumbnails).
+  Flash ends in ~100ms before row opacity dips at 5% (~112ms) of the 2.25s enter animation.
 */
 .track-row.track-row-enter-highlight {
+  position: relative;
   animation: track-row-enter-highlight 2.25s linear forwards;
+}
+
+.track-row-enter-highlight-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  pointer-events: none;
+  background: rgba(132, 31, 204, 0.55);
+  animation: track-row-enter-highlight-flash 0.1s ease-out forwards;
+}
+
+@keyframes track-row-enter-highlight-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes track-row-enter-highlight {
   0% {
-    opacity: 0.12;
-  }
-  /* Blink 1 */
-  2.5% {
     opacity: 1;
   }
+  /* Blink 1 */
   5% {
     opacity: 0.12;
   }
-  /* Blink 2 */
   7.5% {
     opacity: 1;
   }
@@ -2698,6 +3012,7 @@ body {
   flex-shrink: 0;
   background-size: cover;
   background-position: center;
+  border-radius: 0;
 }
 
 .track-waveform-sounds-like-overlay-content {
@@ -3400,6 +3715,7 @@ body {
 
 .track-actions-overflow {
   position: relative;
+  margin-left: 8px;
 }
 
 .track-actions-menu-btn svg {
@@ -4327,4 +4643,50 @@ body {
   25% { height: 8px; }
   50% { height: 12px; }
   75% { height: 6px; }
+}
+
+/* Mobile hero Sounds Like: must load after all `.sounds-like-box { max-width: … }` breakpoint rules
+   (e.g. max-width: 220px at 880px) or the promo stays narrow under the thumbnail column. */
+@media (max-width: 768px) {
+  .projects-page .sounds-like-box.project-mobile-hero__sounds-like {
+    display: flex !important;
+    position: relative;
+    left: auto;
+    transform: none;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    /* 16px space to the left and right of the purple bar (inset from main column). */
+    margin: 0 16px 16px !important;
+    box-sizing: border-box;
+    border-radius: 10px;
+    /* Solid fill (matches Sounds Like track chrome); overrides `.sounds-like-box` gradient. */
+    background: #312739 !important;
+    /* 16px padding inside the purple rectangle for copy + button. */
+    padding-top: 32px !important;
+    padding-bottom: 32px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    gap: 16px;
+  }
+
+  .projects-page .sounds-like-box.project-mobile-hero__sounds-like p {
+    white-space: normal;
+    font-size: 16px !important;
+    line-height: 1.45;
+  }
+
+  .projects-page .sounds-like-box.project-mobile-hero__sounds-like .btn-sounds-like {
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    gap: 10px;
+    min-height: 48px;
+    border-radius: 10px;
+  }
+
+  .projects-page .sounds-like-box.project-mobile-hero__sounds-like .btn-sounds-like svg {
+    width: 22px;
+    height: 22px;
+  }
 }

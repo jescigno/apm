@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import TrackList, { TrackListTabs, TrackListTrackCount } from '../components/TrackList';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -87,6 +88,8 @@ function BreadcrumbText({ children }) {
   );
 }
 
+const MOBILE_MQ = '(max-width: 480px)';
+
 export default function FavoritesPage({
   soundsLikePanelOpen,
   onSoundsLikeClick,
@@ -95,6 +98,18 @@ export default function FavoritesPage({
   scrollToBottomSignal,
 }) {
   const [activeTab, setActiveTab] = useState('tracks');
+  const [isCompactLayout, setIsCompactLayout] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setIsCompactLayout(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   return (
     <>
@@ -126,7 +141,7 @@ export default function FavoritesPage({
         onSoundsLikeClick={onSoundsLikeClick}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        tabsInBreadcrumb
+        tabsInBreadcrumb={!isCompactLayout}
         showSearchesTab
         tracks={tracks}
         enableTrackDetailsOverlay

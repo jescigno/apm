@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
 import TrackList from '../components/TrackList';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 const FOLDER_HIERARCHY = [
   { id: 'music-for-sports', label: 'APM MARKETING 2', visible: true },
@@ -110,6 +111,15 @@ export default function ProjectsPage({
     };
   }, []);
 
+  const [hideTracksHeader, setHideTracksHeader] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setHideTracksHeader(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   const visibleFolders = FOLDER_HIERARCHY.filter((f) => f.visible || f.locked);
 
   return (
@@ -148,6 +158,7 @@ export default function ProjectsPage({
         tracks={tracks}
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
+        hideTracksHeader={hideTracksHeader}
       />
     </div>
   );
