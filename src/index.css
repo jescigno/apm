@@ -32,9 +32,12 @@
   --border: #e5e5e5;
 }
 
-[data-theme="light"] .header,
-[data-theme="light"] .header-menu-bar {
+[data-theme="light"] .header {
   background: #ffffff;
+}
+
+[data-theme="light"] .header-menu-bar {
+  background: #000000;
 }
 
 [data-theme="light"] .header .search-bar {
@@ -43,28 +46,28 @@
 
 [data-theme="light"] .header-menu-bar .header-menu-item,
 [data-theme="light"] .header-menu-mode-row {
-  color: #1a1a1a;
+  color: #ffffff;
 }
 
 [data-theme="light"] .header-menu-bar .header-menu-item:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .header-menu-mode-switch {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="light"] .header-menu-mode-switch:hover {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 [data-theme="light"] .header-menu-logout {
-  border-color: #1a1a1a;
-  color: #1a1a1a;
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 [data-theme="light"] .header-menu-logout:hover {
-  background: #f0f0f0;
+  background: #1a1a1a;
 }
 
 [data-theme="light"] .sidebar {
@@ -269,7 +272,19 @@ body {
   z-index: 200;
   transform: translateX(100%);
   transition: transform 0.25s ease-out;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.header-menu-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-only; upper-right close is shown via @media (max-width: 768px). */
+.header-menu-bar-close {
+  display: none;
 }
 
 .header-menu-bar--open {
@@ -593,6 +608,12 @@ body {
     --header-stack-height: var(--header-height);
   }
 
+  /* Fixed project title is z-index 550; .header-wrapper is 500, so menu children cannot paint above
+     the title. While the nav is open, lift the portal so the full-screen overlay covers the title. */
+  .header-wrapper.header-wrapper--menu-open {
+    z-index: 800;
+  }
+
   .header {
     height: var(--header-height);
     min-height: var(--header-height);
@@ -600,6 +621,8 @@ body {
     gap: 0;
     flex-wrap: nowrap;
     align-items: center;
+    /* Match main / projects chrome; [data-theme="light"] .header still wins on light theme */
+    background: #232323;
   }
 
   .header .logo,
@@ -621,8 +644,67 @@ body {
     z-index: 600;
   }
 
+  /* Right drawer ~40% of viewport; slides in from the right (base transform). */
   .header-menu-bar {
     z-index: 650;
+    background: #000000;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: 40vw;
+    max-width: 85vw;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .header-menu-bar--open,
+  [data-theme="light"] .header-menu-bar--open {
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .header-menu-bar-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--accent-red);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .header-menu-bar-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .header-menu-bar-close:focus-visible {
+    outline: 2px solid var(--accent-red);
+    outline-offset: 2px;
+  }
+
+  .header-menu-bar-close .header-menu-close-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+
+  .header-menu-bar-inner {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 56px);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .sidebar {
@@ -646,7 +728,7 @@ body {
   .projects-page .project-mobile-hero {
     display: block;
     padding: 12px 16px 16px;
-    background: #000;
+    background: #232323;
   }
 
   /* Full-bleed rule under the header/title row (::before on hero avoids flex ::after issues on the h1). */
@@ -656,8 +738,8 @@ body {
     left: 0;
     right: 0;
     top: calc(var(--header-height) - 6px);
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
+    height: 2px;
+    background: #000000;
     z-index: 551;
     pointer-events: none;
   }
@@ -665,11 +747,13 @@ body {
   .projects-page .project-mobile-hero__title {
     position: fixed;
     top: 0;
-    left: 16px;
+    left: 0;
+    /* End before the header menu column so z-index 550 does not cover the hamburger */
     right: 52px;
     height: var(--header-height);
     margin: 0;
-    padding: 0 8px;
+    /* Left full-bleed #232323; right inset matches header-actions zone + 8px text padding */
+    padding: 0 8px 0 calc(16px + 8px);
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -684,7 +768,7 @@ body {
     border-bottom: none;
     /* Above .header-wrapper (500) so the title is visible in the header strip */
     z-index: 550;
-    background: #000;
+    background: #232323;
     box-sizing: border-box;
     overflow: hidden;
     cursor: default;
@@ -800,10 +884,11 @@ body {
     min-height: 0;
   }
 
+  /* ~36.38% — 33% × 1.05²; margins/padding on row + children unchanged */
   .project-mobile-hero__visuals {
-    flex: 0 0 33%;
+    flex: 0 0 calc(33% * 1.1025);
     min-width: 0;
-    max-width: 33%;
+    max-width: calc(33% * 1.1025);
     margin-left: 2px;
   }
 
@@ -888,15 +973,15 @@ body {
   }
 
   .main-content:has(.projects-page) {
-    background: #000;
+    background: #232323;
   }
 
   .projects-page {
-    background: #000;
+    background: #232323;
   }
 
   .projects-page .tracks-section {
-    background: #000;
+    background: #232323;
   }
 
   .projects-page .track-list {
@@ -1425,6 +1510,30 @@ body {
   gap: 12px;
 }
 
+/* Tablet: stack Sounds Like promo under title/description (desktop card only; below 769px is mobile hero). */
+@media (min-width: 769px) and (max-width: 1000px) {
+  .project-content-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .project-text-block {
+    flex: none;
+    width: 100%;
+  }
+
+  .sounds-like-box {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .sounds-like-box p {
+    white-space: normal;
+  }
+}
+
 .project-info-wrapper {
   display: flex;
   flex-direction: column;
@@ -1719,11 +1828,14 @@ body {
   white-space: nowrap;
 }
 
+/* Promo copy + button size fixed at all viewports; outer padding may still scale in media queries. */
 .sounds-like-box .btn-sounds-like {
   background: #841FCC;
   color: white;
   justify-content: center;
   padding: 6px 18px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .sounds-like-box .btn-sounds-like:hover {
@@ -3990,14 +4102,6 @@ body {
     padding: 16px 20px;
     gap: 10px;
   }
-
-  .sounds-like-box p {
-    font-size: 12px;
-  }
-
-  .sounds-like-box .btn-sounds-like {
-    padding: 5px 14px;
-  }
 }
 
 @media (max-width: 1140px) {
@@ -4042,14 +4146,6 @@ body {
     padding: 14px 18px;
     gap: 8px;
   }
-
-  .sounds-like-box p {
-    font-size: 11px;
-  }
-
-  .sounds-like-box .btn-sounds-like {
-    padding: 4px 12px;
-  }
 }
 
 @media (max-width: 1000px) {
@@ -4093,10 +4189,6 @@ body {
     max-width: 240px;
     padding: 12px 16px;
     gap: 8px;
-  }
-
-  .sounds-like-box p {
-    font-size: 11px;
   }
 }
 
@@ -4143,14 +4235,30 @@ body {
     padding: 10px 14px;
     gap: 6px;
   }
+}
 
-  .sounds-like-box p {
-    font-size: 10px;
+/* Stacked Sounds Like row (769–1000): full-width promo; box padding scaled — copy/button use base sizes. */
+@media (min-width: 881px) and (max-width: 1000px) {
+  .project-content-row .sounds-like-box {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: calc(12px * 1.2) calc(16px * 1.2);
+    gap: calc(8px * 1.2);
+    border-radius: calc(10px * 1.2);
   }
+}
 
-  .sounds-like-box .btn-sounds-like {
-    padding: 4px 10px;
-    font-size: 12px;
+@media (min-width: 769px) and (max-width: 880px) {
+  .project-content-row .sounds-like-box {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: calc(10px * 1.2) calc(14px * 1.2);
+    gap: calc(6px * 1.2);
+    border-radius: calc(10px * 1.2);
   }
 }
 
@@ -4848,8 +4956,8 @@ body {
     margin: 0 16px 16px !important;
     box-sizing: border-box;
     border-radius: 10px;
-    /* Solid fill (matches Sounds Like track chrome); overrides `.sounds-like-box` gradient. */
-    background: #312739 !important;
+    /* Same purple treatment as desktop `.sounds-like-box` */
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%) !important;
     /* 16px padding inside the purple rectangle for copy + button. */
     padding-top: 32px !important;
     padding-bottom: 32px !important;
@@ -4860,16 +4968,16 @@ body {
 
   .projects-page .sounds-like-box.project-mobile-hero__sounds-like p {
     white-space: normal;
-    font-size: 16px !important;
+    font-size: 13px;
     line-height: 1.45;
   }
 
   .projects-page .sounds-like-box.project-mobile-hero__sounds-like .btn-sounds-like {
-    padding: 9px 22px;
+    padding: 6px 18px;
     font-size: 14px;
-    font-weight: 400;
+    font-weight: 500;
     gap: 8px;
-    min-height: 40px;
+    min-height: unset;
     border-radius: 8px;
   }
 

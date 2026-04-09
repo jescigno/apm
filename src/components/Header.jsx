@@ -59,7 +59,7 @@ function Header({ onOpenProjectsPanel }) {
   }, [menuOpen]);
 
   return createPortal(
-    <div className="header-wrapper" ref={menuRef}>
+    <div className={`header-wrapper${menuOpen ? ' header-wrapper--menu-open' : ''}`} ref={menuRef}>
       <header className={`header ${menuOpen ? 'header--menu-open' : ''}`}>
         <a href="#" className="logo">
           <img src="/APMLogo.svg" alt="apm music" className="logo-img" />
@@ -99,6 +99,19 @@ function Header({ onOpenProjectsPanel }) {
         className={`header-menu-bar ${menuOpen ? 'header-menu-bar--open' : ''}`}
         aria-hidden={!menuOpen}
       >
+        <button
+          type="button"
+          className="header-menu-bar-close"
+          aria-label="Close menu"
+          onClick={() => {
+            setMenuOpen(false);
+            setMyApmOpen(false);
+          }}
+        >
+          <svg className="header-menu-close-icon" viewBox="0 0 18 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3.66 3.86L8.78 9.27M8.78 9.27l5.13 5.41M8.78 9.27l5.13-5.41M8.78 9.27L3.66 14.68" />
+          </svg>
+        </button>
         <div className="header-menu-bar-inner">
           {HEADER_MENU_OPTIONS.map(({ label, href }) => (
             <a key={label} href={href} className="header-menu-item" role="menuitem" onClick={() => setMenuOpen(false)}>
