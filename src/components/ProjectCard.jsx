@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 const PROJECT_IMAGES = [
@@ -10,7 +10,7 @@ const PROJECT_IMAGES = [
 
 const PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
 const PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
-const MOBILE_HEADER_TITLE = 'Winter Olympics 2026 - Contemporary Italy';
+const MOBILE_HEADER_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
 const PROJECT_DESCRIPTION =
   'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.';
 
@@ -28,6 +28,11 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
   const titleRef = useRef(null);
+  const mobileTitleContainerRef = useRef(null);
+  const mobileTitleTextRef = useRef(null);
+  const [mobileTitleTruncated, setMobileTitleTruncated] = useState(false);
+  /** idle → scroll (marquee) → fadeOut (at end, opacity 0) → fadeIn (truncated centered) → idle */
+  const [mobileTitlePhase, setMobileTitlePhase] = useState('idle');
   const [isTruncated, setIsTruncated] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
@@ -93,6 +98,63 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
     };
   }, [isTitleHovered]);
 
+  const updateMobileTitleTruncation = useCallback(() => {
+    const c = mobileTitleContainerRef.current;
+    const t = mobileTitleTextRef.current;
+    if (!c || !t) return;
+    setMobileTitleTruncated(t.scrollWidth > c.clientWidth);
+  }, []);
+
+  useEffect(() => {
+    const c = mobileTitleContainerRef.current;
+    const t = mobileTitleTextRef.current;
+    if (!c || !t) return;
+    updateMobileTitleTruncation();
+    const ro = new ResizeObserver(() => updateMobileTitleTruncation());
+    ro.observe(c);
+    ro.observe(t);
+    const onOrient = () => updateMobileTitleTruncation();
+    window.addEventListener('orientationchange', onOrient);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', onOrient);
+    };
+  }, [updateMobileTitleTruncation]);
+
+  const handleMobileTitleActivate = useCallback(() => {
+    const c = mobileTitleContainerRef.current;
+    const t = mobileTitleTextRef.current;
+    if (!c || !t || !mobileTitleTruncated || mobileTitlePhase !== 'idle') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const overflow = t.scrollWidth - t.clientWidth;
+    if (overflow <= 0) return;
+    const sec = Math.min(12, Math.max(4, overflow / 55));
+    t.style.setProperty('--marquee-x', `-${overflow}px`);
+    t.style.setProperty('--scroll-duration', `${sec}s`);
+    setMobileTitlePhase('scroll');
+  }, [mobileTitleTruncated, mobileTitlePhase]);
+
+  const handleMobileTitleAnimEnd = useCallback((e) => {
+    const name = e.animationName ? String(e.animationName) : '';
+    const t = mobileTitleTextRef.current;
+
+    if (name.includes('project-mobile-hero-title-scroll-once')) {
+      setMobileTitlePhase('fadeOut');
+      return;
+    }
+    if (name.includes('project-mobile-hero-title-fade-out')) {
+      if (t) {
+        t.style.removeProperty('--marquee-x');
+        t.style.removeProperty('--scroll-duration');
+      }
+      setMobileTitlePhase('fadeIn');
+      return;
+    }
+    if (name.includes('project-mobile-hero-title-fade-in')) {
+      setMobileTitlePhase('idle');
+    }
+  }, []);
+
   const overlayPanel = (
     <div className="project-details-overlay">
       <div
@@ -141,8 +203,39 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
   return (
     <>
       <section className="project-mobile-hero" aria-labelledby="project-mobile-hero-title">
-        <h1 id="project-mobile-hero-title" className="project-mobile-hero__title">
-          {MOBILE_HEADER_TITLE}
+        <h1
+          id="project-mobile-hero-title"
+          className={`project-mobile-hero__title${mobileTitleTruncated ? ' project-mobile-hero__title--truncated' : ''}`}
+          onClick={handleMobileTitleActivate}
+          onKeyDown={(e) => {
+            if (!mobileTitleTruncated || mobileTitlePhase !== 'idle') return;
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleMobileTitleActivate();
+            }
+          }}
+          tabIndex={mobileTitleTruncated ? 0 : undefined}
+          aria-label={MOBILE_HEADER_TITLE}
+        >
+          <span
+            ref={mobileTitleContainerRef}
+            className="project-mobile-hero__title-clip"
+          >
+            <span
+              ref={mobileTitleTextRef}
+              className={[
+                'project-mobile-hero__title-text',
+                mobileTitlePhase === 'scroll' && 'project-mobile-hero__title-text--scroll',
+                mobileTitlePhase === 'fadeOut' && 'project-mobile-hero__title-text--held-end project-mobile-hero__title-text--fade-out-anim',
+                mobileTitlePhase === 'fadeIn' && 'project-mobile-hero__title-text--fade-in-anim',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onAnimationEnd={handleMobileTitleAnimEnd}
+            >
+              {MOBILE_HEADER_TITLE}
+            </span>
+          </span>
         </h1>
         <div className="project-mobile-hero__row">
           <div className="project-mobile-hero__visuals" aria-hidden="true">

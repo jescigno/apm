@@ -672,7 +672,8 @@ body {
     padding: 0 8px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    min-width: 0;
     font-family: 'Poppins', sans-serif;
     font-size: 15px;
     font-weight: 400;
@@ -686,35 +687,162 @@ body {
     background: #000;
     box-sizing: border-box;
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    cursor: default;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .project-mobile-hero__row {
+  /* Flex min-width + overflow establish a hard clip rect for the marquee (fixes right-edge bleed). */
+  .projects-page .project-mobile-hero__title-clip {
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
   }
 
-  /* 2×2 grid matches desktop assets; width ~30% of the hero row (overrides global fixed `.image-grid` widths). */
+  .projects-page .project-mobile-hero__title--truncated {
+    cursor: pointer;
+  }
+
+  .projects-page .project-mobile-hero__title--truncated:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.45);
+    outline-offset: 2px;
+  }
+
+  .projects-page .project-mobile-hero__title-text {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  /*
+   * Marquee: must fully drop idle ellipsis + overflow clipping on THIS node, or the
+   * off-screen tail stays “truncated” while translating. Also keep the line from
+   * flex-shrinking inside .title-clip (flex item min-width: auto can still squeeze).
+   */
+  .projects-page .project-mobile-hero__title-text--scroll,
+  .projects-page .project-mobile-hero__title-text--held-end {
+    display: inline-block;
+    flex: 0 0 auto;
+    align-self: center;
+    width: max-content !important;
+    min-width: max-content;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap;
+  }
+
+  .projects-page .project-mobile-hero__title-text--scroll {
+    animation: project-mobile-hero-title-scroll-once var(--scroll-duration, 6s) linear forwards;
+  }
+
+  .projects-page .project-mobile-hero__title-text--held-end {
+    transform: translateX(var(--marquee-x, 0px));
+    opacity: 1;
+  }
+
+  .projects-page .project-mobile-hero__title-text--fade-out-anim {
+    animation: project-mobile-hero-title-fade-out 0.32s ease forwards;
+  }
+
+  .projects-page .project-mobile-hero__title-text--fade-in-anim {
+    animation: project-mobile-hero-title-fade-in 0.38s ease forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .projects-page .project-mobile-hero__title-text--scroll {
+      animation: none;
+    }
+  }
+
+  @keyframes project-mobile-hero-title-scroll-once {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(var(--marquee-x, 0px));
+    }
+  }
+
+  @keyframes project-mobile-hero-title-fade-out {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes project-mobile-hero-title-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  /*
+   * Row height follows the text column only; thumbnails are absolutely stretched top/bottom
+   * so the 2×2 grid always matches that height (not a fixed square from aspect-ratio).
+   */
+  .project-mobile-hero__row {
+    position: relative;
+    padding-left: calc(2px + 30% + 14px);
+    min-height: 0;
+  }
+
   .project-mobile-hero__visuals {
-    flex: 0 0 30%;
+    position: absolute;
+    left: 2px;
+    top: 0;
+    bottom: 0;
+    width: 30%;
     min-width: 0;
     max-width: 30%;
-    margin-left: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .project-mobile-hero__visuals .image-grid.single {
-    width: 100% !important; /* beats later breakpoint rules that set fixed px on `.image-grid` */
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100% !important;
+    height: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0;
+  }
+
+  .project-mobile-hero__visuals .grid-img {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    object-fit: cover;
   }
 
   .project-mobile-hero__text {
-    flex: 1;
+    flex: none;
+    width: 100%;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-left: 6px;
+    margin-left: 0;
   }
 
   .project-mobile-hero__desc {
@@ -724,8 +852,21 @@ body {
     color: rgba(255, 255, 255, 0.85);
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 5;
     overflow: hidden;
+    word-break: break-word;
+  }
+
+  @media (max-width: 480px) {
+    .project-mobile-hero__desc {
+      -webkit-line-clamp: 4;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .project-mobile-hero__desc {
+      -webkit-line-clamp: 3;
+    }
   }
 
   .project-mobile-hero__details {
@@ -778,8 +919,8 @@ body {
     justify-content: space-between;
     gap: 12px;
     padding: 10px 16px 12px;
-    background: #000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #232323;
+    /* Divider is the first track’s border-top only — avoid stacking with toolbar border-bottom. */
   }
 
   .tracks-mobile-toolbar-count {
@@ -2848,6 +2989,13 @@ body {
 
 .track-list > .track-row:nth-last-child(2) {
   border-bottom: none;
+}
+
+/* Top divider when the list isn’t preceded by .track-list-top (e.g. projects mobile toolbar). */
+.tracks-section:not(:has(> .track-list-boundary.track-list-top))
+  .track-list
+  > .track-row:first-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /*
