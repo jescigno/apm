@@ -865,7 +865,7 @@ body {
     color: var(--text-secondary);
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 3;
     overflow: hidden;
   }
 }
@@ -4015,6 +4015,55 @@ body {
   }
 }
 
+/* Tablet / narrow desktop: hero grid fills the visuals column; overrides stepped px widths + centered shrink above. */
+@media (min-width: 769px) and (max-width: 1280px) {
+  .project-card {
+    align-items: flex-start;
+    /* Match wide layout spacing; overrides stepped-down padding/gap from max-width rules above. */
+    padding: 16px 24px;
+    gap: 16px;
+  }
+
+  .project-visuals {
+    align-items: stretch;
+    margin-right: 4px;
+    gap: 10px;
+    /* Prior narrow-desktop clamp × 0.85 in this range only */
+    flex: 0 0 clamp(150px, 23.12vw, 218px);
+  }
+
+  .image-grid,
+  .image-grid.single {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0;
+  }
+
+  /* Keep description-column type at desktop sizes; overrides stepped-down rules above. */
+  .project-card .project-title {
+    font-size: 24px;
+  }
+
+  .project-card .project-description p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .project-card .keywords {
+    gap: 8px;
+  }
+
+  .project-card .keyword {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .project-card .add-keyword {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 1024px) {
   .project-info-wrapper {
     max-height: none !important;
@@ -4677,16 +4726,16 @@ body {
   }
 
   .projects-page .sounds-like-box.project-mobile-hero__sounds-like .btn-sounds-like {
-    padding: 12px 28px;
-    font-size: 16px;
-    font-weight: 600;
-    gap: 10px;
-    min-height: 48px;
-    border-radius: 10px;
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 400;
+    gap: 8px;
+    min-height: 40px;
+    border-radius: 8px;
   }
 
   .projects-page .sounds-like-box.project-mobile-hero__sounds-like .btn-sounds-like svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 }
