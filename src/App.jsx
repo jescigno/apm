@@ -8,6 +8,7 @@ import FavoritesPage from './pages/FavoritesPage';
 import SoundsLikePanel from './components/SoundsLikePanel';
 import ProjectsPanel from './components/ProjectsPanel';
 import AudioPlayer from './components/AudioPlayer';
+import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS } from './constants/routes';
 import {
   PROJECTS_TRACKS,
   FAVORITES_TRACKS,
@@ -81,7 +82,7 @@ function AppContent() {
   }, []);
 
   const handleSoundsLikeAddComplete = useCallback((item) => {
-    const isFavorites = location.pathname.startsWith('/favorites');
+    const isFavorites = location.pathname.startsWith(ROUTE_FAVORITES);
     const merged = isFavorites
       ? [...FAVORITES_TRACKS, ...favoritesExtraTracks]
       : [...PROJECTS_TRACKS, ...projectsExtraTracks];
@@ -107,13 +108,13 @@ function AppContent() {
   }, [enterHighlightTrackNum]);
 
   const openSoundsLikePanel = useCallback(() => {
-    if (location.pathname !== '/project-details' && location.pathname !== '/favorites') return;
+    if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
     setProjectsPanelOpen(false);
     setSoundsLikePanelOpen(true);
   }, [location.pathname]);
 
   useEffect(() => {
-    if (location.pathname !== '/project-details' && location.pathname !== '/favorites') {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) {
       setSoundsLikePanelOpen(false);
     }
   }, [location.pathname]);
@@ -161,11 +162,11 @@ function AppContent() {
       >
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Navigate to="/project-details" replace />} />
-            <Route path="/history" element={<Navigate to="/project-details" replace />} />
-            <Route path="/projects" element={<Navigate to="/project-details" replace />} />
+            <Route path="/" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
+            <Route path="/history" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
+            <Route path="/projects" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
             <Route
-              path="/project-details"
+              path={ROUTE_PROJECT_DETAILS}
               element={
                 <ProjectsPage
                   soundsLikePanelOpen={soundsLikePanelOpen}
@@ -177,7 +178,7 @@ function AppContent() {
               }
             />
             <Route
-              path="/favorites"
+              path={ROUTE_FAVORITES}
               element={
                 <FavoritesPage
                   soundsLikePanelOpen={soundsLikePanelOpen}

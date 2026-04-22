@@ -183,7 +183,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
           </div>
         </div>
       )}
-      {!(hideTracksHeader && activeTab === 'tracks') && (
+      {!(hideTracksHeader && activeTab === 'tracks') && !tabsInBreadcrumb && (
         <div className="track-list-boundary track-list-top" aria-hidden="true" />
       )}
       {hideTracksHeader && activeTab === 'tracks' && (
