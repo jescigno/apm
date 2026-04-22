@@ -152,11 +152,11 @@ body {
 
 .header-nav-wide__link {
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
-  text-underline-offset: 10px;
+  text-underline-offset: 14px;
   transition: opacity 0.2s, text-decoration-color 0.2s;
 }
 
@@ -200,7 +200,7 @@ body {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 16px 10px var(--header-dropdown-inset);
+  padding: 14px 16px 10px var(--header-dropdown-inset);
   font-family: inherit;
   font-size: 15px;
   font-weight: 400;
