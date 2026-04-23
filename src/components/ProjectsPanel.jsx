@@ -1,7 +1,7 @@
 /**
  * Right panel for projects folder tree. Uses only `projects-panel-*` classes in index.css.
  */
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   PROJECTS_PANEL_FOLDER_MORE_ACTIONS,
@@ -31,6 +31,28 @@ const EXTRA_COL_LAST_UPDATED_AT = 700;
 const HEADER_INLINE_NAV_AT = 480;
 /** At this width (px): larger nav labels, header rule, “Name” column header, folder ⋯ always visible. */
 const HEADER_WIDE_LAYOUT_AT = 520;
+/** At this width (px): toolbar actions show icon + text (Search / New Project / Sort). */
+const TOOLBAR_LABELED_AT = 720;
+
+/** Min horizontal gap (px) between source links when using Tracks-matched 22px style (align with CSS). */
+const INLINE_NAV_TRACKS_TYPO_GAP = 16;
+/** Subpixel / rounding slack when comparing measured nav width to available space. */
+const INLINE_NAV_TRACKS_TYPO_FIT_BUFFER = 4;
+
+/** Approx. min width (px) of the full inline source nav at 22px / 500; used to gate Tracks-style labels. */
+function getInlineNavMinWidth22Px() {
+  if (typeof document === 'undefined') return 0;
+  const el = document.createElement('canvas');
+  const ctx = el.getContext('2d');
+  if (!ctx) return 0;
+  ctx.font = '500 22px "Poppins", system-ui, sans-serif';
+  let textW = 0;
+  for (const { label } of PROJECTS_PANEL_INLINE_NAV) {
+    textW += ctx.measureText(label).width;
+  }
+  const gapW = Math.max(0, PROJECTS_PANEL_INLINE_NAV.length - 1) * INLINE_NAV_TRACKS_TYPO_GAP;
+  return Math.ceil(textW + gapW) + 8;
+}
 
 function getExtraColumnFlags(panelWidth) {
   return {
@@ -109,11 +131,11 @@ function FolderGlyph() {
   );
 }
 
-function FolderMetaColumn({ text, visible }) {
+function FolderMetaColumn({ text, visible, variant }) {
   if (!visible) return null;
   const s = text != null && String(text).trim() !== '' ? String(text) : '—';
   return (
-    <div className="projects-panel-folder-meta" title={s}>
+    <div className={`projects-panel-folder-meta projects-panel-folder-meta--${variant}`} title={s}>
       {s}
     </div>
   );
@@ -128,6 +150,10 @@ function FolderRow({
   showMoreAlways,
   onFolderMoreClick,
   folderMoreOpenId,
+  /** false only for 2nd+ top-level roots; nested rows omit this (default true) */
+  isFirstInRootList = true,
+  /** false except for the last top-level root; nested rows omit (default true) */
+  isLastInRootList = true,
 }) {
   const hasChildren = Array.isArray(folder.children) && folder.children.length > 0;
   const expanded = expandedIds.has(folder.id);
@@ -135,15 +161,25 @@ function FolderRow({
   const showArrow = hasChildren && canShowNested;
   const { description: showDescription, purpose: showPurpose, lastUpdated: showLastUpdated } = extraCols;
 
+  const primaryIndentPx =
+    depth * 14 + (depth > 0 ? 2 : 0) + (depth === 1 ? 2 : 0) + (depth === 1 || depth === 2 ? 4 : 0);
+
+  const rootGroupDivider =
+    depth === 0 && !isFirstInRootList ? ' projects-panel-folder-block--root-group-start' : '';
+  const rootGroupEnd =
+    depth === 0 && isLastInRootList ? ' projects-panel-folder-block--root-group-end' : '';
+  const rootGroupFirst =
+    depth === 0 && isFirstInRootList ? ' projects-panel-folder-block--root-group-first' : '';
+
   return (
-    <div className="projects-panel-folder-block">
+    <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}`}>
       <div
         className={`projects-panel-folder-row${showDescription || showPurpose || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}`}
-        style={{
-          paddingLeft: `${depth * 14 + (depth > 0 ? 2 : 0) + (depth === 1 ? 2 : 0) + (depth === 1 || depth === 2 ? 4 : 0)}px`,
-        }}
       >
-        <div className="projects-panel-folder-primary">
+        <div
+          className="projects-panel-folder-primary"
+          style={{ paddingLeft: `${primaryIndentPx}px` }}
+        >
           <span className="projects-panel-folder-expand-slot">
             {showArrow ? (
               <button
@@ -162,9 +198,9 @@ function FolderRow({
           <FolderGlyph />
           <span className="projects-panel-folder-name">{folder.name}</span>
         </div>
-        <FolderMetaColumn visible={showDescription} text={folder.description} />
-        <FolderMetaColumn visible={showPurpose} text={folder.purpose} />
-        <FolderMetaColumn visible={showLastUpdated} text={folder.lastUpdated} />
+        <FolderMetaColumn visible={showDescription} variant="description" text={folder.description} />
+        <FolderMetaColumn visible={showPurpose} variant="purpose" text={folder.purpose} />
+        <FolderMetaColumn visible={showLastUpdated} variant="lastUpdated" text={folder.lastUpdated} />
         <button
           type="button"
           className={`projects-panel-folder-more${showMoreAlways ? ' projects-panel-folder-more--always' : ''}`}
@@ -202,6 +238,7 @@ function FolderRow({
 
 function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth = 263, maxWidth = 600 }) {
   const resizeRef = useRef(null);
+  const headerMainRef = useRef(null);
   const widthRef = useRef(width);
   widthRef.current = width;
 
@@ -212,6 +249,7 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
   const [menuPosition, setMenuPosition] = useState(null);
   const folderMoreAnchorRef = useRef(null);
   const [folderMoreMenu, setFolderMoreMenu] = useState(null);
+  const [inlineNavTracksTypoFits, setInlineNavTracksTypoFits] = useState(false);
 
   const updateMenuPosition = useCallback(() => {
     const el = headlineBtnRef.current;
@@ -367,8 +405,43 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
 
   const extraCols = getExtraColumnFlags(width);
   const showAnyMetaCol = extraCols.description || extraCols.purpose || extraCols.lastUpdated;
+  const showAllFolderMeta = extraCols.description && extraCols.purpose && extraCols.lastUpdated;
   const showWideLayout = width >= HEADER_WIDE_LAYOUT_AT;
+  const showToolbarLabels = width >= TOOLBAR_LABELED_AT;
   const showColumnHeadersRow = showAnyMetaCol || showWideLayout;
+
+  useLayoutEffect(() => {
+    if (!isOpen || !showInlineNav || !showAllFolderMeta) {
+      setInlineNavTracksTypoFits(false);
+      return;
+    }
+    const minNavW = getInlineNavMinWidth22Px();
+    if (minNavW <= 0) {
+      setInlineNavTracksTypoFits(false);
+      return;
+    }
+    const run = () => {
+      const main = headerMainRef.current;
+      if (!main) {
+        setInlineNavTracksTypoFits(false);
+        return;
+      }
+      const toolbar = main.querySelector('.projects-panel-toolbar-icons');
+      const mainW = main.getBoundingClientRect().width;
+      const toolbarW = toolbar?.getBoundingClientRect().width ?? 0;
+      const available = mainW - toolbarW - 8;
+      setInlineNavTracksTypoFits(available >= minNavW + INLINE_NAV_TRACKS_TYPO_FIT_BUFFER);
+    };
+    run();
+    const ro = new ResizeObserver(run);
+    const main = headerMainRef.current;
+    if (main) {
+      ro.observe(main);
+      const toolbar = main.querySelector('.projects-panel-toolbar-icons');
+      if (toolbar) ro.observe(toolbar);
+    }
+    return () => ro.disconnect();
+  }, [isOpen, showInlineNav, showAllFolderMeta, showToolbarLabels, width]);
 
   const currentSource = PROJECTS_PANEL_SOURCES.find((s) => s.id === sourceId) ?? PROJECTS_PANEL_SOURCES[0];
 
@@ -442,7 +515,7 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
 
   return (
     <aside
-      className={`projects-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' projects-panel--overlay' : ''}${showInlineNav ? ' projects-panel--inline-nav' : ''}${showWideLayout ? ' projects-panel--wide-layout' : ''}`}
+      className={`projects-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' projects-panel--overlay' : ''}${showInlineNav ? ' projects-panel--inline-nav' : ''}${showWideLayout ? ' projects-panel--wide-layout' : ''}${inlineNavTracksTypoFits ? ' projects-panel--inline-nav-tracks-typo' : ''}${showToolbarLabels ? ' projects-panel--toolbar-labeled' : ''}`}
       role="dialog"
       aria-label="My Projects"
       style={isOpen ? { width: `${width}px`, minWidth: `${width}px` } : undefined}
@@ -455,7 +528,7 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
         />
       )}
       <div className="projects-panel-header projects-panel-header--folders">
-        <div className="projects-panel-header-main">
+        <div className="projects-panel-header-main" ref={headerMainRef}>
           {showInlineNav ? (
             <nav className="projects-panel-inline-nav" aria-label="Project source">
               {PROJECTS_PANEL_INLINE_NAV.map((item) => (
@@ -501,14 +574,17 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
           )}
           <div className="projects-panel-toolbar-icons" role="toolbar" aria-label="Panel actions">
             <div className="projects-panel-toolbar-cluster">
-              <button type="button" className="projects-panel-toolbar-btn" aria-label="Search">
-                <img src="/nav-icons/Search.svg" alt="" />
+              <button type="button" className="projects-panel-toolbar-btn" aria-label="Search My Projects">
+                <img src="/nav-icons/Search.svg" alt="" aria-hidden />
+                <span className="projects-panel-toolbar-btn-label">Search My Projects</span>
               </button>
-              <button type="button" className="projects-panel-toolbar-btn" aria-label="Add folder">
-                <img src="/icons/Folder-New.svg" alt="" />
+              <button type="button" className="projects-panel-toolbar-btn" aria-label="New Project">
+                <img src="/icons/Folder-New.svg" alt="" aria-hidden />
+                <span className="projects-panel-toolbar-btn-label">New Project</span>
               </button>
-              <button type="button" className="projects-panel-toolbar-btn" aria-label="Sort">
-                <img src="/Sort.svg" alt="" />
+              <button type="button" className="projects-panel-toolbar-btn" aria-label="SORT: DATE MODIFIED">
+                <img src="/Sort.svg" alt="" aria-hidden />
+                <span className="projects-panel-toolbar-btn-label">SORT: DATE MODIFIED</span>
               </button>
             </div>
             <button type="button" className="projects-panel-toolbar-btn projects-panel-toolbar-btn--close" onClick={onClose} aria-label="Close panel">
@@ -530,20 +606,20 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
               Name
             </div>
             {extraCols.description && (
-              <div className="projects-panel-column-header">Description</div>
+              <div className="projects-panel-column-header projects-panel-column-header--description">Description</div>
             )}
             {extraCols.purpose && (
-              <div className="projects-panel-column-header">Purpose</div>
+              <div className="projects-panel-column-header projects-panel-column-header--purpose">Purpose</div>
             )}
             {extraCols.lastUpdated && (
-              <div className="projects-panel-column-header">Last updated</div>
+              <div className="projects-panel-column-header projects-panel-column-header--last-updated">Last updated</div>
             )}
             {/* Matches folder-row more button width so Name + meta columns share the same flex space */}
             <div className="projects-panel-column-headers-spacer" aria-hidden="true" />
           </div>
         )}
         <div className="projects-panel-folder-list">
-          {PROJECTS_PANEL_FOLDER_TREE.map((folder) => (
+          {PROJECTS_PANEL_FOLDER_TREE.map((folder, index) => (
             <FolderRow
               key={folder.id}
               folder={folder}
@@ -554,6 +630,8 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
               showMoreAlways={showWideLayout}
               onFolderMoreClick={openFolderMoreMenu}
               folderMoreOpenId={folderMoreMenu?.folderId ?? null}
+              isFirstInRootList={index === 0}
+              isLastInRootList={index === PROJECTS_PANEL_FOLDER_TREE.length - 1}
             />
           ))}
         </div>
