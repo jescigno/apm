@@ -173,6 +173,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             )}
           </div>
           <p className="track-desc track-desc--mobile-below-title">{item.desc}</p>
+          <p className="track-recorded track-recorded--mobile">Recorded {item.recorded}</p>
         </div>
         <div className="track-actions-overflow track-actions-overflow--mobile" ref={overflowRef}>
           <button
@@ -380,6 +381,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 </button>
               )}
             </div>
+            <p className="track-recorded">Recorded {item.recorded}</p>
           </div>
           {isAlbum ? (
             <button type="button" className="show-all-tracks">

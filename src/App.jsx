@@ -15,6 +15,7 @@ import {
   SAMPLE_AUDIO,
   generateTrackId,
   generateSoundsLikeTrackDescription,
+  pickRandomRecordedLabel,
 } from './components/TrackList';
 import { SOUNDS_LIKE_PANEL_INITIAL_ITEMS, createSoundsLikeItems } from './constants/soundsLikePanel';
 
@@ -43,6 +44,7 @@ function buildTrackFromSoundsLike(item, mergedTracks) {
     audioUrl: SAMPLE_AUDIO,
     hasLyrics: Math.random() > 0.45,
     stems: Math.floor(Math.random() * 5) + 2,
+    recorded: pickRandomRecordedLabel(),
   };
 }
 

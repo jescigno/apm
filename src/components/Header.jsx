@@ -48,14 +48,13 @@ const PROFILE_MENU_ITEMS = [
   { label: 'Notifications', to: '/notifications' },
   { label: 'Favorites', to: ROUTE_FAVORITES },
   { label: 'History', to: '/history' },
-  { label: 'APM Classic', to: '/apm-classic' },
   { type: 'divider' },
   { label: 'My Account', to: '/account' },
   { label: 'Logout', action: 'logout' },
 ];
 
 /**
- * Items shown under the “My APM” hamburger accordion only (stops at APM Classic).
+ * Items shown under the “My APM” hamburger accordion only (stops at History, before the divider).
  * Excludes the divider, My Account, Logout, and Mode — those are not part of this dropdown.
  */
 const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(

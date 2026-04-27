@@ -39,6 +39,26 @@ export function generateSoundsLikeTrackDescription() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+const RECORDED_LABEL_POOL = [
+  '02/04/2004',
+  '2011',
+  '11/20/2018',
+  '2015',
+  '2019',
+  '03/15/2016',
+  '2020',
+  '2017',
+  '10/01/2023',
+  '2014',
+  '2012',
+  '08/12/2019',
+];
+
+/** Random "Recorded" suffix — mix of MM/DD/YYYY and year-only */
+export function pickRandomRecordedLabel() {
+  return RECORDED_LABEL_POOL[Math.floor(Math.random() * RECORDED_LABEL_POOL.length)];
+}
+
 const TRACKS_BASE = [
   { num: 1, title: 'Rocking the Stadium', versions: 4, commentCount: 2, desc: 'Big hard-hitting stadium rock sounds with fast paced anthemic rock guitars, high energy riffs and off beat synth melodies.', audioUrl: SAMPLE_AUDIO },
   { num: 2, title: '#3 Stadium Anthem - Narrartive Instrumental', versions: 3, commentCount: 5, desc: 'Uplifting anthemic rock with soaring guitars and driving percussion.', audioUrl: SAMPLE_AUDIO },
@@ -55,6 +75,19 @@ const TRACKS_BASE = [
   id: generateTrackId(),
   hasLyrics: Math.random() > 0.45,
   stems: [4, 4, 5, 4, 6, 3, 4, 5, 4, 4][t.num - 1],
+  /** Shown as "Recorded …" — mix of full dates (MM/DD/YYYY) and year-only */
+  recorded: [
+    '02/04/2004',
+    '2011',
+    '11/20/2018',
+    '2015',
+    '08/12/2019',
+    '2020',
+    '2017',
+    '03/15/2016',
+    '2022',
+    '10/01/2023',
+  ][t.num - 1],
 }));
 
 const FAVORITES_TRACKS = TRACKS_BASE.map((t) => {
@@ -86,6 +119,18 @@ const ALBUMS = [
   ...a,
   id: generateTrackId(),
   hasLyrics: Math.random() > 0.45,
+  recorded: [
+    '2010',
+    '06/22/2014',
+    '2018',
+    '01/30/2017',
+    '2021',
+    '09/05/2013',
+    '2012',
+    '04/18/2019',
+    '2023',
+    '2016',
+  ][a.num - 1],
 }));
 
 export function TrackListTabs({ activeTab, onTabChange, className, showSearchesTab }) {
