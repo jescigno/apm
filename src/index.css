@@ -53,13 +53,6 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="light"] .header-menu-bar .header-menu-item.header-menu-logout-outline,
-[data-theme="light"] .header-menu-bar .header-menu-item.header-menu-logout-outline:hover {
-  background: transparent;
-  border-color: #ffffff;
-  color: #ffffff;
-}
-
 [data-theme="light"] .header-menu-mode-switch {
   background: rgba(255, 255, 255, 0.15);
 }
@@ -261,7 +254,7 @@ body {
   top: 100%;
   right: 0;
   left: auto;
-  min-width: 300px;
+  min-width: 220px;
   padding: 16px 0 8px;
   background: #000000;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
@@ -317,22 +310,6 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.header-profile-dropdown__item--logout {
-  text-align: center;
-  background: transparent;
-  border: 1px solid #ffffff;
-  margin: 8px 12px 8px;
-  width: auto;
-  align-self: stretch;
-  box-shadow: none;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.header-profile-dropdown__item--logout:hover {
-  background: transparent;
-  opacity: 0.92;
-}
-
 [data-theme="light"] .header-nav-wide__link {
   color: #1a1a1a;
 }
@@ -356,17 +333,6 @@ body {
 
 [data-theme="light"] .header-profile-dropdown__item:hover {
   background: rgba(0, 0, 0, 0.06);
-}
-
-[data-theme="light"] .header-profile-dropdown__item--logout {
-  border-color: #1a1a1a;
-  color: #1a1a1a;
-  background: transparent;
-}
-
-[data-theme="light"] .header-profile-dropdown__item--logout:hover {
-  background: transparent;
-  opacity: 0.88;
 }
 
 [data-theme="light"] .header-profile-dropdown__divider {
@@ -430,6 +396,41 @@ body {
 
   .header-menu-bar {
     display: none !important;
+  }
+
+  /*
+   * Profile menu: align panel to the viewport’s right edge (not the icon cluster).
+   * Slight upward overlap + padding keeps a continuous hover path from the trigger into the menu.
+   */
+  .header-profile-dropdown {
+    position: fixed;
+    top: calc(var(--header-height) - 10px);
+    right: env(safe-area-inset-right, 0px);
+    left: auto;
+    padding: 14px 0 8px;
+  }
+
+  /* Match nav link underline while profile flyout is active (hover or keyboard). */
+  .header-end-wide .header-profile-btn {
+    position: relative;
+    transition: opacity 0.2s;
+  }
+
+  .header-profile-wrap:hover .header-profile-btn,
+  .header-profile-wrap:focus-within .header-profile-btn {
+    opacity: 0.85;
+  }
+
+  .header-profile-wrap:hover .header-profile-btn::after,
+  .header-profile-wrap:focus-within .header-profile-btn::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 1px;
+    background: currentColor;
+    pointer-events: none;
   }
 }
 
@@ -681,26 +682,6 @@ body {
   font-family: inherit;
 }
 
-.header-menu-bar .header-menu-item.header-menu-logout-outline {
-  margin: 12px 24px 0;
-  padding: 10px 16px;
-  width: calc(100% - 48px);
-  max-width: none;
-  background: transparent;
-  border: 1px solid #ffffff;
-  text-align: center;
-  font-family: inherit;
-  color: #ffffff;
-  box-sizing: border-box;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.header-menu-bar .header-menu-item.header-menu-logout-outline:hover {
-  background: transparent;
-  text-decoration: none;
-  opacity: 0.92;
-}
-
 .header-menu-bar .header-menu-myapm-btn + .header-menu-item.header-menu-myapm-subitem {
   margin-top: -6px;
 }
@@ -716,6 +697,47 @@ body {
 
 .header-menu-mode-row:hover {
   background: transparent;
+}
+
+.header-menu-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 24px 28px;
+}
+
+.header-menu-auth-btn {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0;
+  border: 1px solid transparent;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.header-menu-auth-btn--login {
+  background: transparent;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.header-menu-auth-btn--login:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.header-menu-auth-btn--register {
+  background: #cc203c;
+  color: #ffffff;
+  border-color: #cc203c;
+}
+
+.header-menu-auth-btn--register:hover {
+  background: #b01b35;
+  border-color: #b01b35;
 }
 
 .header-menu-mode-switch {
@@ -797,6 +819,11 @@ body {
 .icon-btn:hover {
   color: var(--text-primary);
   background: var(--bg-elevated);
+}
+
+.icon-btn.header-profile-btn:hover,
+.icon-btn.header-profile-btn:focus-visible {
+  background: none;
 }
 
 .icon-btn svg {

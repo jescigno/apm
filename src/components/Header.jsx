@@ -54,11 +54,10 @@ const PROFILE_MENU_ITEMS = [
 ];
 
 /**
- * Items shown under the “My APM” hamburger accordion only (stops at History, before the divider).
- * Excludes the divider, My Account, Logout, and Mode — those are not part of this dropdown.
+ * Items under the “My APM” hamburger accordion (logout last). Excludes divider and My Account.
  */
 const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(
-  (o) => o.type !== 'divider' && o.action !== 'logout' && o.label !== 'My Account'
+  (o) => o.type !== 'divider' && o.label !== 'My Account'
 );
 
 function ModeToggle({ isDark, setIsDark, className = '' }) {
@@ -95,6 +94,8 @@ function Header({ onOpenProjectsPanel }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [myApmOpen, setMyApmOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(null);
+  /** Hamburger menu only: after Logout, hide Logout and show Login / Register below Mode. */
+  const [hamburgerLoggedOut, setHamburgerLoggedOut] = useState(false);
   const menuRef = useRef(null);
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('apm-theme');
@@ -222,7 +223,7 @@ function Header({ onOpenProjectsPanel }) {
                     <button
                       key={opt.label}
                       type="button"
-                      className="header-profile-dropdown__item header-profile-dropdown__item--logout"
+                      className="header-profile-dropdown__item"
                       role="menuitem"
                     >
                       {opt.label}
@@ -336,69 +337,99 @@ function Header({ onOpenProjectsPanel }) {
               </a>
             );
           })}
-          <div className="header-menu-divider" />
-          <button
-            type="button"
-            className="header-menu-item header-menu-myapm-btn"
-            onClick={() => setMyApmOpen((o) => !o)}
-            aria-expanded={myApmOpen}
-          >
-            <span>My APM</span>
-            <svg
-              className={`header-menu-item-chevron ${myApmOpen ? 'header-menu-item-chevron--open' : ''}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          {myApmOpen &&
-            PROFILE_MENU_MY_APM_SUBITEMS.map((opt) =>
-              opt.action === 'projectsPanel' ? (
-                <button
-                  key={opt.label}
-                  type="button"
-                  className="header-menu-item header-menu-myapm-subitem"
-                  onClick={() => {
-                    onOpenProjectsPanel?.();
-                    setMyApmOpen(false);
-                    setMenuOpen(false);
-                  }}
+          {!hamburgerLoggedOut ? (
+            <>
+              <div className="header-menu-divider" />
+              <button
+                type="button"
+                className="header-menu-item header-menu-myapm-btn"
+                onClick={() => setMyApmOpen((o) => !o)}
+                aria-expanded={myApmOpen}
+              >
+                <span>My APM</span>
+                <svg
+                  className={`header-menu-item-chevron ${myApmOpen ? 'header-menu-item-chevron--open' : ''}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
                 >
-                  {opt.label}
-                </button>
-              ) : (
-                <Link
-                  key={opt.label}
-                  to={opt.to}
-                  className="header-menu-item header-menu-myapm-subitem"
-                  onClick={() => {
-                    navigate(opt.to);
-                    setMyApmOpen(false);
-                    setMenuOpen(false);
-                  }}
-                >
-                  {opt.label}
-                </Link>
-              )
-            )}
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {myApmOpen &&
+                PROFILE_MENU_MY_APM_SUBITEMS.map((opt) =>
+                  opt.action === 'projectsPanel' ? (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      className="header-menu-item header-menu-myapm-subitem"
+                      onClick={() => {
+                        onOpenProjectsPanel?.();
+                        setMyApmOpen(false);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ) : opt.action === 'logout' ? (
+                    <button
+                      key={opt.label}
+                      type="button"
+                      className="header-menu-item header-menu-myapm-subitem"
+                      onClick={() => {
+                        setHamburgerLoggedOut(true);
+                        setMyApmOpen(false);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={opt.label}
+                      to={opt.to}
+                      className="header-menu-item header-menu-myapm-subitem"
+                      onClick={() => {
+                        navigate(opt.to);
+                        setMyApmOpen(false);
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                    </Link>
+                  )
+                )}
+            </>
+          ) : (
+            <div className="header-menu-divider" />
+          )}
           <div className="header-menu-item header-menu-mode-row">
             <span>Mode</span>
             <ModeToggle isDark={isDark} setIsDark={setIsDark} />
           </div>
-          <button
-            type="button"
-            className="header-menu-item header-menu-logout-outline"
-            onClick={() => {
-              setMyApmOpen(false);
-              setMenuOpen(false);
-            }}
-          >
-            {PROFILE_MENU_ITEMS.find((o) => o.action === 'logout')?.label ?? 'Logout'}
-          </button>
+          {hamburgerLoggedOut && (
+            <div className="header-menu-auth-buttons">
+              <button
+                type="button"
+                className="header-menu-auth-btn header-menu-auth-btn--login"
+                onClick={() => {
+                  setHamburgerLoggedOut(false);
+                  setMyApmOpen(true);
+                }}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                className="header-menu-auth-btn header-menu-auth-btn--register"
+                onClick={() => setMenuOpen(false)}
+              >
+                Register
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>,
