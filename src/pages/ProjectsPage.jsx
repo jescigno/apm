@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
+import ProjectCollabBar from '../components/ProjectCollabBar';
 import TrackList from '../components/TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
@@ -99,7 +100,11 @@ const DEFAULT_DOC_TITLE = 'apm music';
 
 export default function ProjectsPage({
   soundsLikePanelOpen,
+  commentsPanelOpen,
+  clockPanelOpen,
   onSoundsLikeClick,
+  onCommentsClick,
+  onClockClick,
   tracks,
   enterHighlightTrackNum,
   scrollToBottomSignal,
@@ -143,13 +148,20 @@ export default function ProjectsPage({
             </span>
           </span>
         </div>
-        <div className="project-collabs">
-          <img src="/BC-icons.svg" alt="Breadcrumb icons" className="project-collabs-icons" />
-        </div>
+        <ProjectCollabBar
+          onSoundsLikeClick={onSoundsLikeClick}
+          soundsLikePanelOpen={soundsLikePanelOpen}
+          onCommentsClick={onCommentsClick}
+          commentsPanelOpen={commentsPanelOpen}
+          onClockClick={onClockClick}
+          clockPanelOpen={clockPanelOpen}
+        />
       </div>
 
       <ProjectCard
         soundsLikePanelOpen={soundsLikePanelOpen}
+        commentsPanelOpen={commentsPanelOpen}
+        clockPanelOpen={clockPanelOpen}
         onSoundsLikeClick={onSoundsLikeClick}
       />
       <TrackList

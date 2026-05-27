@@ -24,7 +24,7 @@ const GRID_HEIGHTS = [
   { mq: '', height: 220 },
 ];
 
-function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
+function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, onSoundsLikeClick }) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
   const titleRef = useRef(null);
@@ -39,6 +39,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
   const [gridHeight, setGridHeight] = useState(220);
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   const [titleTooltipRect, setTitleTooltipRect] = useState(null);
+  const hideSoundsLikePromo = soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
 
   useEffect(() => {
     const update = () => {
@@ -192,7 +193,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
               <button type="button" className="add-keyword">+ Add Keyword</button>
             </div>
             <div className="project-details-overlay-metadata metadata">
-              Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+              Created by <span className="metadata-value">Matthew</span><span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
             </div>
           </div>
         </div>
@@ -260,7 +261,7 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
           </div>
         </div>
       </section>
-      {!soundsLikePanelOpen && (
+      {!hideSoundsLikePromo && (
         <div className="sounds-like-box project-mobile-hero__sounds-like">
           <p>Find tracks that sound like this project</p>
           <button type="button" className="btn-sounds-like" onClick={onSoundsLikeClick}>
@@ -388,10 +389,10 @@ function ProjectCard({ soundsLikePanelOpen, onSoundsLikeClick }) {
               </div>
             )}
             <div className="metadata">
-              Created by <span className="metadata-value">Matthew For Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+              Created by <span className="metadata-value">Matthew</span><span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
             </div>
           </div>
-          {!soundsLikePanelOpen && (
+          {!hideSoundsLikePromo && (
             <div className="sounds-like-box">
               <p>Find tracks that sound like this project</p>
               <button type="button" className="btn-sounds-like" onClick={onSoundsLikeClick}>

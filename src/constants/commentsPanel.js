@@ -1,0 +1,73 @@
+/** Sample project-level comments for the Comments right panel. */
+export const COMMENTS_PANEL_INITIAL_ITEMS = [
+  {
+    id: 'pc1',
+    trackTitle: 'Rocking the Stadium',
+    author: 'Matthew',
+    text: 'Great energy for the opening sequence. The build-up around 1:20 works really well.',
+    date: 'Mar 14, 2025 2:34 PM',
+  },
+  {
+    id: 'pc2',
+    trackTitle: 'Stadium Anthem',
+    author: 'Sarah Chen',
+    text: 'Perfect for the climax scene—can we lock this for the final cut?',
+    date: 'Mar 13, 2025 9:12 AM',
+  },
+  {
+    id: 'pc3',
+    trackTitle: 'Victory March',
+    author: 'Matthew',
+    text: 'The brass entrance at 0:32 is exactly what we need for the medal ceremony.',
+    date: 'Mar 12, 2025 4:55 PM',
+  },
+  {
+    id: 'pc4',
+    trackTitle: 'Game Day Energy',
+    author: 'Alex Rivera',
+    text: 'Stem mix feels a little hot on the drums. Worth a quick level check.',
+    date: 'Mar 11, 2025 11:20 AM',
+  },
+  {
+    id: 'pc5',
+    trackTitle: 'Stadium Roar',
+    author: 'Sarah Chen',
+    text: 'Love the crowd texture layered under the guitars.',
+    date: 'Mar 10, 2025 3:08 PM',
+  },
+  {
+    id: 'pc6',
+    trackTitle: 'Touchdown Charge',
+    author: 'Alex Rivera',
+    text: 'The tension build in the second half is perfect for the highlight reel.',
+    date: 'Mar 9, 2025 7:42 AM',
+  },
+  {
+    id: 'pc7',
+    trackTitle: 'Prime Time',
+    author: 'Matthew',
+    text: 'Broadcast mix is clean—let’s use this for the cold open.',
+    date: 'Mar 8, 2025 1:15 PM',
+  },
+  {
+    id: 'pc8',
+    trackTitle: 'Championship Drive',
+    author: 'Sarah Chen',
+    text: 'Brass hits land well. Might trim the intro by 4 bars.',
+    date: 'Mar 7, 2025 6:30 PM',
+  },
+  {
+    id: 'pc9',
+    trackTitle: 'Kickoff Frenzy',
+    author: 'Alex Rivera',
+    text: 'High energy without feeling chaotic—great pick for segment one.',
+    date: 'Mar 6, 2025 10:45 AM',
+  },
+  {
+    id: 'pc10',
+    trackTitle: 'Overtime',
+    author: 'Matthew',
+    text: 'Saving this for the final montage once picture is locked.',
+    date: 'Mar 5, 2025 2:22 PM',
+  },
+];

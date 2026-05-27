@@ -173,6 +173,50 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
+function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect }) {
+  const label = selectedCount === 1 ? '1 TRACK SELECTED' : `${selectedCount} TRACKS SELECTED`;
+
+  return (
+    <div className="tracks-selection-bar">
+      <div className="tracks-selection-meta">
+        <span className="tracks-selection-count">{label}</span>
+        <span className="tracks-selection-divider" aria-hidden="true" />
+        <button type="button" className="tracks-selection-deselect" onClick={onDeselect}>
+          DESELECT
+        </button>
+      </div>
+      <div className="tracks-selection-actions">
+        <button type="button" className="tracks-selection-action" onClick={onPlay}>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          PLAY
+        </button>
+        <button type="button" className="tracks-selection-action">
+          <img src="/icons/FavoriteOutline.svg" alt="" />
+          FAVORITE
+        </button>
+        <button type="button" className="tracks-selection-action">
+          <img src="/icons/Share.svg" alt="" />
+          SHARE
+        </button>
+        <button type="button" className="tracks-selection-action">
+          <img src="/icons/Add.svg" alt="" />
+          ADD
+        </button>
+        <button type="button" className="tracks-selection-action">
+          <img src="/icons/Download.svg" alt="" />
+          DOWNLOAD
+        </button>
+        <button type="button" className="tracks-selection-action" onClick={onSoundsLike}>
+          <img src="/SoundsLike.svg" alt="" />
+          SOUNDS LIKE
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const [internalTab, setInternalTab] = useState('tracks');
@@ -181,6 +225,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
   const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const listEndRef = useRef(null);
   const [mobileTrackLayout, setMobileTrackLayout] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -207,25 +252,68 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
   const currentTracks = activeTab === 'tracks' ? tracks : ALBUMS;
   const handlePlayAll = () => playQueue(currentTracks, 0);
 
+  const handleSelectChange = (id, selected) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const selectedCount = selectedIds.size;
+  const hasSelection = selectedCount > 0;
+
+  const handlePlaySelected = () => {
+    const selected = currentTracks.filter((item) => selectedIds.has(item.id));
+    if (selected.length > 0) playQueue(selected, 0);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectionBar = hasSelection ? (
+    <TracksSelectionBar
+      selectedCount={selectedCount}
+      onPlay={handlePlaySelected}
+      onSoundsLike={onSoundsLikeClick}
+      onDeselect={handleDeselectAll}
+    />
+  ) : null;
+
+  const trackCountLabel = activeTab === 'tracks'
+    ? `${tracks.length} TITLES`
+    : activeTab === 'albums'
+      ? `${ALBUMS.length} Albums`
+      : '0 Searches';
+
   return (
     <div className="tracks-section">
       {hasHeaderContent && (
         <div className="tracks-header">
           <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
-          <span className="track-count">
-            {activeTab === 'tracks'
-              ? `${tracks.length} TITLES`
-              : activeTab === 'albums'
-                ? `${ALBUMS.length} Albums`
-                : '0 Searches'}
-          </span>
-          <div className="tracks-actions">
-            <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
-            <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
-            </button>
-            <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+          <div className="tracks-header-meta">
+            {hasSelection ? (
+              selectionBar
+            ) : (
+              <>
+                <span className="track-count">{trackCountLabel}</span>
+                <div className="tracks-actions">
+                  <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
+                  <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
+                  </button>
+                  <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+                </div>
+              </>
+            )}
           </div>
+        </div>
+      )}
+      {tabsInBreadcrumb && !hideTracksHeader && hasSelection && activeTab !== 'searches' && (
+        <div className="tracks-selection-bar-row">
+          {selectionBar}
         </div>
       )}
       {!(hideTracksHeader && activeTab === 'tracks') && !tabsInBreadcrumb && (
@@ -233,10 +321,16 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
       )}
       {hideTracksHeader && activeTab === 'tracks' && (
         <div className="tracks-mobile-toolbar">
-          <span className="tracks-mobile-toolbar-count">{tracks.length} TITLES</span>
-          <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
-            <img src="/Reorder.svg" alt="" /> REORDER
-          </button>
+          {hasSelection ? (
+            selectionBar
+          ) : (
+            <>
+              <span className="tracks-mobile-toolbar-count">{tracks.length} TITLES</span>
+              <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
+                <img src="/Reorder.svg" alt="" /> REORDER
+              </button>
+            </>
+          )}
         </div>
       )}
       <div className="track-list">
@@ -262,6 +356,8 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
                 Number(track.num) === Number(enterHighlightTrackNum)
               }
               showVersionsStems={showVersionsStems}
+              isSelected={selectedIds.has(track.id)}
+              onSelectChange={handleSelectChange}
             />
           ))}
         {activeTab === 'albums' &&
@@ -282,6 +378,8 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
               mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               showVersionsStems={showVersionsStems}
+              isSelected={selectedIds.has(album.id)}
+              onSelectChange={handleSelectChange}
             />
           ))}
         <div ref={listEndRef} className="track-list-scroll-anchor" aria-hidden="true" />

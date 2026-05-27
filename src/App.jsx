@@ -7,6 +7,8 @@ import ProjectsPage from './pages/ProjectsPage';
 import FavoritesPage from './pages/FavoritesPage';
 import SoundsLikePanel from './components/SoundsLikePanel';
 import ProjectsPanel from './components/ProjectsPanel';
+import CommentsPanel from './components/CommentsPanel';
+import ClockPanel from './components/ClockPanel';
 import AudioPlayer from './components/AudioPlayer';
 import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS } from './constants/routes';
 import {
@@ -18,6 +20,8 @@ import {
   pickRandomRecordedLabel,
 } from './components/TrackList';
 import { SOUNDS_LIKE_PANEL_INITIAL_ITEMS, createSoundsLikeItems } from './constants/soundsLikePanel';
+import { COMMENTS_PANEL_INITIAL_ITEMS } from './constants/commentsPanel';
+import { CLOCK_PANEL_INITIAL_ITEMS } from './constants/clockPanel';
 
 const PANEL_MIN_WIDTH = 263;
 /** Max width for Sounds Like panel (fixed cap). */
@@ -53,6 +57,10 @@ function AppContent() {
   const [soundsLikePanelOpen, setSoundsLikePanelOpen] = useState(false);
   const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
+  const [commentsPanelOpen, setCommentsPanelOpen] = useState(false);
+  const [commentsPanelWidth, setCommentsPanelWidth] = useState(PANEL_MIN_WIDTH);
+  const [clockPanelOpen, setClockPanelOpen] = useState(false);
+  const [clockPanelWidth, setClockPanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelWidth, setProjectsPanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelMaxWidth, setProjectsPanelMaxWidth] = useState(() =>
     getProjectsPanelMaxWidth()
@@ -112,6 +120,8 @@ function AppContent() {
   const openSoundsLikePanel = useCallback(() => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
     setProjectsPanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen(false);
     setSoundsLikePanelOpen(true);
   }, [location.pathname]);
 
@@ -123,8 +133,33 @@ function AppContent() {
 
   const openProjectsPanel = () => {
     setSoundsLikePanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen(false);
     setProjectsPanelOpen(true);
   };
+
+  const openCommentsPanel = useCallback(() => {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS) return;
+    setSoundsLikePanelOpen(false);
+    setProjectsPanelOpen(false);
+    setClockPanelOpen(false);
+    setCommentsPanelOpen((open) => !open);
+  }, [location.pathname]);
+
+  const openClockPanel = useCallback(() => {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS) return;
+    setSoundsLikePanelOpen(false);
+    setProjectsPanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen((open) => !open);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS) {
+      setCommentsPanelOpen(false);
+      setClockPanelOpen(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!soundsLikePanelOpen) {
@@ -139,6 +174,18 @@ function AppContent() {
   }, [projectsPanelOpen]);
 
   useEffect(() => {
+    if (!commentsPanelOpen) {
+      setCommentsPanelWidth(PANEL_MIN_WIDTH);
+    }
+  }, [commentsPanelOpen]);
+
+  useEffect(() => {
+    if (!clockPanelOpen) {
+      setClockPanelWidth(PANEL_MIN_WIDTH);
+    }
+  }, [clockPanelOpen]);
+
+  useEffect(() => {
     const onResize = () => {
       const next = getProjectsPanelMaxWidth();
       setProjectsPanelMaxWidth(next);
@@ -149,8 +196,17 @@ function AppContent() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const rightPanelOpen = soundsLikePanelOpen || projectsPanelOpen;
-  const rightPanelWidth = projectsPanelOpen ? projectsPanelWidth : soundsLikePanelOpen ? soundsLikePanelWidth : 0;
+  const rightPanelOpen = soundsLikePanelOpen || projectsPanelOpen || commentsPanelOpen || clockPanelOpen;
+
+  const rightPanelWidth = projectsPanelOpen
+    ? projectsPanelWidth
+    : commentsPanelOpen
+      ? commentsPanelWidth
+      : clockPanelOpen
+        ? clockPanelWidth
+        : soundsLikePanelOpen
+          ? soundsLikePanelWidth
+          : 0;
   /** Reserve min panel width so main layout stays fixed; wider panel draws on top without reflow. */
   const mainPaddingRight = rightPanelOpen ? Math.min(rightPanelWidth, PANEL_MIN_WIDTH) : 0;
 
@@ -172,7 +228,11 @@ function AppContent() {
               element={
                 <ProjectsPage
                   soundsLikePanelOpen={soundsLikePanelOpen}
+                  commentsPanelOpen={commentsPanelOpen}
+                  clockPanelOpen={clockPanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
+                  onCommentsClick={openCommentsPanel}
+                  onClockClick={openClockPanel}
                   tracks={mergedProjects}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
@@ -214,6 +274,24 @@ function AppContent() {
         onWidthChange={setProjectsPanelWidth}
         minWidth={PANEL_MIN_WIDTH}
         maxWidth={projectsPanelMaxWidth}
+      />
+      <CommentsPanel
+        isOpen={commentsPanelOpen}
+        onClose={() => setCommentsPanelOpen(false)}
+        width={commentsPanelWidth}
+        onWidthChange={setCommentsPanelWidth}
+        minWidth={PANEL_MIN_WIDTH}
+        maxWidth={PANEL_MAX_WIDTH}
+        items={COMMENTS_PANEL_INITIAL_ITEMS}
+      />
+      <ClockPanel
+        isOpen={clockPanelOpen}
+        onClose={() => setClockPanelOpen(false)}
+        width={clockPanelWidth}
+        onWidthChange={setClockPanelWidth}
+        minWidth={PANEL_MIN_WIDTH}
+        maxWidth={PANEL_MAX_WIDTH}
+        items={CLOCK_PANEL_INITIAL_ITEMS}
       />
       <AudioPlayer onSoundsLikeClick={openSoundsLikePanel} />
     </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import TrackWaveform from './TrackWaveform';
 
@@ -18,13 +18,188 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
 });
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false }) {
+const TRACK_COMMENT_SEND_ICON = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M3.4 20.4 22 12 3.4 3.6 3 10.8l9.6 1.2-9.6 1.2z" />
+  </svg>
+);
+
+function useHoverTooltip() {
+  const triggerRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipRect, setTooltipRect] = useState(null);
+
+  const updateTooltipRect = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setTooltipRect({ left: rect.left + rect.width / 2, top: rect.top });
+  }, []);
+
+  useEffect(() => {
+    if (!isHovered) return;
+    updateTooltipRect();
+    const onUpdate = () => updateTooltipRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [isHovered, updateTooltipRect]);
+
+  const bindHover = {
+    onMouseEnter: () => {
+      setIsHovered(true);
+      updateTooltipRect();
+    },
+    onMouseLeave: () => setIsHovered(false),
+    onFocus: () => {
+      setIsHovered(true);
+      updateTooltipRect();
+    },
+    onBlur: () => setIsHovered(false),
+  };
+
+  return { triggerRef, isHovered, tooltipRect, bindHover };
+}
+
+function HoverTooltipPortal({ text, tooltipRect, multiline = false }) {
+  if (!text || !tooltipRect) return null;
+
+  return createPortal(
+    <span
+      className={`app-hover-tooltip app-hover-tooltip-portal${multiline ? ' app-hover-tooltip--multiline' : ''}`}
+      role="tooltip"
+      style={{
+        left: tooltipRect.left,
+        bottom: window.innerHeight - tooltipRect.top + 6,
+      }}
+    >
+      {text}
+    </span>,
+    document.body
+  );
+}
+
+function TrackCommentCompose({
+  draft,
+  savedComment,
+  focused,
+  onDraftChange,
+  onFocus,
+  onBlur,
+  onSend,
+  placeholder = 'Click to add comment',
+  variant = 'inline',
+  inputRef,
+  showSend = false,
+}) {
+  const active = focused;
+  const showSavedDisplay = !focused && Boolean(savedComment);
+  const showPlaceholder = !focused && !savedComment;
+  const savedCommentTooltip = useHoverTooltip();
+
+  const syncInputHeight = useCallback(() => {
+    const input = inputRef?.current;
+    if (!input || showSavedDisplay) return;
+    input.style.height = 'auto';
+    input.style.height = `${input.scrollHeight}px`;
+  }, [inputRef, showSavedDisplay]);
+
+  useEffect(() => {
+    syncInputHeight();
+  }, [draft, focused, syncInputHeight]);
+
+  useEffect(() => {
+    if (!focused || showSavedDisplay) return;
+    const frame = requestAnimationFrame(() => {
+      inputRef?.current?.focus({ preventScroll: true });
+      syncInputHeight();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focused, showSavedDisplay, inputRef, syncInputHeight]);
+
+  return (
+    <div
+      className={`track-comment-compose track-comment-compose--${variant}${active ? ' track-comment-compose--active' : ''}${showSavedDisplay ? ' track-comment-compose--saved' : ''}${showSend ? ' track-comment-compose--has-text' : ''}`}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
+      {showSavedDisplay ? (
+        <>
+          <button
+            ref={savedCommentTooltip.triggerRef}
+            type="button"
+            className="comment-input comment-input--saved"
+            onClick={(event) => {
+              event.stopPropagation();
+              onFocus();
+            }}
+            {...savedCommentTooltip.bindHover}
+          >
+            {savedComment}
+          </button>
+          {savedCommentTooltip.isHovered && (
+            <HoverTooltipPortal
+              text={savedComment}
+              tooltipRect={savedCommentTooltip.tooltipRect}
+              multiline
+            />
+          )}
+        </>
+      ) : (
+        <textarea
+          ref={inputRef}
+          rows={1}
+          className="comment-input"
+          placeholder={showPlaceholder ? placeholder : ''}
+          value={draft}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault();
+              onSend();
+            }
+          }}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+        />
+      )}
+      {showSend && (
+        <button
+          type="button"
+          className="track-comment-send-btn"
+          aria-label="Send comment"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onSend();
+          }}
+        >
+          {TRACK_COMMENT_SEND_ICON}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, isSelected = false, onSelectChange }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
   const [trackDetailsOverlayOpen, setTrackDetailsOverlayOpen] = useState(false);
   const [commentOverlayOpen, setCommentOverlayOpen] = useState(false);
   const [commentButtonRect, setCommentButtonRect] = useState(null);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [savedComment, setSavedComment] = useState('');
+  const [commentFocused, setCommentFocused] = useState(false);
+  const [popoverCommentDraft, setPopoverCommentDraft] = useState('');
+  const [popoverSavedComment, setPopoverSavedComment] = useState('');
+  const [popoverCommentFocused, setPopoverCommentFocused] = useState(false);
+  const commentInputRef = useRef(null);
+  const popoverCommentInputRef = useRef(null);
   const overflowRef = useRef(null);
   const menuBtnRef = useRef(null);
   const commentBtnRef = useRef(null);
@@ -80,6 +255,18 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   }, [commentOverlayOpen]);
 
   useEffect(() => {
+    if (!commentOverlayOpen) {
+      setPopoverCommentDraft('');
+      setPopoverSavedComment('');
+      setPopoverCommentFocused(false);
+      return;
+    }
+    setPopoverCommentFocused(true);
+    const frame = requestAnimationFrame(() => popoverCommentInputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [commentOverlayOpen]);
+
+  useEffect(() => {
     if (overflowMenuOpen && (compact || mobileTrackLayout) && menuBtnRef.current) {
       const update = () => {
         if (menuBtnRef.current) {
@@ -117,10 +304,60 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     onTogglePause?.();
   };
 
+  const handleTrackCommentSend = () => {
+    const text = commentDraft.trim();
+    if (!text) return;
+    setSavedComment(text);
+    setCommentDraft('');
+    setCommentFocused(false);
+    commentInputRef.current?.blur();
+  };
+
+  const handleTrackCommentFocus = () => {
+    setCommentFocused(true);
+    setCommentDraft(savedComment);
+  };
+
+  const handlePopoverCommentSend = () => {
+    const text = popoverCommentDraft.trim();
+    if (!text) return;
+    setPopoverSavedComment(text);
+    setPopoverCommentDraft('');
+    setPopoverCommentFocused(false);
+    popoverCommentInputRef.current?.blur();
+  };
+
+  const handlePopoverCommentFocus = () => {
+    setPopoverCommentFocused(true);
+    setPopoverCommentDraft(popoverSavedComment);
+  };
+
+  const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected);
+
+  const renderSelectCheckbox = () => {
+    if (!showSelectCheckbox) {
+      if (showPauseIcon) {
+        return <span className="track-num-spacer-checkbox" aria-hidden="true" />;
+      }
+      return <span className="track-num-spacer" aria-hidden="true" />;
+    }
+
+    return (
+      <input
+        type="checkbox"
+        className="track-checkbox"
+        checked={isSelected}
+        onChange={(event) => onSelectChange?.(item.id, event.target.checked)}
+        aria-label={`Select ${item.title}`}
+        onClick={(event) => event.stopPropagation()}
+      />
+    );
+  };
+
   if (mobileTrackLayout) {
     return (
       <div
-        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -264,48 +501,33 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   return (
     <div
-      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems ? ' track-row--compact-versions-stems' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems ? ' track-row--compact-versions-stems' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
       <span className="track-num">
-        {showPlayingIcon && isHovered ? (
+        {showPlayingIcon ? (
           <>
-            <input
-              type="checkbox"
-              className="track-checkbox"
-              aria-label={`Select ${item.title}`}
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              type="button"
-              className="track-play-btn track-pause-btn"
-              onClick={handlePause}
-              aria-label={`Pause ${item.title}`}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
-            </button>
-          </>
-        ) : showPlayingIcon ? (
-          <>
-            <span className="track-num-spacer" aria-hidden="true" />
-            <PlayingAudioIcon />
+            {renderSelectCheckbox()}
+            {isHovered ? (
+              <button
+                type="button"
+                className="track-play-btn track-pause-btn"
+                onClick={handlePause}
+                aria-label={`Pause ${item.title}`}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                </svg>
+              </button>
+            ) : (
+              <PlayingAudioIcon />
+            )}
           </>
         ) : showPauseIcon ? (
           <>
-            {isHovered ? (
-              <input
-                type="checkbox"
-                className="track-checkbox"
-                aria-label={`Select ${item.title}`}
-                onClick={(e) => e.stopPropagation()}
-              />
-            ) : (
-              <span className="track-num-spacer-checkbox" aria-hidden="true" />
-            )}
+            {renderSelectCheckbox()}
             <button
               type="button"
               className="track-play-btn"
@@ -319,12 +541,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           </>
         ) : canPlay && isHovered ? (
           <>
-            <input
-              type="checkbox"
-              className="track-checkbox"
-              aria-label={`Select ${item.title}`}
-              onClick={(e) => e.stopPropagation()}
-            />
+            {renderSelectCheckbox()}
             <button
               type="button"
               className="track-play-btn"
@@ -338,7 +555,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           </>
         ) : (
           <>
-            <span className="track-num-spacer" aria-hidden="true" />
+            {renderSelectCheckbox()}
             {item.num}
           </>
         )}
@@ -439,7 +656,19 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         </>
       )}
       {!compact && (
-        <input type="text" className="comment-input" placeholder="Click to add comment" />
+        <div className="track-comment-cell">
+          <TrackCommentCompose
+            draft={commentDraft}
+            savedComment={savedComment}
+            focused={commentFocused}
+            onDraftChange={setCommentDraft}
+            onFocus={handleTrackCommentFocus}
+            onBlur={() => setCommentFocused(false)}
+            onSend={handleTrackCommentSend}
+            inputRef={commentInputRef}
+            showSend={commentFocused && commentDraft.trim().length > 0}
+          />
+        </div>
       )}
       <div className="track-actions">
         <div className="track-action-icons track-actions-expanded">
@@ -638,11 +867,18 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 return (
                   <>
                     <h4 className="track-comment-popover-title">Comment</h4>
-                    <input
-                      type="text"
-                      className="track-comment-popover-input track-comment-popover-input-only"
+                    <TrackCommentCompose
+                      variant="popover"
+                      draft={popoverCommentDraft}
+                      savedComment={popoverSavedComment}
+                      focused={popoverCommentFocused}
+                      onDraftChange={setPopoverCommentDraft}
+                      onFocus={handlePopoverCommentFocus}
+                      onBlur={() => setPopoverCommentFocused(false)}
+                      onSend={handlePopoverCommentSend}
                       placeholder="Add a comment..."
-                      onClick={(e) => e.stopPropagation()}
+                      inputRef={popoverCommentInputRef}
+                      showSend={popoverCommentFocused && popoverCommentDraft.trim().length > 0}
                     />
                   </>
                 );
@@ -683,11 +919,18 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                       </div>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    className="track-comment-popover-input"
+                  <TrackCommentCompose
+                    variant="popover"
+                    draft={popoverCommentDraft}
+                    savedComment={popoverSavedComment}
+                    focused={popoverCommentFocused}
+                    onDraftChange={setPopoverCommentDraft}
+                    onFocus={handlePopoverCommentFocus}
+                    onBlur={() => setPopoverCommentFocused(false)}
+                    onSend={handlePopoverCommentSend}
                     placeholder="Add a comment..."
-                    onClick={(e) => e.stopPropagation()}
+                    inputRef={popoverCommentInputRef}
+                    showSend={popoverCommentFocused && popoverCommentDraft.trim().length > 0}
                   />
                 </>
               );
