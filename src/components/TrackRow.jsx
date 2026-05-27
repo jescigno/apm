@@ -99,6 +99,29 @@ function TrackCommentCompose({
   const showSavedDisplay = !focused && Boolean(savedComment);
   const showPlaceholder = !focused && !savedComment;
   const savedCommentTooltip = useHoverTooltip();
+  const [isSavedCommentTruncated, setIsSavedCommentTruncated] = useState(false);
+
+  useEffect(() => {
+    if (!showSavedDisplay) {
+      setIsSavedCommentTruncated(false);
+      return;
+    }
+
+    const el = savedCommentTooltip.triggerRef.current;
+    if (!el) return;
+
+    const textEl = el.querySelector('.comment-input-saved-text');
+    if (!textEl) return;
+
+    const checkTruncation = () => {
+      setIsSavedCommentTruncated(textEl.scrollHeight > textEl.clientHeight + 1);
+    };
+
+    checkTruncation();
+    const observer = new ResizeObserver(checkTruncation);
+    observer.observe(textEl);
+    return () => observer.disconnect();
+  }, [showSavedDisplay, savedComment, savedCommentTooltip.triggerRef]);
 
   const syncInputHeight = useCallback(() => {
     const input = inputRef?.current;
@@ -135,11 +158,11 @@ function TrackCommentCompose({
               event.stopPropagation();
               onFocus();
             }}
-            {...savedCommentTooltip.bindHover}
+            {...(isSavedCommentTruncated ? savedCommentTooltip.bindHover : {})}
           >
-            {savedComment}
+            <span className="comment-input-saved-text">{savedComment}</span>
           </button>
-          {savedCommentTooltip.isHovered && (
+          {isSavedCommentTruncated && savedCommentTooltip.isHovered && (
             <HoverTooltipPortal
               text={savedComment}
               tooltipRect={savedCommentTooltip.tooltipRect}
@@ -306,7 +329,13 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   const handleTrackCommentSend = () => {
     const text = commentDraft.trim();
-    if (!text) return;
+    if (!text) {
+      setSavedComment('');
+      setCommentDraft('');
+      setCommentFocused(false);
+      commentInputRef.current?.blur();
+      return;
+    }
     setSavedComment(text);
     setCommentDraft('');
     setCommentFocused(false);
@@ -318,9 +347,23 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     setCommentDraft(savedComment);
   };
 
+  const handleTrackCommentBlur = () => {
+    if (!commentDraft.trim()) {
+      setSavedComment('');
+      setCommentDraft('');
+    }
+    setCommentFocused(false);
+  };
+
   const handlePopoverCommentSend = () => {
     const text = popoverCommentDraft.trim();
-    if (!text) return;
+    if (!text) {
+      setPopoverSavedComment('');
+      setPopoverCommentDraft('');
+      setPopoverCommentFocused(false);
+      popoverCommentInputRef.current?.blur();
+      return;
+    }
     setPopoverSavedComment(text);
     setPopoverCommentDraft('');
     setPopoverCommentFocused(false);
@@ -330,6 +373,14 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const handlePopoverCommentFocus = () => {
     setPopoverCommentFocused(true);
     setPopoverCommentDraft(popoverSavedComment);
+  };
+
+  const handlePopoverCommentBlur = () => {
+    if (!popoverCommentDraft.trim()) {
+      setPopoverSavedComment('');
+      setPopoverCommentDraft('');
+    }
+    setPopoverCommentFocused(false);
   };
 
   const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected);
@@ -663,7 +714,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             focused={commentFocused}
             onDraftChange={setCommentDraft}
             onFocus={handleTrackCommentFocus}
-            onBlur={() => setCommentFocused(false)}
+            onBlur={handleTrackCommentBlur}
             onSend={handleTrackCommentSend}
             inputRef={commentInputRef}
             showSend={commentFocused && commentDraft.trim().length > 0}
@@ -874,7 +925,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                       focused={popoverCommentFocused}
                       onDraftChange={setPopoverCommentDraft}
                       onFocus={handlePopoverCommentFocus}
-                      onBlur={() => setPopoverCommentFocused(false)}
+                      onBlur={handlePopoverCommentBlur}
                       onSend={handlePopoverCommentSend}
                       placeholder="Add a comment..."
                       inputRef={popoverCommentInputRef}
@@ -926,7 +977,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                     focused={popoverCommentFocused}
                     onDraftChange={setPopoverCommentDraft}
                     onFocus={handlePopoverCommentFocus}
-                    onBlur={() => setPopoverCommentFocused(false)}
+                    onBlur={handlePopoverCommentBlur}
                     onSend={handlePopoverCommentSend}
                     placeholder="Add a comment..."
                     inputRef={popoverCommentInputRef}

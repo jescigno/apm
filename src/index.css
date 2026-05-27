@@ -4419,7 +4419,7 @@ body {
 
 .track-row {
   display: grid;
-  grid-template-columns: 28px 385px 1fr 100px 160px auto;
+  grid-template-columns: 28px 385px 1fr 100px 220px auto;
   align-items: center;
   column-gap: 12px;
   row-gap: 20px;
@@ -5191,6 +5191,7 @@ body {
   color: #F3F3F3;
   text-transform: capitalize;
   letter-spacing: 0.5px;
+  line-height: 1.2;
   align-self: start;
   padding-top: 18px;
 }
@@ -5199,7 +5200,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 4px 0;
+  padding: 0;
   font-size: 11px;
   letter-spacing: 0.5px;
   line-height: 1.2;
@@ -5218,7 +5219,7 @@ body {
   -ms-overflow-style: none;
 }
 
-.track-comment-compose:not(.track-comment-compose--active) .comment-input {
+.track-comment-compose:not(.track-comment-compose--active) textarea.comment-input {
   white-space: nowrap;
   overflow: hidden;
   overflow-y: hidden;
@@ -5235,13 +5236,25 @@ body {
   text-align: left;
   cursor: text;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: #F3F3F3;
   font-size: 11px;
   letter-spacing: 0.5px;
   line-height: 1.2;
-  padding: 4px 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.comment-input-saved-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
 }
 
 .comment-input::placeholder {
@@ -5256,7 +5269,11 @@ body {
   align-self: start;
   min-width: 0;
   /* Reserve one-line placeholder height so the row doesn't grow while editing. */
-  min-height: calc(18px + 8px + 1.2 * 11px);
+  min-height: calc(18px + 1.2 * 11px);
+}
+
+.track-comment-cell:has(.track-comment-compose--saved) {
+  min-height: calc(18px + 1.2 * 11px * 3);
 }
 
 .track-row:has(.track-comment-compose--active) {
@@ -5275,13 +5292,15 @@ body {
 
 .track-comment-compose--inline.track-comment-compose--active {
   position: absolute;
-  top: 0;
+  top: 18px;
   left: -4px;
   right: 0;
   width: calc(100% + 4px);
   z-index: 2;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  padding-top: 0;
+  background: #303030;
   border-radius: 6px;
+  overflow: hidden;
 }
 
 .track-comment-compose--popover {
@@ -5295,7 +5314,7 @@ body {
 }
 
 .track-comment-compose--active .comment-input {
-  background: #303030;
+  background: transparent;
   color: var(--text-primary);
   font-size: 13px;
   line-height: 1.5;
@@ -5303,6 +5322,10 @@ body {
   min-height: 40px;
   max-height: 240px;
   outline: none;
+}
+
+.track-comment-compose--active:not(.track-comment-compose--inline) .comment-input {
+  background: #303030;
 }
 
 .track-comment-compose--saved {
@@ -5558,7 +5581,7 @@ body {
 /* Responsive adjustments — container width = main area (includes effect of right panel padding) */
 @container app-content (max-width: 1336px) {
   .track-row {
-    grid-template-columns: 28px 345px 1fr 80px 140px auto;
+    grid-template-columns: 28px 345px 1fr 80px 200px auto;
     gap: 16px;
   }
 }
