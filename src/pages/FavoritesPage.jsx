@@ -93,6 +93,7 @@ const MOBILE_MQ = '(max-width: 480px)';
 export default function FavoritesPage({
   soundsLikePanelOpen,
   onSoundsLikeClick,
+  onSoundsLikeWithSelection,
   tracks,
   enterHighlightTrackNum,
   scrollToBottomSignal,
@@ -139,6 +140,7 @@ export default function FavoritesPage({
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}
         onSoundsLikeClick={onSoundsLikeClick}
+        onSoundsLikeWithSelection={onSoundsLikeWithSelection}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         tabsInBreadcrumb={!isCompactLayout}

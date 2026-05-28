@@ -66,6 +66,7 @@ function AppContent() {
     getProjectsPanelMaxWidth()
   );
   const [soundsLikeItems, setSoundsLikeItems] = useState(() => [...SOUNDS_LIKE_PANEL_INITIAL_ITEMS]);
+  const [soundsLikeSourceTracks, setSoundsLikeSourceTracks] = useState([]);
   const [projectsExtraTracks, setProjectsExtraTracks] = useState([]);
   const [favoritesExtraTracks, setFavoritesExtraTracks] = useState([]);
   const [enterHighlightTrackNum, setEnterHighlightTrackNum] = useState(null);
@@ -75,9 +76,11 @@ function AppContent() {
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
-  const handleSoundsLikeRefresh = useCallback(() => {
+  const refreshSoundsLikeResults = useCallback(() => {
     setSoundsLikeItems(createSoundsLikeItems(6, 'sl'));
   }, []);
+
+  const handleSoundsLikeRefresh = refreshSoundsLikeResults;
 
   const handleSoundsLikeLoadMore = useCallback(() => {
     setSoundsLikeItems((prev) => [...prev, ...createSoundsLikeItems(3, 'sl')]);
@@ -90,6 +93,15 @@ function AppContent() {
       )
     );
   }, []);
+
+  const handleRemoveSourceTrack = useCallback((trackId) => {
+    setSoundsLikeSourceTracks((prev) => prev.filter((track) => track.id !== trackId));
+    refreshSoundsLikeResults();
+  }, [refreshSoundsLikeResults]);
+
+  const handleRemoveSoundsLikeItem = useCallback(() => {
+    refreshSoundsLikeResults();
+  }, [refreshSoundsLikeResults]);
 
   const handleSoundsLikeAddComplete = useCallback((item) => {
     const isFavorites = location.pathname.startsWith(ROUTE_FAVORITES);
@@ -122,12 +134,29 @@ function AppContent() {
     setProjectsPanelOpen(false);
     setCommentsPanelOpen(false);
     setClockPanelOpen(false);
+    setSoundsLikeSourceTracks([]);
     setSoundsLikePanelOpen(true);
   }, [location.pathname]);
+
+  const openSoundsLikePanelWithSelection = useCallback((tracks) => {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
+    if (!tracks?.length) return;
+    setProjectsPanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen(false);
+    setSoundsLikeSourceTracks(tracks);
+    setSoundsLikePanelOpen(true);
+  }, [location.pathname]);
+
+  const closeSoundsLikePanel = useCallback(() => {
+    setSoundsLikePanelOpen(false);
+    setSoundsLikeSourceTracks([]);
+  }, []);
 
   useEffect(() => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) {
       setSoundsLikePanelOpen(false);
+      setSoundsLikeSourceTracks([]);
     }
   }, [location.pathname]);
 
@@ -231,6 +260,7 @@ function AppContent() {
                   commentsPanelOpen={commentsPanelOpen}
                   clockPanelOpen={clockPanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
+                  onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
                   onCommentsClick={openCommentsPanel}
                   onClockClick={openClockPanel}
                   tracks={mergedProjects}
@@ -245,6 +275,7 @@ function AppContent() {
                 <FavoritesPage
                   soundsLikePanelOpen={soundsLikePanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
+                  onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
                   tracks={mergedFavorites}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
@@ -256,12 +287,15 @@ function AppContent() {
       </div>
       <SoundsLikePanel
         isOpen={soundsLikePanelOpen}
-        onClose={() => setSoundsLikePanelOpen(false)}
+        onClose={closeSoundsLikePanel}
         width={soundsLikePanelWidth}
         onWidthChange={setSoundsLikePanelWidth}
         minWidth={PANEL_MIN_WIDTH}
         maxWidth={PANEL_MAX_WIDTH}
+        sourceTracks={soundsLikeSourceTracks}
         items={soundsLikeItems}
+        onRemoveSourceTrack={handleRemoveSourceTrack}
+        onRemoveItem={handleRemoveSoundsLikeItem}
         onAddComplete={handleSoundsLikeAddComplete}
         onRefresh={handleSoundsLikeRefresh}
         onLoadMore={handleSoundsLikeLoadMore}

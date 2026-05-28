@@ -70,11 +70,16 @@ const TRACKS_BASE = [
   { num: 8, title: 'Championship Drive', versions: 5, commentCount: 6, desc: 'Epic climactic themes for championship coverage.', audioUrl: SAMPLE_AUDIO },
   { num: 9, title: 'Kickoff Frenzy', versions: 3, commentCount: 2, desc: 'Explosive opener with driving drums and bold guitars.', audioUrl: SAMPLE_AUDIO },
   { num: 10, title: 'Overtime', versions: 4, commentCount: 9, desc: 'Suspenseful extended tension with dramatic payoff.', audioUrl: SAMPLE_AUDIO },
+  { num: 11, title: 'Fourth Quarter Surge', versions: 3, commentCount: 2, desc: 'Late-game momentum with rising drums and bold guitar stabs.', audioUrl: SAMPLE_AUDIO },
+  { num: 12, title: 'Halftime Hype', versions: 4, commentCount: 0, desc: 'Mid-show energy lift with anthemic hooks and tight rhythm section.', audioUrl: SAMPLE_AUDIO },
+  { num: 13, title: 'Crowd Wave', versions: 5, commentCount: 3, desc: 'Call-and-response rock grooves built for fan cam and stadium cutaways.', audioUrl: SAMPLE_AUDIO },
+  { num: 14, title: 'Final Whistle', versions: 3, commentCount: 1, desc: 'Triumphant closing themes with brass hits and celebratory percussion.', audioUrl: SAMPLE_AUDIO },
+  { num: 15, title: 'Under the Lights', versions: 4, commentCount: 5, desc: 'Night-game atmosphere with driving bass, synth accents, and wide dynamics.', audioUrl: SAMPLE_AUDIO },
 ].map((t) => ({
   ...t,
   id: generateTrackId(),
   hasLyrics: Math.random() > 0.45,
-  stems: [4, 4, 5, 4, 6, 3, 4, 5, 4, 4][t.num - 1],
+  stems: [4, 4, 5, 4, 6, 3, 4, 5, 4, 4, 3, 4, 5, 3, 4][t.num - 1],
   /** Shown as "Recorded …" — mix of full dates (MM/DD/YYYY) and year-only */
   recorded: [
     '02/04/2004',
@@ -87,6 +92,11 @@ const TRACKS_BASE = [
     '03/15/2016',
     '2022',
     '10/01/2023',
+    '2018',
+    '04/22/2021',
+    '2016',
+    '09/08/2020',
+    '2023',
   ][t.num - 1],
 }));
 
@@ -186,38 +196,38 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect })
         </button>
       </div>
       <div className="tracks-selection-actions">
-        <button type="button" className="tracks-selection-action" onClick={onPlay}>
+        <button type="button" className="tracks-selection-action tracks-selection-action--play" onClick={onPlay} aria-label="Play">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M8 5v14l11-7z" />
           </svg>
-          PLAY
+          <span className="tracks-selection-action-label">Play</span>
         </button>
-        <button type="button" className="tracks-selection-action">
-          <img src="/icons/FavoriteOutline.svg" alt="" />
-          FAVORITE
+        <button type="button" className="tracks-selection-action" aria-label="Favorite">
+          <img src="/icons/Favorite.svg" alt="" />
+          <span className="tracks-selection-action-label">Favorite</span>
         </button>
-        <button type="button" className="tracks-selection-action">
+        <button type="button" className="tracks-selection-action" aria-label="Share">
           <img src="/icons/Share.svg" alt="" />
-          SHARE
+          <span className="tracks-selection-action-label">Share</span>
         </button>
-        <button type="button" className="tracks-selection-action">
+        <button type="button" className="tracks-selection-action" aria-label="Add">
           <img src="/icons/Add.svg" alt="" />
-          ADD
+          <span className="tracks-selection-action-label">Add</span>
         </button>
-        <button type="button" className="tracks-selection-action">
+        <button type="button" className="tracks-selection-action" aria-label="Download">
           <img src="/icons/Download.svg" alt="" />
-          DOWNLOAD
+          <span className="tracks-selection-action-label">Download</span>
         </button>
-        <button type="button" className="tracks-selection-action" onClick={onSoundsLike}>
+        <button type="button" className="tracks-selection-action" onClick={onSoundsLike} aria-label="Sounds like">
           <img src="/SoundsLike.svg" alt="" />
-          SOUNDS LIKE
+          <span className="tracks-selection-action-label">Sounds Like</span>
         </button>
       </div>
     </div>
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
@@ -273,11 +283,19 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, activeTab: controll
     setSelectedIds(new Set());
   };
 
+  const handleSoundsLikeSelected = () => {
+    const selected = currentTracks.filter((item) => selectedIds.has(item.id));
+    if (selected.length > 0) {
+      onSoundsLikeWithSelection?.(selected);
+      setSelectedIds(new Set());
+    }
+  };
+
   const selectionBar = hasSelection ? (
     <TracksSelectionBar
       selectedCount={selectedCount}
       onPlay={handlePlaySelected}
-      onSoundsLike={onSoundsLikeClick}
+      onSoundsLike={handleSoundsLikeSelected}
       onDeselect={handleDeselectAll}
     />
   ) : null;

@@ -2,7 +2,7 @@
  * Right panel for Sounds Like results. Uses only `sounds-like-*` classes in index.css.
  * Projects panel (ProjectsPanel.jsx) uses `projects-panel-*` — keep namespaces separate.
  */
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 
@@ -14,6 +14,39 @@ const PLACEHOLDER_BLINK_DURATION_MS = 2400;
 /** Must match CSS `sounds-like-track-content-fade-in` duration */
 const CONTENT_FADE_IN_MS = 1100;
 
+const STACK_THUMB_SIZE = 36;
+const STACK_THUMB_OVERLAP = 14;
+const STACK_ITEM_STEP = STACK_THUMB_SIZE - STACK_THUMB_OVERLAP;
+const STACK_OVERFLOW_BADGE_SIZE = 36;
+const STACK_OVERFLOW_GAP = 0;
+
+function stackItemsWidth(count) {
+  if (count <= 0) return 0;
+  return STACK_THUMB_SIZE + (count - 1) * STACK_ITEM_STEP;
+}
+
+function computeCollapsedStackLayout(total, availableWidth) {
+  if (total <= 0 || availableWidth <= 0) {
+    return { visible: 0, overflow: 0 };
+  }
+
+  if (stackItemsWidth(total) <= availableWidth) {
+    return { visible: total, overflow: 0 };
+  }
+
+  for (let visible = total; visible >= 0; visible -= 1) {
+    const overflow = total - visible;
+    const widthNeeded =
+      stackItemsWidth(visible) +
+      (overflow > 0 ? STACK_OVERFLOW_BADGE_SIZE + STACK_OVERFLOW_GAP : 0);
+    if (widthNeeded <= availableWidth) {
+      return { visible, overflow };
+    }
+  }
+
+  return { visible: 0, overflow: total };
+}
+
 function SoundsLikePanel({
   isOpen,
   onClose,
@@ -21,12 +54,19 @@ function SoundsLikePanel({
   onWidthChange,
   minWidth = 263,
   maxWidth = 600,
+  sourceTracks = [],
   items = [],
+  onRemoveSourceTrack,
+  onRemoveItem,
   onAddComplete,
   onRefresh,
   onLoadMore,
   onItemEnterAnimationComplete,
 }) {
+  const hasSourceTracks = sourceTracks.length > 0;
+  const [sourceTracksExpanded, setSourceTracksExpanded] = useState(false);
+  const [collapsedStackLayout, setCollapsedStackLayout] = useState({ visible: 0, overflow: 0 });
+  const collapsedStackRef = useRef(null);
   const resizeRef = useRef(null);
   const widthRef = useRef(width);
   widthRef.current = width;
@@ -72,6 +112,49 @@ function SoundsLikePanel({
       setExitingId(null);
     }
   }, [items, exitingId]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSourceTracksExpanded(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setSourceTracksExpanded(false);
+  }, [sourceTracks.map((track) => track.id).join('|')]);
+
+  useLayoutEffect(() => {
+    if (sourceTracksExpanded || !hasSourceTracks) return;
+
+    const measure = () => {
+      const el = collapsedStackRef.current;
+      if (!el) return;
+      const styles = window.getComputedStyle(el);
+      const horizontalPadding =
+        parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const availableWidth = el.clientWidth - horizontalPadding;
+      setCollapsedStackLayout(
+        computeCollapsedStackLayout(sourceTracks.length, availableWidth)
+      );
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (collapsedStackRef.current) {
+      observer.observe(collapsedStackRef.current);
+    }
+    return () => observer.disconnect();
+  }, [sourceTracksExpanded, hasSourceTracks, sourceTracks.length, width, isOpen]);
+
+  const visibleSourceTracks = sourceTracksExpanded
+    ? sourceTracks
+    : sourceTracks.slice(0, collapsedStackLayout.visible);
+  const hiddenSourceTrackCount = sourceTracksExpanded ? 0 : collapsedStackLayout.overflow;
+
+  const getSourceThumbSrc = (track) => {
+    const thumbIndex = ((track.num ?? 1) - 1) % TRACK_THUMBNAILS.length;
+    return TRACK_THUMBNAILS[thumbIndex];
+  };
 
   useEffect(() => {
     if (!resizeRef.current || !onWidthChange || !isOpen) return;
@@ -148,7 +231,82 @@ function SoundsLikePanel({
           </button>
         </div>
       </div>
-      <div className="sounds-like-panel-content">
+      {hasSourceTracks && (
+        <div
+          className={`sounds-like-panel-source-tracks${sourceTracksExpanded ? '' : ' sounds-like-panel-source-tracks--collapsed'}`}
+        >
+          {sourceTracksExpanded ? (
+            sourceTracks.map((track) => (
+              <div key={track.id} className="sounds-like-panel-source-track">
+                <button
+                  type="button"
+                  className="sounds-like-panel-source-remove"
+                  aria-label={`Remove ${track.title}`}
+                  onClick={() => onRemoveSourceTrack?.(track.id)}
+                >
+                  <img src="/Trash.svg" alt="" />
+                </button>
+                <button
+                  type="button"
+                  className="sounds-like-panel-source-thumb-btn"
+                  aria-label="Collapse selected tracks"
+                  onClick={() => setSourceTracksExpanded(false)}
+                >
+                  <img
+                    src={getSourceThumbSrc(track)}
+                    alt=""
+                    className="sounds-like-panel-source-thumb"
+                    aria-hidden
+                  />
+                </button>
+                <div className="sounds-like-panel-source-text">
+                  <span className="sounds-like-panel-source-title">{track.title}</span>
+                  {track.id && (
+                    <span className="sounds-like-panel-source-id">{track.id}</span>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div
+              ref={collapsedStackRef}
+              className="sounds-like-panel-source-stack"
+              role="button"
+              tabIndex={0}
+              aria-label={`Expand ${sourceTracks.length} selected tracks`}
+              onClick={() => setSourceTracksExpanded(true)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setSourceTracksExpanded(true);
+                }
+              }}
+            >
+              {visibleSourceTracks.map((track, index) => (
+                <div
+                  key={track.id}
+                  className="sounds-like-panel-source-stack-item"
+                  style={{ zIndex: index + 1 }}
+                >
+                  <img
+                    src={getSourceThumbSrc(track)}
+                    alt=""
+                    className="sounds-like-panel-source-stack-thumb"
+                    aria-hidden
+                  />
+                  <span className="sounds-like-panel-source-stack-title">{track.title}</span>
+                </div>
+              ))}
+              {hiddenSourceTrackCount > 0 && (
+                <span className="sounds-like-panel-source-stack-overflow" aria-hidden>
+                  +{hiddenSourceTrackCount}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      <div className={`sounds-like-panel-content${hasSourceTracks ? ' sounds-like-panel-content--with-source' : ''}`}>
         {items.map((item) => {
           const i = item.waveformIndex ?? 0;
           const title = item.title;
@@ -163,6 +321,17 @@ function SoundsLikePanel({
               key={item.id}
               className={`sounds-like-track ${width >= 440 ? 'sounds-like-track-expanded' : ''}${isExiting ? ' sounds-like-track--exiting' : ''}${showPlaceholder ? ' sounds-like-track--placeholder-phase' : ''}`}
             >
+              {showContent && (
+                <button
+                  type="button"
+                  className="sounds-like-track-remove"
+                  aria-label={`Remove ${title}`}
+                  onClick={() => onRemoveItem?.(item.id)}
+                  disabled={exitingId != null}
+                >
+                  <img src="/Trash.svg" alt="" />
+                </button>
+              )}
               {showPlaceholder && (
                 <div className="sounds-like-track-placeholder" aria-hidden />
               )}

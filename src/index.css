@@ -1422,9 +1422,11 @@ body {
     align-self: center;
   }
 
+  .track-row--mobile .track-desc,
   .track-row--mobile .track-desc--mobile-below-title {
     margin: 0;
     padding-top: 0;
+    align-self: auto;
     font-size: 13px;
     line-height: 1.45;
     color: #F3F3F3;
@@ -2459,6 +2461,225 @@ body {
   height: 12px;
 }
 
+.sounds-like-panel-source-tracks {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sounds-like-panel-source-tracks::-webkit-scrollbar {
+  display: none;
+}
+
+.sounds-like-panel-source-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+
+.sounds-like-panel-source-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.sounds-like-panel-source-track:hover .sounds-like-panel-source-remove {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sounds-like-panel-source-remove img {
+  width: 14px;
+  height: 14px;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+
+.sounds-like-panel-source-remove:hover img {
+  opacity: 1;
+}
+
+.sounds-like-panel-source-tracks--collapsed {
+  max-height: none;
+  overflow: visible;
+  padding-left: 12px;
+}
+
+.sounds-like-panel-source-thumb-btn {
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.sounds-like-panel-source-thumb-btn:hover .sounds-like-panel-source-thumb {
+  opacity: 0.85;
+}
+
+.sounds-like-panel-source-stack {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 4px 8px 4px 0;
+  margin: -6px 0 0 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.sounds-like-panel-source-stack-overflow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: -0.2px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.sounds-like-panel-source-stack-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: -14px;
+}
+
+.sounds-like-panel-source-stack-item:first-child {
+  margin-left: 0;
+}
+
+.sounds-like-panel-source-stack-item:hover {
+  z-index: 50;
+}
+
+.sounds-like-panel-source-stack-thumb {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: none;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.sounds-like-panel-source-stack-item:not(:first-child) .sounds-like-panel-source-stack-thumb {
+  box-shadow:
+    -1px 0 0 rgba(0, 0, 0, 0.2),
+    -3px 0 6px -1px rgba(0, 0, 0, 0.38),
+    -9px 0 14px -7px rgba(0, 0, 0, 0.26);
+}
+
+.sounds-like-panel-source-stack-title {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 2;
+  max-width: min(220px, calc(100vw - 80px));
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #303030;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px) scale(0.96);
+  transform-origin: top left;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.sounds-like-panel-source-stack-item:hover .sounds-like-panel-source-stack-thumb {
+  transform: translateY(-6px);
+}
+
+.sounds-like-panel-source-stack-item:not(:first-child):hover .sounds-like-panel-source-stack-thumb {
+  box-shadow:
+    -1px 0 0 rgba(0, 0, 0, 0.24),
+    -4px 1px 7px -1px rgba(0, 0, 0, 0.42),
+    -11px 2px 16px -7px rgba(0, 0, 0, 0.3);
+}
+
+.sounds-like-panel-source-stack-item:hover .sounds-like-panel-source-stack-title {
+  opacity: 1;
+  transform: translateY(6px) scale(1);
+}
+
+.sounds-like-panel-source-thumb {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.sounds-like-panel-source-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sounds-like-panel-source-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sounds-like-panel-source-id {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sounds-like-panel-content {
   padding: 0 32px 12px 12px;
   margin-top: -2px;
@@ -2482,7 +2703,13 @@ body {
   display: none;
 }
 
+.sounds-like-panel-content--with-source {
+  margin-top: 0;
+  padding-top: 10px;
+}
+
 .sounds-like-track {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -2494,6 +2721,47 @@ body {
   width: 100%;
   min-height: 38px;
   transition: gap 0.2s ease, padding 0.2s ease;
+}
+
+.sounds-like-track-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.sounds-like-track:hover .sounds-like-track-remove {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sounds-like-track-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sounds-like-track-remove img {
+  width: 14px;
+  height: 14px;
+  display: block;
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+
+.sounds-like-track-remove:hover:not(:disabled) img {
+  opacity: 1;
 }
 
 .sounds-like-track.sounds-like-track--exiting {
@@ -4345,9 +4613,73 @@ body {
   flex-shrink: 0;
 }
 
-.tracks-selection-action svg {
-  width: 14px;
-  height: 14px;
+.tracks-selection-action--play svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tracks-selection-action img[src*="Favorite.svg"] {
+  filter: brightness(0) invert(1);
+}
+
+/* ~1140px viewport (64px sidebar): icon-only action buttons when space is tight */
+@container app-content (max-width: 1076px) {
+  .tracks-selection-bar-row {
+    overflow: visible;
+  }
+
+  .tracks-selection-bar {
+    gap: 10px;
+    padding: 4px 6px 4px 12px;
+    overflow: visible;
+  }
+
+  .tracks-selection-actions {
+    overflow: visible;
+  }
+
+  .tracks-selection-action {
+    position: relative;
+    gap: 0;
+    padding: 8px 9px;
+    overflow: visible;
+  }
+
+  .tracks-selection-action-label {
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    padding: 4px 8px;
+    background: #232323;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  .tracks-selection-action:hover .tracks-selection-action-label,
+  .tracks-selection-action:focus-visible .tracks-selection-action-label {
+    display: block;
+  }
+
+  /* Keep edge tooltips inside the viewport */
+  .tracks-selection-actions .tracks-selection-action:first-child .tracks-selection-action-label {
+    left: 0;
+    transform: none;
+  }
+
+  .tracks-selection-actions .tracks-selection-action:last-child .tracks-selection-action-label {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
 }
 
 .tracks-actions {
@@ -5184,6 +5516,7 @@ body {
   min-width: 0;
   align-self: start;
   padding-top: 18px;
+  padding-right: 4px;
 }
 
 .track-label {
@@ -5593,7 +5926,7 @@ body {
 
 /* Responsive adjustments — container width = main area (includes effect of right panel padding) */
 @container app-content (max-width: 1336px) {
-  .track-row {
+  .track-row:not(.track-row-compact) {
     grid-template-columns: 28px minmax(0, 300px) minmax(0, 1fr) 64px minmax(120px, 190px) auto;
     column-gap: 10px;
   }
@@ -5871,46 +6204,56 @@ body {
   }
 }
 
+/* ≤~1200px viewport: reflow desc/comment/actions only — keep row padding, #, art, and row height */
 @container app-content (max-width: 1136px) {
-  .track-row {
-    grid-template-columns: 28px minmax(0, 32%) minmax(0, 1fr) minmax(80px, 120px) auto;
-    column-gap: 10px;
-    row-gap: 0;
-    align-items: start;
+  .track-row:not(.track-row-compact):not(.track-row--mobile) {
+    grid-template-columns: 28px minmax(0, 35%) minmax(0, 1fr) minmax(72px, 100px) auto;
+    align-items: center;
+    min-height: 115px;
   }
 
-  .track-num {
+  .track-row.track-row-compact:not(.track-row--mobile) {
+    grid-template-columns: 28px minmax(0, 35%) minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 115px;
+  }
+
+  .track-row:not(.track-row--mobile) .track-num {
     grid-column: 1;
     grid-row: 1;
     align-self: center;
+    overflow: visible;
+    z-index: 2;
   }
 
-  .track-thumb-col {
+  .track-row:not(.track-row--mobile) .track-thumb-col {
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    margin-left: 0;
-    gap: 12px;
-    height: auto;
-    min-height: 72px;
-    align-self: start;
+    height: 85px;
+    align-self: end;
   }
 
-  .track-thumb-col .track-info-dropdowns,
-  .track-thumb-col .track-info {
+  .track-row:not(.track-row--mobile) .track-thumb-col .track-info-dropdowns,
+  .track-row:not(.track-row--mobile) .track-thumb-col .track-info {
     min-width: 0;
     overflow: hidden;
   }
 
-  .track-thumb-col .track-title,
-  .track-thumb-col .track-title.track-title-clickable {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col .track-info-dropdowns {
+    min-height: 85px;
+    justify-content: space-between;
+  }
+
+  .track-row:not(.track-row--mobile) .track-thumb-col .track-title,
+  .track-row:not(.track-row--mobile) .track-thumb-col .track-title.track-title-clickable {
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .track-desc {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-desc {
     grid-column: 3;
     grid-row: 1;
     min-width: 0;
@@ -5919,14 +6262,14 @@ body {
     padding-top: 18px;
   }
 
-  .track-comment-cell {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-comment-cell {
     grid-column: 4;
     grid-row: 1;
     min-width: 0;
     align-self: start;
   }
 
-  .track-actions {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-actions {
     grid-column: 5;
     grid-row: 1;
     min-width: 0;
@@ -5934,48 +6277,31 @@ body {
     align-self: start;
   }
 
-  .track-label {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-label {
     display: none;
   }
 
-  .track-comment-compose:not(.track-comment-compose--active):not(.track-comment-compose--saved) textarea.comment-input {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-comment-compose:not(.track-comment-compose--active):not(.track-comment-compose--saved) textarea.comment-input {
     white-space: normal;
     text-overflow: unset;
     height: calc(1.2 * 11px * 2);
     min-height: calc(1.2 * 11px * 2);
   }
-
-  .track-thumb {
-    width: 72px;
-    height: 72px;
-  }
 }
 
-@container app-content (max-width: 960px) {
-  .track-row {
-    grid-template-columns: 28px minmax(0, 30%) minmax(0, 1fr) minmax(72px, 96px) auto;
-    column-gap: 8px;
-    padding-left: 12px;
-    padding-right: 12px;
-    min-height: 96px;
+/* Just above mobile (~769–832px viewport): tighter column split, same padding and art */
+@container app-content (max-width: 768px) {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) {
+    grid-template-columns: 28px minmax(0, 38%) minmax(0, 1fr) minmax(48px, 68px) auto;
   }
 
-  .track-thumb-col {
-    gap: 10px;
-    min-height: 64px;
+  .track-row.track-row-compact:not(.track-row--mobile) {
+    grid-template-columns: 28px minmax(0, 38%) minmax(0, 1fr) auto;
   }
 
-  .track-thumb {
-    width: 64px;
-    height: 64px;
-  }
-
-  .track-desc {
+  .track-row:not(.track-row-compact):not(.track-row--mobile) .track-desc {
     font-size: 11px;
-  }
-
-  .track-comment-cell {
-    min-height: calc(18px + 1.2 * 11px * 2);
+    line-height: 1.35;
   }
 }
 

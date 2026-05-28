@@ -103,6 +103,7 @@ export default function ProjectsPage({
   commentsPanelOpen,
   clockPanelOpen,
   onSoundsLikeClick,
+  onSoundsLikeWithSelection,
   onCommentsClick,
   onClockClick,
   tracks,
@@ -167,6 +168,7 @@ export default function ProjectsPage({
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}
         onSoundsLikeClick={onSoundsLikeClick}
+        onSoundsLikeWithSelection={onSoundsLikeWithSelection}
         tracks={tracks}
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
