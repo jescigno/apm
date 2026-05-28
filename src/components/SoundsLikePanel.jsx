@@ -57,7 +57,6 @@ function SoundsLikePanel({
   sourceTracks = [],
   items = [],
   onRemoveSourceTrack,
-  onRemoveItem,
   onAddComplete,
   onRefresh,
   onLoadMore,
@@ -321,17 +320,6 @@ function SoundsLikePanel({
               key={item.id}
               className={`sounds-like-track ${width >= 440 ? 'sounds-like-track-expanded' : ''}${isExiting ? ' sounds-like-track--exiting' : ''}${showPlaceholder ? ' sounds-like-track--placeholder-phase' : ''}`}
             >
-              {showContent && (
-                <button
-                  type="button"
-                  className="sounds-like-track-remove"
-                  aria-label={`Remove ${title}`}
-                  onClick={() => onRemoveItem?.(item.id)}
-                  disabled={exitingId != null}
-                >
-                  <img src="/Trash.svg" alt="" />
-                </button>
-              )}
               {showPlaceholder && (
                 <div className="sounds-like-track-placeholder" aria-hidden />
               )}

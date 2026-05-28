@@ -2723,47 +2723,6 @@ body {
   transition: gap 0.2s ease, padding 0.2s ease;
 }
 
-.sounds-like-track-remove {
-  position: absolute;
-  top: 50%;
-  right: 8px;
-  transform: translateY(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.sounds-like-track:hover .sounds-like-track-remove {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.sounds-like-track-remove:disabled {
-  cursor: not-allowed;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.sounds-like-track-remove img {
-  width: 14px;
-  height: 14px;
-  display: block;
-  filter: brightness(0) invert(1);
-  opacity: 0.85;
-}
-
-.sounds-like-track-remove:hover:not(:disabled) img {
-  opacity: 1;
-}
-
 .sounds-like-track.sounds-like-track--exiting {
   pointer-events: none;
   animation: sounds-like-track-exit 0.48s ease-out forwards;

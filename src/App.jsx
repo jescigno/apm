@@ -99,10 +99,6 @@ function AppContent() {
     refreshSoundsLikeResults();
   }, [refreshSoundsLikeResults]);
 
-  const handleRemoveSoundsLikeItem = useCallback(() => {
-    refreshSoundsLikeResults();
-  }, [refreshSoundsLikeResults]);
-
   const handleSoundsLikeAddComplete = useCallback((item) => {
     const isFavorites = location.pathname.startsWith(ROUTE_FAVORITES);
     const merged = isFavorites
@@ -295,7 +291,6 @@ function AppContent() {
         sourceTracks={soundsLikeSourceTracks}
         items={soundsLikeItems}
         onRemoveSourceTrack={handleRemoveSourceTrack}
-        onRemoveItem={handleRemoveSoundsLikeItem}
         onAddComplete={handleSoundsLikeAddComplete}
         onRefresh={handleSoundsLikeRefresh}
         onLoadMore={handleSoundsLikeLoadMore}
