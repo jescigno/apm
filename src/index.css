@@ -4419,7 +4419,7 @@ body {
 
 .track-row {
   display: grid;
-  grid-template-columns: 28px 385px 1fr 100px 220px auto;
+  grid-template-columns: 28px 385px minmax(0, 1fr) 100px 220px auto;
   align-items: center;
   column-gap: 12px;
   row-gap: 20px;
@@ -5219,7 +5219,7 @@ body {
   -ms-overflow-style: none;
 }
 
-.track-comment-compose:not(.track-comment-compose--active) textarea.comment-input {
+.track-comment-compose:not(.track-comment-compose--active):not(.track-comment-compose--saved) textarea.comment-input {
   white-space: nowrap;
   overflow: hidden;
   overflow-y: hidden;
@@ -5268,6 +5268,7 @@ body {
   position: relative;
   align-self: start;
   min-width: 0;
+  cursor: text;
   /* Reserve one-line placeholder height so the row doesn't grow while editing. */
   min-height: calc(18px + 1.2 * 11px);
 }
@@ -5288,6 +5289,10 @@ body {
   align-self: start;
   padding-top: 18px;
   margin-left: -4px;
+}
+
+.track-comment-compose:not(.track-comment-compose--active):not(.track-comment-compose--saved) {
+  cursor: text;
 }
 
 .track-comment-compose--inline.track-comment-compose--active {
@@ -5380,7 +5385,7 @@ body {
   flex-shrink: 0;
 }
 
-/* 1050px and above: show all 5 icons. Below 1050px: collapse to ... menu */
+/* Wide main area: all five icons. Below ~1164px viewport (64px sidebar): … menu. */
 .track-actions-expanded {
   display: flex;
 }
@@ -5400,14 +5405,21 @@ body {
   gap: 8px;
 }
 
-/* Equivalent to viewport 1050 / 1049 with full-width main: content width = viewport − sidebar (64px) */
-@container app-content (min-width: 986px) {
+/* app-content width = viewport − sidebar (64px); 1101 ≈ 1165px viewport */
+@container app-content (min-width: 1101px) {
   .track-actions {
     min-width: 210px;
   }
 }
 
-@container app-content (max-width: 985px) {
+/* Narrow desktop: drop actions min-width so the grid doesn’t wrap desc onto a second row */
+@container app-content (max-width: 1136px) {
+  .track-actions {
+    min-width: 0;
+  }
+}
+
+@container app-content (max-width: 1100px) {
   .track-actions-expanded {
     display: none;
   }
@@ -5465,6 +5477,7 @@ body {
   font-family: inherit;
   font-weight: 400;
   cursor: pointer;
+  white-space: nowrap;
 }
 .track-sounds-like:hover {
   color: #6aa8d9;
@@ -5581,8 +5594,8 @@ body {
 /* Responsive adjustments — container width = main area (includes effect of right panel padding) */
 @container app-content (max-width: 1336px) {
   .track-row {
-    grid-template-columns: 28px 345px 1fr 80px 200px auto;
-    gap: 16px;
+    grid-template-columns: 28px minmax(0, 300px) minmax(0, 1fr) 64px minmax(120px, 190px) auto;
+    column-gap: 10px;
   }
 }
 
@@ -5860,12 +5873,110 @@ body {
 
 @container app-content (max-width: 1136px) {
   .track-row {
-    grid-template-columns: 28px 280px minmax(0, 280px) auto;
-    grid-template-areas: unset;
+    grid-template-columns: 28px minmax(0, 32%) minmax(0, 1fr) minmax(80px, 120px) auto;
+    column-gap: 10px;
+    row-gap: 0;
+    align-items: start;
   }
 
-  .track-label { display: none; }
-  .track-comment-compose { display: none; }
+  .track-num {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .track-thumb-col {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    margin-left: 0;
+    gap: 12px;
+    height: auto;
+    min-height: 72px;
+    align-self: start;
+  }
+
+  .track-thumb-col .track-info-dropdowns,
+  .track-thumb-col .track-info {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .track-thumb-col .track-title,
+  .track-thumb-col .track-title.track-title-clickable {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .track-desc {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 0;
+    max-width: none;
+    align-self: start;
+    padding-top: 18px;
+  }
+
+  .track-comment-cell {
+    grid-column: 4;
+    grid-row: 1;
+    min-width: 0;
+    align-self: start;
+  }
+
+  .track-actions {
+    grid-column: 5;
+    grid-row: 1;
+    min-width: 0;
+    width: auto;
+    align-self: start;
+  }
+
+  .track-label {
+    display: none;
+  }
+
+  .track-comment-compose:not(.track-comment-compose--active):not(.track-comment-compose--saved) textarea.comment-input {
+    white-space: normal;
+    text-overflow: unset;
+    height: calc(1.2 * 11px * 2);
+    min-height: calc(1.2 * 11px * 2);
+  }
+
+  .track-thumb {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+@container app-content (max-width: 960px) {
+  .track-row {
+    grid-template-columns: 28px minmax(0, 30%) minmax(0, 1fr) minmax(72px, 96px) auto;
+    column-gap: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
+    min-height: 96px;
+  }
+
+  .track-thumb-col {
+    gap: 10px;
+    min-height: 64px;
+  }
+
+  .track-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .track-desc {
+    font-size: 11px;
+  }
+
+  .track-comment-cell {
+    min-height: calc(18px + 1.2 * 11px * 2);
+  }
 }
 
 /* ========== Audio Player ========== */
