@@ -24,7 +24,6 @@ const MAX_FOLDER_DEPTH_INDEX = 3;
 
 /** Panel width (px) at which each extra column appears (progressive). */
 const EXTRA_COL_DESCRIPTION_AT = 460;
-const EXTRA_COL_PURPOSE_AT = 580;
 const EXTRA_COL_LAST_UPDATED_AT = 700;
 
 /** At this width (px), replace the source dropdown with inline links. */
@@ -57,7 +56,6 @@ function getInlineNavMinWidth22Px() {
 function getExtraColumnFlags(panelWidth) {
   return {
     description: panelWidth >= EXTRA_COL_DESCRIPTION_AT,
-    purpose: panelWidth >= EXTRA_COL_PURPOSE_AT,
     lastUpdated: panelWidth >= EXTRA_COL_LAST_UPDATED_AT,
   };
 }
@@ -159,7 +157,7 @@ function FolderRow({
   const expanded = expandedIds.has(folder.id);
   const canShowNested = depth < MAX_FOLDER_DEPTH_INDEX;
   const showArrow = hasChildren && canShowNested;
-  const { description: showDescription, purpose: showPurpose, lastUpdated: showLastUpdated } = extraCols;
+  const { description: showDescription, lastUpdated: showLastUpdated } = extraCols;
 
   const primaryIndentPx =
     depth * 14 + (depth > 0 ? 2 : 0) + (depth === 1 ? 2 : 0) + (depth === 1 || depth === 2 ? 4 : 0);
@@ -174,7 +172,7 @@ function FolderRow({
   return (
     <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}`}>
       <div
-        className={`projects-panel-folder-row${showDescription || showPurpose || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}`}
+        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}`}
       >
         <div
           className="projects-panel-folder-primary"
@@ -199,7 +197,6 @@ function FolderRow({
           <span className="projects-panel-folder-name">{folder.name}</span>
         </div>
         <FolderMetaColumn visible={showDescription} variant="description" text={folder.description} />
-        <FolderMetaColumn visible={showPurpose} variant="purpose" text={folder.purpose} />
         <FolderMetaColumn visible={showLastUpdated} variant="lastUpdated" text={folder.lastUpdated} />
         <button
           type="button"
@@ -404,8 +401,8 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
   }, []);
 
   const extraCols = getExtraColumnFlags(width);
-  const showAnyMetaCol = extraCols.description || extraCols.purpose || extraCols.lastUpdated;
-  const showAllFolderMeta = extraCols.description && extraCols.purpose && extraCols.lastUpdated;
+  const showAnyMetaCol = extraCols.description || extraCols.lastUpdated;
+  const showAllFolderMeta = extraCols.description && extraCols.lastUpdated;
   const showWideLayout = width >= HEADER_WIDE_LAYOUT_AT;
   const showToolbarLabels = width >= TOOLBAR_LABELED_AT;
   const showColumnHeadersRow = showAnyMetaCol || showWideLayout;
@@ -607,9 +604,6 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
             </div>
             {extraCols.description && (
               <div className="projects-panel-column-header projects-panel-column-header--description">Description</div>
-            )}
-            {extraCols.purpose && (
-              <div className="projects-panel-column-header projects-panel-column-header--purpose">Purpose</div>
             )}
             {extraCols.lastUpdated && (
               <div className="projects-panel-column-header projects-panel-column-header--last-updated">Last updated</div>

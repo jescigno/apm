@@ -4105,11 +4105,11 @@ body {
   gap: 8px;
 }
 
-/* Same width as .projects-panel-folder-more so header columns align with row data */
+/* Same width as .projects-panel-folder-more (+ its right margin) so header columns align with row data */
 .projects-panel-column-headers-spacer {
   flex-shrink: 0;
-  width: 26px;
-  min-width: 26px;
+  width: 42px;
+  min-width: 42px;
   height: 1px;
   align-self: center;
   visibility: hidden;
@@ -4117,7 +4117,7 @@ body {
 }
 
 .projects-panel-column-headers-primary {
-  flex: 4.25 1 0;
+  flex: 3.25 1 0;
   min-width: 0;
   text-align: left;
 }
@@ -4136,23 +4136,28 @@ body {
 }
 
 .projects-panel-column-header.projects-panel-column-header--name {
-  flex: 4.25 1 0;
+  flex: 3.25 1 0;
   text-transform: none;
   letter-spacing: 0.03em;
 }
 
-/* Name + Description get most width; Purpose modest; Last updated (date) stays narrow */
+/* Name narrower; Description gets the extra width; Last updated stays narrow */
 .projects-panel-column-header--description {
-  flex: 4 1 0;
-}
-
-.projects-panel-column-header--purpose {
-  flex: 1.15 1 0;
+  flex: 5.5 1 0;
 }
 
 .projects-panel-column-header--last-updated {
   flex: 0.65 1 0;
   min-width: 5.75rem;
+}
+
+.projects-panel-column-headers--with-meta .projects-panel-column-headers-primary,
+.projects-panel-column-headers--with-meta .projects-panel-column-header--name {
+  flex: 2.5 1 0;
+}
+
+.projects-panel-column-headers--with-meta .projects-panel-column-header--description {
+  flex: 6.25 1 0;
 }
 
 .projects-panel-folder-block {
@@ -4238,8 +4243,16 @@ body {
   gap: 8px;
 }
 
+.projects-panel-folder-row--with-meta .projects-panel-folder-primary {
+  flex: 2.5 1 0;
+}
+
+.projects-panel-folder-row--with-meta .projects-panel-folder-meta--description {
+  flex: 6.25 1 0;
+}
+
 .projects-panel-folder-primary {
-  flex: 4.25 1 0;
+  flex: 3.25 1 0;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -4327,11 +4340,7 @@ body {
 }
 
 .projects-panel-folder-meta--description {
-  flex: 4 1 0;
-}
-
-.projects-panel-folder-meta--purpose {
-  flex: 1.15 1 0;
+  flex: 5.5 1 0;
 }
 
 .projects-panel-folder-meta--lastUpdated {
@@ -4347,6 +4356,7 @@ body {
   justify-content: center;
   width: 26px;
   height: 26px;
+  margin-right: 16px;
   padding: 0;
   border: none;
   border-radius: 50%;
