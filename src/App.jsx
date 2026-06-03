@@ -5,12 +5,14 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ProjectsPage from './pages/ProjectsPage';
 import FavoritesPage from './pages/FavoritesPage';
+import SearchPage from './pages/SearchPage';
+import SearchFiltersPanel from './components/SearchFiltersPanel';
 import SoundsLikePanel from './components/SoundsLikePanel';
 import ProjectsPanel from './components/ProjectsPanel';
 import CommentsPanel from './components/CommentsPanel';
 import ClockPanel from './components/ClockPanel';
 import AudioPlayer from './components/AudioPlayer';
-import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS } from './constants/routes';
+import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from './constants/routes';
 import {
   PROJECTS_TRACKS,
   FAVORITES_TRACKS,
@@ -187,6 +189,12 @@ function AppContent() {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (location.pathname === ROUTE_SEARCH) {
+      setProjectsPanelOpen(false);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!soundsLikePanelOpen) {
       setSoundsLikePanelWidth(PANEL_MIN_WIDTH);
     }
@@ -234,15 +242,17 @@ function AppContent() {
           : 0;
   /** Reserve min panel width so main layout stays fixed; wider panel draws on top without reflow. */
   const mainPaddingRight = rightPanelOpen ? Math.min(rightPanelWidth, PANEL_MIN_WIDTH) : 0;
+  const isSearchRoute = location.pathname === ROUTE_SEARCH;
 
   return (
     <div className={currentTrack ? 'app-root player-visible' : 'app-root'}>
       <Header onOpenProjectsPanel={openProjectsPanel} />
       <Sidebar />
       <div
-        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}`}
+        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}`}
         style={rightPanelOpen ? { paddingRight: `${mainPaddingRight}px` } : undefined}
       >
+        {isSearchRoute && <SearchFiltersPanel />}
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
@@ -278,6 +288,7 @@ function AppContent() {
                 />
               }
             />
+            <Route path={ROUTE_SEARCH} element={<SearchPage />} />
           </Routes>
         </main>
       </div>

@@ -1,0 +1,41 @@
+/** Quick filter shortcuts (Search filters panel). */
+export const SEARCH_QUICK_FILTERS = [
+  'New Releases',
+  'Trailers',
+  'Building',
+  'Has Lyrics',
+  'Acoustic Only',
+  'Solo',
+  'Vintage',
+  'Instrumental Only',
+  'Indie Rock',
+  'Promo / Ads: 30',
+  'Promo / Ads: 60',
+  'Exclude Classical',
+  'Has Stems',
+  'Archival',
+  'Explicit Lyrics',
+];
+
+/** Tag category rows (Search filters panel — drill-down in a future step). */
+export const SEARCH_TAG_CATEGORIES = [
+  'Mood',
+  'Genre',
+  'Music For',
+  'Character',
+  'Movement',
+  'Musical Form',
+  'Instruments & Groupings',
+  'Voices & Groupings',
+  'Key',
+  'BPM & Tempo',
+  'Duration',
+  'Music with FX',
+  'Era',
+  'Region',
+  'Language',
+  'Lyrics Subject',
+  'Recording Date',
+  'Release Date',
+  'Track Type',
+];

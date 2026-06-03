@@ -158,10 +158,15 @@ function Header({ onOpenProjectsPanel }) {
           <img src="/APMLogo.svg" alt="apm music" className="logo-img" />
         </a>
         <div className="search-bar">
-          <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
+          <img
+            src="/icons/Search.svg"
+            alt=""
+            className="search-icon"
+            width={20}
+            height={20}
+            draggable={false}
+            aria-hidden
+          />
           <input type="text" placeholder="Add keywords, paste a link, or try a prompt like 'climactic mountain summit at dawn'" />
         </div>
         <div className="header-end-wide">
