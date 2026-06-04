@@ -1028,9 +1028,20 @@ body {
   min-width: 0;
 }
 
+.content-carousel--recent-searches {
+  --search-carousel-card-search-height: 86px;
+  --search-carousel-card-search-v-pad: 14px;
+  --search-carousel-card-search-label-size: 14px;
+  --search-carousel-card-search-label-lh: 1.35;
+  --search-carousel-card-search-label-lines: 2;
+  --search-carousel-card-search-meta-gap: 4px;
+  --search-carousel-card-search-subtitle-size: 12px;
+  --search-carousel-card-search-subtitle-lh: 1.35;
+}
+
 .content-carousel--recent-searches .content-carousel-track {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(2, auto);
+  grid-template-rows: repeat(2, var(--search-carousel-card-search-height));
   overflow: visible;
 }
 
@@ -1149,7 +1160,7 @@ body {
 
   .content-carousel--recent-searches .content-carousel-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, auto);
+    grid-template-rows: repeat(2, var(--search-carousel-card-search-height));
   }
 
   .content-carousel--recent-searches .content-carousel-slide:nth-child(n + 5) {
@@ -1220,7 +1231,8 @@ body {
   align-items: center;
   gap: 4px;
   width: 100%;
-  min-height: 72px;
+  height: var(--search-carousel-card-search-height);
+  min-height: var(--search-carousel-card-search-height);
   padding: 0 6px 0 0;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
@@ -1240,18 +1252,19 @@ body {
 .search-carousel-card-search-main {
   display: flex;
   flex: 1;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   min-width: 0;
-  min-height: 72px;
+  height: 100%;
   margin: 0;
-  padding: 14px 8px 14px 16px;
+  padding: var(--search-carousel-card-search-v-pad) 8px var(--search-carousel-card-search-v-pad) 16px;
   border: none;
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  box-sizing: border-box;
   transition: opacity 0.15s ease;
 }
 
@@ -1263,6 +1276,7 @@ body {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
+  margin-top: 1px;
   display: block;
   object-fit: contain;
   opacity: 0.55;
@@ -1550,6 +1564,19 @@ body {
 
 .search-carousel-card--search .search-carousel-card-meta {
   padding-top: 0;
+  gap: 2px;
+  flex: 1;
+  align-self: flex-start;
+  min-height: calc(
+    var(--search-carousel-card-search-label-size) * var(--search-carousel-card-search-label-lh) *
+      var(--search-carousel-card-search-label-lines) + 2px +
+      var(--search-carousel-card-search-subtitle-size) * var(--search-carousel-card-search-subtitle-lh)
+  );
+}
+
+.search-carousel-card--search .search-carousel-card-subtitle {
+  flex-shrink: 0;
+  margin-top: 0;
 }
 
 .search-carousel-card--track,

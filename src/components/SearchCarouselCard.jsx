@@ -4,7 +4,7 @@ const RECENT_SEARCH_MENU_ITEMS = [
   { id: 'search', label: 'Search', icon: '/icons/Search.svg' },
   { id: 'sounds-like', label: 'Sounds Like', icon: '/player-actions/SoundsLike.svg' },
   { id: 'share', label: 'Share', icon: '/icons/Upload.svg' },
-  { id: 'add-to-project', label: 'Add to a Project', icon: '/icons/Add.svg' },
+  { id: 'add-to-favorites', label: 'Add to Favorites', icon: '/player-actions/Favorite.svg' },
   { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/Close.svg' },
 ];
 
@@ -12,6 +12,7 @@ const RECENTLY_PLAYED_MENU_ITEMS = [
   { id: 'go-to-track', label: 'Go to Track', icon: '/TrackDetails.svg' },
   { id: 'sounds-like', label: 'Sounds Like', icon: '/player-actions/SoundsLike.svg' },
   { id: 'share', label: 'Share', icon: '/icons/Upload.svg' },
+  { id: 'add-to-favorites', label: 'Add to Favorites', icon: '/player-actions/Favorite.svg' },
   { id: 'add-to-project', label: 'Add to a Project', icon: '/icons/Add.svg' },
   { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/Close.svg' },
 ];
@@ -99,14 +100,16 @@ function RecentSearchCard({ item, onRemoveFromHistory }) {
           draggable={false}
           aria-hidden
         />
-        <span className="search-carousel-card-label">{item.label}</span>
+        <span className="search-carousel-card-meta">
+          <span className="search-carousel-card-label">{item.label}</span>
+          {item.subtitle && <span className="search-carousel-card-subtitle">{item.subtitle}</span>}
+        </span>
       </button>
       <SearchCarouselOverflowMenu
         itemLabel={item.label}
         itemId={item.id}
         menuItems={RECENT_SEARCH_MENU_ITEMS}
         onRemoveFromHistory={onRemoveFromHistory}
-        showOnHover
       />
     </div>
   );
