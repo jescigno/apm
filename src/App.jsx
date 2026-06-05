@@ -127,24 +127,24 @@ function AppContent() {
     return () => window.clearTimeout(t);
   }, [enterHighlightTrackNum]);
 
-  const openSoundsLikePanel = useCallback(() => {
+  const openSoundsLikePanel = useCallback((tracksOrTrack) => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
+    const sourceTracks = Array.isArray(tracksOrTrack)
+      ? tracksOrTrack
+      : tracksOrTrack
+        ? [tracksOrTrack]
+        : [];
     setProjectsPanelOpen(false);
     setCommentsPanelOpen(false);
     setClockPanelOpen(false);
-    setSoundsLikeSourceTracks([]);
+    setSoundsLikeSourceTracks(sourceTracks);
     setSoundsLikePanelOpen(true);
   }, [location.pathname]);
 
   const openSoundsLikePanelWithSelection = useCallback((tracks) => {
-    if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
     if (!tracks?.length) return;
-    setProjectsPanelOpen(false);
-    setCommentsPanelOpen(false);
-    setClockPanelOpen(false);
-    setSoundsLikeSourceTracks(tracks);
-    setSoundsLikePanelOpen(true);
-  }, [location.pathname]);
+    openSoundsLikePanel(tracks);
+  }, [openSoundsLikePanel]);
 
   const closeSoundsLikePanel = useCallback(() => {
     setSoundsLikePanelOpen(false);

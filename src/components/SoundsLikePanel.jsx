@@ -63,7 +63,9 @@ function SoundsLikePanel({
   onItemEnterAnimationComplete,
 }) {
   const hasSourceTracks = sourceTracks.length > 0;
+  const isSingleSourceTrack = sourceTracks.length === 1;
   const [sourceTracksExpanded, setSourceTracksExpanded] = useState(false);
+  const showExpandedSourceTracks = isSingleSourceTrack || sourceTracksExpanded;
   const [collapsedStackLayout, setCollapsedStackLayout] = useState({ visible: 0, overflow: 0 });
   const collapsedStackRef = useRef(null);
   const resizeRef = useRef(null);
@@ -123,7 +125,7 @@ function SoundsLikePanel({
   }, [sourceTracks.map((track) => track.id).join('|')]);
 
   useLayoutEffect(() => {
-    if (sourceTracksExpanded || !hasSourceTracks) return;
+    if (showExpandedSourceTracks || !hasSourceTracks || isSingleSourceTrack) return;
 
     const measure = () => {
       const el = collapsedStackRef.current;
@@ -143,12 +145,12 @@ function SoundsLikePanel({
       observer.observe(collapsedStackRef.current);
     }
     return () => observer.disconnect();
-  }, [sourceTracksExpanded, hasSourceTracks, sourceTracks.length, width, isOpen]);
+  }, [showExpandedSourceTracks, hasSourceTracks, isSingleSourceTrack, sourceTracks.length, width, isOpen]);
 
-  const visibleSourceTracks = sourceTracksExpanded
+  const visibleSourceTracks = showExpandedSourceTracks
     ? sourceTracks
     : sourceTracks.slice(0, collapsedStackLayout.visible);
-  const hiddenSourceTrackCount = sourceTracksExpanded ? 0 : collapsedStackLayout.overflow;
+  const hiddenSourceTrackCount = showExpandedSourceTracks ? 0 : collapsedStackLayout.overflow;
 
   const getSourceThumbSrc = (track) => {
     const thumbIndex = ((track.num ?? 1) - 1) % TRACK_THUMBNAILS.length;
@@ -232,32 +234,43 @@ function SoundsLikePanel({
       </div>
       {hasSourceTracks && (
         <div
-          className={`sounds-like-panel-source-tracks${sourceTracksExpanded ? '' : ' sounds-like-panel-source-tracks--collapsed'}`}
+          className={`sounds-like-panel-source-tracks${showExpandedSourceTracks ? '' : ' sounds-like-panel-source-tracks--collapsed'}`}
         >
-          {sourceTracksExpanded ? (
+          {showExpandedSourceTracks ? (
             sourceTracks.map((track) => (
               <div key={track.id} className="sounds-like-panel-source-track">
-                <button
-                  type="button"
-                  className="sounds-like-panel-source-remove"
-                  aria-label={`Remove ${track.title}`}
-                  onClick={() => onRemoveSourceTrack?.(track.id)}
-                >
-                  <img src="/Trash.svg" alt="" />
-                </button>
-                <button
-                  type="button"
-                  className="sounds-like-panel-source-thumb-btn"
-                  aria-label="Collapse selected tracks"
-                  onClick={() => setSourceTracksExpanded(false)}
-                >
+                {!isSingleSourceTrack && (
+                  <button
+                    type="button"
+                    className="sounds-like-panel-source-remove"
+                    aria-label={`Remove ${track.title}`}
+                    onClick={() => onRemoveSourceTrack?.(track.id)}
+                  >
+                    <img src="/Trash.svg" alt="" />
+                  </button>
+                )}
+                {isSingleSourceTrack ? (
                   <img
                     src={getSourceThumbSrc(track)}
                     alt=""
                     className="sounds-like-panel-source-thumb"
                     aria-hidden
                   />
-                </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="sounds-like-panel-source-thumb-btn"
+                    aria-label="Collapse selected tracks"
+                    onClick={() => setSourceTracksExpanded(false)}
+                  >
+                    <img
+                      src={getSourceThumbSrc(track)}
+                      alt=""
+                      className="sounds-like-panel-source-thumb"
+                      aria-hidden
+                    />
+                  </button>
+                )}
                 <div className="sounds-like-panel-source-text">
                   <span className="sounds-like-panel-source-title">{track.title}</span>
                   {track.id && (
