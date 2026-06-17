@@ -5671,7 +5671,7 @@ body {
   transform: translateY(-2px);
 }
 
-.track-row.track-row--compact-versions-stems .track-dropdowns select {
+.track-row.track-row--compact-versions-stems .track-dropdowns .track-dropdown-label {
   padding-bottom: 0;
   background-position: right calc(50% + 2px);
 }
@@ -5979,6 +5979,10 @@ body {
   background: var(--accent-red);
   color: #fff;
   border-radius: 0;
+}
+
+.track-row--selected .track-version-badge.track-version-badge--on-thumb {
+  color: #fff;
 }
 
 .track-title {
@@ -6317,14 +6321,15 @@ body {
   height: 14px;
 }
 
-.track-dropdowns select {
+.track-dropdowns .track-dropdown-label {
+  display: inline-block;
   background: transparent;
   border: none;
   color: #7BBCEB;
   padding: 4px 0;
   font-size: 12px;
-  cursor: pointer;
-  appearance: none;
+  font-family: inherit;
+  cursor: default;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237BBCEB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right center;
@@ -6332,7 +6337,7 @@ body {
   padding-right: 18px;
 }
 
-.track-dropdowns select:hover {
+.track-dropdowns .track-dropdown-label:hover {
   text-decoration: underline;
 }
 

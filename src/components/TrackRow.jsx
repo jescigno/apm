@@ -658,8 +658,8 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             </button>
           ) : (!compact || showVersionsStems) ? (
             <div className="track-dropdowns">
-              <select aria-label="Versions"><option>Versions ({track.versions})</option></select>
-              <select aria-label="Stems"><option>Stems ({track.stems ?? 4})</option></select>
+              <span className="track-dropdown-label">Versions ({track.versions})</span>
+              <span className="track-dropdown-label">Stems ({track.stems ?? 4})</span>
             </div>
           ) : null}
         </div>
