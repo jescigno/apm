@@ -319,6 +319,20 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     ? ALBUM_THUMB_ORDER[(item.num - 1) % ALBUM_THUMB_ORDER.length]
     : (item.num - 1) % TRACK_THUMBNAILS.length;
   const thumbSrc = TRACK_THUMBNAILS[thumbIndex];
+  const thumbStyle = {
+    backgroundImage: `url('${thumbSrc}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
+
+  const renderTrackThumb = (className = 'track-thumb') => (
+    <div className={`track-thumb-wrap${className.includes('mobile') ? ' track-thumb-wrap--mobile' : ''}`}>
+      <div className={className} style={thumbStyle} />
+      {titleBadge && (
+        <span className="track-version-badge track-version-badge--on-thumb">{titleBadge}</span>
+      )}
+    </div>
+  );
   const canPlay = item.audioUrl && onPlay;
   const showPlayingIcon = isCurrentTrack && isPlaying;
   const showPauseIcon = isCurrentTrack && !isPlaying;
@@ -439,33 +453,23 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               </button>
             )}
           </div>
-          <div
-            className="track-thumb track-thumb--mobile"
-            style={{
-              backgroundImage: `url('${thumbSrc}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          {renderTrackThumb('track-thumb track-thumb--mobile')}
         </div>
         <div className="track-mobile-text">
-          <div className="track-title-badge-wrap">
-            {titleBadge && <span className="track-version-badge">{titleBadge}</span>}
-            {enableTrackDetailsOverlay ? (
-              <button
-                type="button"
-                className="track-title track-title-clickable"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTrackDetailsOverlayOpen(true);
-                }}
-              >
-                {item.title}
-              </button>
-            ) : (
-              <span className="track-title">{item.title}</span>
-            )}
-          </div>
+          {enableTrackDetailsOverlay ? (
+            <button
+              type="button"
+              className="track-title track-title-clickable"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTrackDetailsOverlayOpen(true);
+              }}
+            >
+              {item.title}
+            </button>
+          ) : (
+            <span className="track-title">{item.title}</span>
+          )}
           <p className="track-desc track-desc--mobile-below-title">{item.desc}</p>
           <p className="track-recorded track-recorded--mobile">Recorded {item.recorded}</p>
         </div>
@@ -618,32 +622,20 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         )}
       </span>
       <div className="track-thumb-col">
-        <div
-          className="track-thumb"
-          style={{
-            backgroundImage: `url('${thumbSrc}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+        {renderTrackThumb()}
         <div className="track-info-dropdowns">
           <div className="track-info">
-            <div className="track-title-badge-wrap">
-              {titleBadge && (
-                <span className="track-version-badge">{titleBadge}</span>
-              )}
-              {enableTrackDetailsOverlay ? (
-                <button
-                  type="button"
-                  className="track-title track-title-clickable"
-                  onClick={(e) => { e.stopPropagation(); setTrackDetailsOverlayOpen(true); }}
-                >
-                  {item.title}
-                </button>
-              ) : (
-                <span className="track-title">{item.title}</span>
-              )}
-            </div>
+            {enableTrackDetailsOverlay ? (
+              <button
+                type="button"
+                className="track-title track-title-clickable"
+                onClick={(e) => { e.stopPropagation(); setTrackDetailsOverlayOpen(true); }}
+              >
+                {item.title}
+              </button>
+            ) : (
+              <span className="track-title">{item.title}</span>
+            )}
             <div className="track-id-row">
               <span className="track-id">{item.id}</span>
               <button type="button" className="track-id-icon-btn" aria-label="Track info">
@@ -703,7 +695,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               outlineOverlayText: '0:45 - 1:30',
               outlineOverlaySegmentTime: '0:45 - 1:30',
             })}
-            {...(isAlbum && { outlineColor: '#ffffff' })}
+            {...(isAlbum && item.num !== 2 && item.num !== 5 && { outlineColor: '#ffffff' })}
           />
         </div>
       ) : (

@@ -147,7 +147,7 @@ export default function FavoritesPage({
         showSearchesTab
         tracks={tracks}
         enableTrackDetailsOverlay
-        trackTitleBadges={{ 2: 'VERSION', 4: 'STEM' }}
+        trackTitleBadges={{ 2: 'VERSION', 5: 'VERSION' }}
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         showVersionsStems
