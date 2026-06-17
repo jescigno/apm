@@ -103,6 +103,7 @@ export default function ProjectsPage({
   commentsPanelOpen,
   clockPanelOpen,
   onSoundsLikeClick,
+  onPromoSoundsLikeClick,
   onSoundsLikeWithSelection,
   onCommentsClick,
   onClockClick,
@@ -163,7 +164,7 @@ export default function ProjectsPage({
         soundsLikePanelOpen={soundsLikePanelOpen}
         commentsPanelOpen={commentsPanelOpen}
         clockPanelOpen={clockPanelOpen}
-        onSoundsLikeClick={onSoundsLikeClick}
+        onSoundsLikeClick={onPromoSoundsLikeClick}
       />
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}

@@ -127,6 +127,15 @@ function AppContent() {
     return () => window.clearTimeout(t);
   }, [enterHighlightTrackNum]);
 
+  const openSoundsLikePanelFromPromo = useCallback(() => {
+    if (location.pathname !== ROUTE_PROJECT_DETAILS) return;
+    setProjectsPanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen(false);
+    setSoundsLikeSourceTracks([]);
+    setSoundsLikePanelOpen(true);
+  }, [location.pathname]);
+
   const openSoundsLikePanel = useCallback((tracksOrTrack) => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS && location.pathname !== ROUTE_FAVORITES) return;
     const sourceTracks = Array.isArray(tracksOrTrack)
@@ -266,6 +275,7 @@ function AppContent() {
                   commentsPanelOpen={commentsPanelOpen}
                   clockPanelOpen={clockPanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
+                  onPromoSoundsLikeClick={openSoundsLikePanelFromPromo}
                   onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
                   onCommentsClick={openCommentsPanel}
                   onClockClick={openClockPanel}
