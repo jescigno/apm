@@ -1,15 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
 import ProjectCollabBar from '../components/ProjectCollabBar';
 import TrackList from '../components/TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+import {
+  CURRENT_PROJECT_FOLDER_ID,
+  getFolderChildren,
+  getFolderPath,
+  PROJECTS_PANEL_FOLDER_TREE,
+} from '../constants/projectsPanelTree';
 
-const FOLDER_HIERARCHY = [
-  { id: 'music-for-sports', label: 'APM MARKETING 2', visible: true },
-  { id: 'nfl', label: '2026 Milan Olympics Updates', visible: true },
-  { id: 'mnf', label: 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)', visible: true },
-];
+const ITALY_PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
+const ITALY_PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
+const ITALY_PROJECT_DESCRIPTION =
+  'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -99,6 +104,8 @@ function BreadcrumbText({ children }) {
 const DEFAULT_DOC_TITLE = 'apm music';
 
 export default function ProjectsPage({
+  activeFolderId,
+  onFolderSelect,
   soundsLikePanelOpen,
   commentsPanelOpen,
   clockPanelOpen,
@@ -108,6 +115,7 @@ export default function ProjectsPage({
   onCommentsClick,
   onClockClick,
   tracks,
+  projectTrackCount = 0,
   enterHighlightTrackNum,
   scrollToBottomSignal,
 }) {
@@ -118,6 +126,28 @@ export default function ProjectsPage({
     };
   }, []);
 
+  const folderPath = useMemo(
+    () => getFolderPath(PROJECTS_PANEL_FOLDER_TREE, activeFolderId),
+    [activeFolderId]
+  );
+  const activeFolder = folderPath[folderPath.length - 1] ?? null;
+  const childFolders = useMemo(
+    () => getFolderChildren(PROJECTS_PANEL_FOLDER_TREE, activeFolderId),
+    [activeFolderId]
+  );
+  const projectTitle =
+    activeFolderId === CURRENT_PROJECT_FOLDER_ID
+      ? ITALY_PROJECT_TITLE
+      : activeFolder?.name ?? 'Project';
+  const projectTitleTooltip =
+    activeFolderId === CURRENT_PROJECT_FOLDER_ID
+      ? ITALY_PROJECT_TITLE_TOOLTIP
+      : activeFolder?.name ?? 'Project';
+  const projectDescription =
+    activeFolderId === CURRENT_PROJECT_FOLDER_ID
+      ? ITALY_PROJECT_DESCRIPTION
+      : activeFolder?.description ?? '';
+
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -127,7 +157,7 @@ export default function ProjectsPage({
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const visibleFolders = FOLDER_HIERARCHY.filter((f) => f.visible || f.locked);
+  const visibleFolders = folderPath;
 
   return (
     <div className="projects-page">
@@ -140,7 +170,13 @@ export default function ProjectsPage({
                   visibleFolders.map((folder, i) => (
                     <span key={folder.id} style={{ display: 'contents' }}>
                       {i > 0 && <span className="breadcrumb-sep"> / </span>}
-                      <BreadcrumbSegment label={folder.label} />
+                      <BreadcrumbSegment
+                        label={
+                          folder.id === CURRENT_PROJECT_FOLDER_ID
+                            ? ITALY_PROJECT_TITLE
+                            : folder.name
+                        }
+                      />
                     </span>
                   ))
                 ) : (
@@ -161,6 +197,12 @@ export default function ProjectsPage({
       </div>
 
       <ProjectCard
+        title={projectTitle}
+        titleTooltip={projectTitleTooltip}
+        mobileHeaderTitle={projectTitle}
+        description={projectDescription}
+        useDefaultThumbnail={tracks.length === 0}
+        hasTracks={tracks.length > 0}
         soundsLikePanelOpen={soundsLikePanelOpen}
         commentsPanelOpen={commentsPanelOpen}
         clockPanelOpen={clockPanelOpen}
@@ -171,9 +213,13 @@ export default function ProjectsPage({
         onSoundsLikeClick={onSoundsLikeClick}
         onSoundsLikeWithSelection={onSoundsLikeWithSelection}
         tracks={tracks}
+        projectTrackCount={projectTrackCount}
+        childFolders={childFolders}
+        onFolderSelect={onFolderSelect}
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
+        emptyTracksMessage="No tracks yet."
       />
     </div>
   );

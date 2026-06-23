@@ -24,7 +24,36 @@ const GRID_HEIGHTS = [
   { mq: '', height: 220 },
 ];
 
-function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, onSoundsLikeClick }) {
+function ProjectThumbnailVisual({ useDefaultThumbnail }) {
+  if (useDefaultThumbnail) {
+    return (
+      <div className="project-default-thumb" aria-hidden="true">
+        <img src="/APMLogo.svg" alt="" className="project-default-thumb__logo" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="image-grid single">
+      {PROJECT_IMAGES.map((src, i) => (
+        <img key={i} className="grid-img" src={src} alt="" />
+      ))}
+    </div>
+  );
+}
+
+function ProjectCard({
+  title = PROJECT_TITLE,
+  titleTooltip = PROJECT_TITLE_TOOLTIP,
+  mobileHeaderTitle = MOBILE_HEADER_TITLE,
+  description = PROJECT_DESCRIPTION,
+  useDefaultThumbnail = false,
+  hasTracks = true,
+  soundsLikePanelOpen,
+  commentsPanelOpen,
+  clockPanelOpen,
+  onSoundsLikeClick,
+}) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
   const titleRef = useRef(null);
@@ -39,7 +68,7 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
   const [gridHeight, setGridHeight] = useState(220);
   const [isTitleHovered, setIsTitleHovered] = useState(false);
   const [titleTooltipRect, setTitleTooltipRect] = useState(null);
-  const hideSoundsLikePromo = soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
+  const hideSoundsLikePromo = !hasTracks || soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
 
   useEffect(() => {
     const update = () => {
@@ -182,8 +211,8 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
         </button>
         <div className="project-details-overlay-panel">
           <div className="project-details-overlay-panel-scroll">
-            <h3 className="project-details-overlay-title">{PROJECT_TITLE}</h3>
-            <p className="project-details-overlay-description">{PROJECT_DESCRIPTION}</p>
+            <h3 className="project-details-overlay-title">{title}</h3>
+            <p className="project-details-overlay-description">{description}</p>
             <div className="project-details-overlay-keywords">
               {KEYWORDS.map((kw, i) => (
                 <span key={i} className="keyword">
@@ -216,7 +245,7 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
             }
           }}
           tabIndex={mobileTitleTruncated ? 0 : undefined}
-          aria-label={MOBILE_HEADER_TITLE}
+          aria-label={mobileHeaderTitle}
         >
           <span
             ref={mobileTitleContainerRef}
@@ -234,20 +263,16 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                 .join(' ')}
               onAnimationEnd={handleMobileTitleAnimEnd}
             >
-              {MOBILE_HEADER_TITLE}
+              {mobileHeaderTitle}
             </span>
           </span>
         </h1>
         <div className="project-mobile-hero__row">
           <div className="project-mobile-hero__visuals" aria-hidden="true">
-            <div className="image-grid single">
-              {PROJECT_IMAGES.map((src, i) => (
-                <img key={i} className="grid-img" src={src} alt="" />
-              ))}
-            </div>
+            <ProjectThumbnailVisual useDefaultThumbnail={useDefaultThumbnail} />
           </div>
           <div className="project-mobile-hero__text">
-            <p className="project-mobile-hero__desc">{PROJECT_DESCRIPTION}</p>
+            <p className="project-mobile-hero__desc">{description}</p>
             <button
               type="button"
               className="project-mobile-hero__details"
@@ -272,11 +297,7 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
       )}
       <div className="project-card project-card--desktop">
       <div className="project-visuals">
-        <div className="image-grid single">
-          {PROJECT_IMAGES.map((src, i) => (
-            <img key={i} className="grid-img" src={src} alt="" />
-          ))}
-        </div>
+        <ProjectThumbnailVisual useDefaultThumbnail={useDefaultThumbnail} />
         <div className="project-actions project-actions-inline">
           <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
         </div>
@@ -296,11 +317,11 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                 >
                   <div className="project-title-row">
                     <div className="project-title-wrap">
-                      <h2 className="project-title">{PROJECT_TITLE}</h2>
+                      <h2 className="project-title">{title}</h2>
                     </div>
                   </div>
                   <div className="project-description">
-                    <p>{PROJECT_DESCRIPTION}</p>
+                    <p>{description}</p>
                   </div>
                   <div className="keywords">
                     {KEYWORDS.map((kw, i) => (
@@ -319,7 +340,7 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                       onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
                       onMouseLeave={() => setIsTitleHovered(false)}
                     >
-                      <h2 className="project-title">{PROJECT_TITLE}</h2>
+                      <h2 className="project-title">{title}</h2>
                       {isTitleHovered && titleTooltipRect && createPortal(
                         <span
                           className="project-title-tooltip project-title-tooltip-portal"
@@ -329,14 +350,14 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                             bottom: window.innerHeight - titleTooltipRect.bottom + 6,
                           }}
                         >
-                          {PROJECT_TITLE_TOOLTIP}
+                          {titleTooltip}
                         </span>,
                         document.body
                       )}
                     </div>
                   </div>
                   <div className="project-description">
-                    <p>{PROJECT_DESCRIPTION}</p>
+                    <p>{description}</p>
                   </div>
                   {!isTruncated && (
                     <div className="keywords">
@@ -359,7 +380,7 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                     onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
                     onMouseLeave={() => setIsTitleHovered(false)}
                   >
-                    <h2 className="project-title">{PROJECT_TITLE}</h2>
+                    <h2 className="project-title">{title}</h2>
                     {isTitleHovered && titleTooltipRect && createPortal(
                       <span
                         className="project-title-tooltip project-title-tooltip-portal"
@@ -369,14 +390,14 @@ function ProjectCard({ soundsLikePanelOpen, commentsPanelOpen, clockPanelOpen, o
                           bottom: window.innerHeight - titleTooltipRect.bottom + 6,
                         }}
                       >
-                        {PROJECT_TITLE_TOOLTIP}
+                        {titleTooltip}
                       </span>,
                       document.body
                     )}
                   </div>
                 </div>
                 <div className="project-description">
-                  <p>{PROJECT_DESCRIPTION}</p>
+                  <p>{description}</p>
                 </div>
                 <div className="keywords">
                   {KEYWORDS.map((kw, i) => (

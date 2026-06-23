@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import TrackRow from './TrackRow';
+import ProjectFolderRow from './ProjectFolderRow';
 import { usePlayer } from '../context/PlayerContext';
+import { getFolderTrackCount } from '../constants/projectsPanelTree';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 export const SAMPLE_AUDIO = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
@@ -228,11 +230,16 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect })
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
+  const hasChildFolders =
+    activeTab === 'tracks' &&
+    Array.isArray(childFolders) &&
+    childFolders.length > 0;
+  const foldersOnlyView = hasChildFolders && tracks.length === 0;
   const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const listEndRef = useRef(null);
   const [mobileTrackLayout, setMobileTrackLayout] = useState(false);
@@ -317,7 +324,10 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               selectionBar
             ) : (
               <>
-                <span className="track-count">{trackCountLabel}</span>
+                {!foldersOnlyView && (
+                  <span className="track-count">{trackCountLabel}</span>
+                )}
+                {!foldersOnlyView && (
                 <div className="tracks-actions">
                   <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
                   <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
@@ -325,6 +335,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                   </button>
                   <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
                 </div>
+                )}
               </>
             )}
           </div>
@@ -338,21 +349,35 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       {!(hideTracksHeader && activeTab === 'tracks') && !tabsInBreadcrumb && (
         <div className="track-list-boundary track-list-top" aria-hidden="true" />
       )}
-      {hideTracksHeader && activeTab === 'tracks' && (
+      {hideTracksHeader && activeTab === 'tracks' && (hasSelection || !foldersOnlyView) && (
         <div className="tracks-mobile-toolbar">
           {hasSelection ? (
             selectionBar
           ) : (
             <>
-              <span className="tracks-mobile-toolbar-count">{tracks.length} TITLES</span>
+              {!foldersOnlyView && (
+                <span className="tracks-mobile-toolbar-count">{trackCountLabel}</span>
+              )}
+              {!foldersOnlyView && (
               <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
                 <img src="/Reorder.svg" alt="" /> REORDER
               </button>
+              )}
             </>
           )}
         </div>
       )}
       <div className="track-list">
+        {hasChildFolders &&
+          childFolders.map((folder) => (
+            <ProjectFolderRow
+              key={`folder-${folder.id}`}
+              folder={folder}
+              trackCount={getFolderTrackCount(folder, projectTrackCount)}
+              onSelect={onFolderSelect}
+              mobileLayout={mobileTrackLayout}
+            />
+          ))}
         {activeTab === 'tracks' &&
           tracks.map((track) => (
             <TrackRow
@@ -379,6 +404,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               onSelectChange={handleSelectChange}
             />
           ))}
+        {activeTab === 'tracks' && tracks.length === 0 && !hasChildFolders && emptyTracksMessage && (
+          <div className="track-list-empty">{emptyTracksMessage}</div>
+        )}
         {activeTab === 'albums' &&
           ALBUMS.map((album) => (
             <TrackRow

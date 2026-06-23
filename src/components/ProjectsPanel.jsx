@@ -8,6 +8,8 @@ import {
   PROJECTS_PANEL_FOLDER_TREE,
   PROJECTS_PANEL_INLINE_NAV,
   PROJECTS_PANEL_SOURCES,
+  getFolderAncestorIds,
+  getFolderUpdatedAtLabel,
 } from '../constants/projectsPanelTree';
 
 const FOLDER_MORE_MENU_WIDTH = 220;
@@ -148,6 +150,8 @@ function FolderRow({
   showMoreAlways,
   onFolderMoreClick,
   folderMoreOpenId,
+  selectedFolderId,
+  onFolderSelect,
   /** false only for 2nd+ top-level roots; nested rows omit this (default true) */
   isFirstInRootList = true,
   /** false except for the last top-level root; nested rows omit (default true) */
@@ -157,6 +161,7 @@ function FolderRow({
   const expanded = expandedIds.has(folder.id);
   const canShowNested = depth < MAX_FOLDER_DEPTH_INDEX;
   const showArrow = hasChildren && canShowNested;
+  const isSelected = selectedFolderId === folder.id;
   const { description: showDescription, lastUpdated: showLastUpdated } = extraCols;
 
   const primaryIndentPx =
@@ -172,11 +177,30 @@ function FolderRow({
   return (
     <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}`}>
       <div
-        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}`}
+        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}${showDescription ? ' projects-panel-folder-row--col-description' : ''}${showLastUpdated ? ' projects-panel-folder-row--col-last-updated' : ''}${isSelected ? ' projects-panel-folder-row--selected' : ''}`}
+        style={
+          showDescription || showLastUpdated
+            ? { '--folder-indent': `${primaryIndentPx}px` }
+            : undefined
+        }
+        aria-current={isSelected ? 'page' : undefined}
       >
         <div
-          className="projects-panel-folder-primary"
-          style={{ paddingLeft: `${primaryIndentPx}px` }}
+          className="projects-panel-folder-primary projects-panel-folder-primary--selectable"
+          style={
+            showDescription || showLastUpdated
+              ? undefined
+              : { paddingLeft: `${primaryIndentPx}px` }
+          }
+          role="button"
+          tabIndex={0}
+          onClick={() => onFolderSelect?.(folder.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onFolderSelect?.(folder.id);
+            }
+          }}
         >
           <span className="projects-panel-folder-expand-slot">
             {showArrow ? (
@@ -197,7 +221,7 @@ function FolderRow({
           <span className="projects-panel-folder-name">{folder.name}</span>
         </div>
         <FolderMetaColumn visible={showDescription} variant="description" text={folder.description} />
-        <FolderMetaColumn visible={showLastUpdated} variant="lastUpdated" text={folder.lastUpdated} />
+        <FolderMetaColumn visible={showLastUpdated} variant="lastUpdated" text={getFolderUpdatedAtLabel(folder)} />
         <button
           type="button"
           className={`projects-panel-folder-more${showMoreAlways ? ' projects-panel-folder-more--always' : ''}`}
@@ -225,6 +249,8 @@ function FolderRow({
               showMoreAlways={showMoreAlways}
               onFolderMoreClick={onFolderMoreClick}
               folderMoreOpenId={folderMoreOpenId}
+              selectedFolderId={selectedFolderId}
+              onFolderSelect={onFolderSelect}
             />
           ))}
         </div>
@@ -233,7 +259,16 @@ function FolderRow({
   );
 }
 
-function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth = 263, maxWidth = 600 }) {
+function ProjectsPanel({
+  isOpen,
+  onClose,
+  width = 263,
+  onWidthChange,
+  minWidth = 263,
+  maxWidth = 600,
+  selectedFolderId = null,
+  onFolderSelect,
+}) {
   const resizeRef = useRef(null);
   const headerMainRef = useRef(null);
   const widthRef = useRef(width);
@@ -241,7 +276,10 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [sourceId, setSourceId] = useState('myProjects');
-  const [expandedIds, setExpandedIds] = useState(() => new Set());
+  const [expandedIds, setExpandedIds] = useState(() => {
+    if (!selectedFolderId) return new Set();
+    return new Set(getFolderAncestorIds(PROJECTS_PANEL_FOLDER_TREE, selectedFolderId));
+  });
   const headlineBtnRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const folderMoreAnchorRef = useRef(null);
@@ -254,6 +292,16 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
     const r = el.getBoundingClientRect();
     setMenuPosition({ left: r.left, top: r.bottom + 4, width: Math.max(r.width, 200) });
   }, []);
+
+  useEffect(() => {
+    if (!selectedFolderId) return;
+    const ancestors = getFolderAncestorIds(PROJECTS_PANEL_FOLDER_TREE, selectedFolderId);
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      ancestors.forEach((id) => next.add(id));
+      return next;
+    });
+  }, [selectedFolderId]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -501,7 +549,12 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
             type="button"
             role="menuitem"
             className="projects-panel-folder-more-menu-item"
-            onClick={() => closeFolderMoreMenu()}
+            onClick={() => {
+              if (action.id === 'view') {
+                onFolderSelect?.(folderMoreMenu.folderId);
+              }
+              closeFolderMoreMenu();
+            }}
           >
             {action.label}
           </button>
@@ -595,7 +648,7 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
       <div className="projects-panel-content projects-panel-content--folders">
         {showColumnHeadersRow && (
           <div
-            className={`projects-panel-column-headers${showAnyMetaCol ? ' projects-panel-column-headers--with-meta' : ''}`}
+            className={`projects-panel-column-headers${showAnyMetaCol ? ' projects-panel-column-headers--with-meta' : ''}${extraCols.description ? ' projects-panel-column-headers--col-description' : ''}${extraCols.lastUpdated ? ' projects-panel-column-headers--col-last-updated' : ''}`}
             role="row"
             aria-label="Column headings"
           >
@@ -624,6 +677,8 @@ function ProjectsPanel({ isOpen, onClose, width = 263, onWidthChange, minWidth =
               showMoreAlways={showWideLayout}
               onFolderMoreClick={openFolderMoreMenu}
               folderMoreOpenId={folderMoreMenu?.folderId ?? null}
+              selectedFolderId={selectedFolderId}
+              onFolderSelect={onFolderSelect}
               isFirstInRootList={index === 0}
               isLastInRootList={index === PROJECTS_PANEL_FOLDER_TREE.length - 1}
             />

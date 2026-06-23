@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -13,6 +13,7 @@ import CommentsPanel from './components/CommentsPanel';
 import ClockPanel from './components/ClockPanel';
 import AudioPlayer from './components/AudioPlayer';
 import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from './constants/routes';
+import { CURRENT_PROJECT_FOLDER_ID, folderHasProjectTracks } from './constants/projectsPanelTree';
 import {
   PROJECTS_TRACKS,
   FAVORITES_TRACKS,
@@ -56,6 +57,7 @@ function buildTrackFromSoundsLike(item, mergedTracks) {
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [soundsLikePanelOpen, setSoundsLikePanelOpen] = useState(false);
   const [soundsLikePanelWidth, setSoundsLikePanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelOpen, setProjectsPanelOpen] = useState(false);
@@ -73,9 +75,22 @@ function AppContent() {
   const [favoritesExtraTracks, setFavoritesExtraTracks] = useState([]);
   const [enterHighlightTrackNum, setEnterHighlightTrackNum] = useState(null);
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
+  const [activeProjectFolderId, setActiveProjectFolderId] = useState(CURRENT_PROJECT_FOLDER_ID);
   const { currentTrack } = usePlayer();
 
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
+  const projectPageTracks = useMemo(
+    () => (folderHasProjectTracks(activeProjectFolderId) ? mergedProjects : []),
+    [activeProjectFolderId, mergedProjects]
+  );
+
+  const handleProjectFolderSelect = useCallback(
+    (folderId) => {
+      setActiveProjectFolderId(folderId);
+      navigate(ROUTE_PROJECT_DETAILS);
+    },
+    [navigate]
+  );
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
   const refreshSoundsLikeResults = useCallback(() => {
@@ -271,6 +286,8 @@ function AppContent() {
               path={ROUTE_PROJECT_DETAILS}
               element={
                 <ProjectsPage
+                  activeFolderId={activeProjectFolderId}
+                  onFolderSelect={handleProjectFolderSelect}
                   soundsLikePanelOpen={soundsLikePanelOpen}
                   commentsPanelOpen={commentsPanelOpen}
                   clockPanelOpen={clockPanelOpen}
@@ -279,7 +296,8 @@ function AppContent() {
                   onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
                   onCommentsClick={openCommentsPanel}
                   onClockClick={openClockPanel}
-                  tracks={mergedProjects}
+                  tracks={projectPageTracks}
+                  projectTrackCount={mergedProjects.length}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
                 />
@@ -324,6 +342,8 @@ function AppContent() {
         onWidthChange={setProjectsPanelWidth}
         minWidth={PANEL_MIN_WIDTH}
         maxWidth={projectsPanelMaxWidth}
+        selectedFolderId={location.pathname === ROUTE_PROJECT_DETAILS ? activeProjectFolderId : null}
+        onFolderSelect={handleProjectFolderSelect}
       />
       <CommentsPanel
         isOpen={commentsPanelOpen}
