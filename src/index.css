@@ -388,6 +388,10 @@ body {
     padding: 8px 0;
   }
 
+  .search-bar input::placeholder {
+    font-size: 12px;
+  }
+
   .search-icon {
     width: 18px;
     height: 18px;
@@ -462,11 +466,60 @@ body {
   padding: 0 16px;
 }
 
-.search-icon {
-  width: 20px;
-  height: 20px;
+.search-bar--has-query {
+  padding-right: 12px;
+}
+
+.search-bar-clear-btn {
   flex-shrink: 0;
-  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.search-bar-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.search-bar-clear-btn:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 1px;
+}
+
+.search-bar-clear-btn img {
+  width: 10px;
+  height: 10px;
+  display: block;
+  opacity: 0.9;
+}
+
+[data-theme="light"] .search-bar-clear-btn {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .search-bar-clear-btn:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+[data-theme="light"] .search-bar-clear-btn img {
+  filter: brightness(0);
+  opacity: 0.7;
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-right: 10px;
   display: block;
   object-fit: contain;
   opacity: 0.55;
@@ -479,16 +532,22 @@ body {
 
 .search-bar input {
   flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   color: var(--text-primary);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
-  padding: 12px 0;
+  line-height: 14px;
+  padding: 10px 0;
   outline: none;
 }
 
 .search-bar input::placeholder {
   color: var(--text-muted);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .header-wrapper {
@@ -993,6 +1052,136 @@ body {
 .search-home::-webkit-scrollbar {
   display: none;
   width: 0;
+}
+
+.search-results {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-results-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.search-results-page .tracks-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.search-results-page .track-list {
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
+}
+
+.app-content-wrapper--search:has(.search-results) .main-content,
+.app-content-wrapper--search:has(.search-results) .search-filters-panel {
+  margin-top: 0;
+}
+
+.search-results,
+.search-results-page {
+  margin: 0;
+  padding: 0;
+}
+
+.tracks-section--search-results {
+  margin: 0;
+  padding: 0;
+}
+
+.tracks-section--search-results .tracks-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 0;
+  padding: 0 0 8px;
+  flex-shrink: 0;
+  background: #232323;
+}
+
+.tracks-section--search-results .tabs {
+  padding-left: 16px;
+}
+
+.tracks-section--search-results .tab {
+  padding-top: 0;
+  padding-bottom: 4px;
+}
+
+/* Search center column: project-style rows, no comment column */
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) {
+  grid-template-columns: 28px minmax(0, 35%) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 115px;
+  padding: 11px 16px;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-num {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  height: 85px;
+  align-self: end;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col .track-info-dropdowns {
+  min-height: 85px;
+  justify-content: space-between;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col .track-info-dropdowns,
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col .track-info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col .track-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-desc {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  align-self: start;
+  padding-top: 18px;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-actions {
+  grid-column: 4;
+  grid-row: 1;
+  min-width: 0;
+  width: auto;
+  align-self: start;
+}
+
+.tracks-section--search-results .track-row:not(.track-row-compact):not(.track-row--mobile) .track-label {
+  display: none;
 }
 
 .search-home-content {

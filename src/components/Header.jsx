@@ -89,8 +89,9 @@ function ModeToggle({ isDark, setIsDark, className = '' }) {
   );
 }
 
-function Header({ onOpenProjectsPanel }) {
+function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange }) {
   const navigate = useNavigate();
+  const hasSearchQuery = searchQuery.trim().length > 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [myApmOpen, setMyApmOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(null);
@@ -157,17 +158,32 @@ function Header({ onOpenProjectsPanel }) {
         <a href="#" className="logo">
           <img src="/APMLogo.svg" alt="apm music" className="logo-img" />
         </a>
-        <div className="search-bar">
+        <div className={`search-bar${hasSearchQuery ? ' search-bar--has-query' : ''}`}>
           <img
             src="/icons/Search.svg"
             alt=""
             className="search-icon"
-            width={20}
-            height={20}
+            width={18}
+            height={18}
             draggable={false}
             aria-hidden
           />
-          <input type="text" placeholder="Add keywords, paste a link, or try a prompt like 'climactic mountain summit at dawn'" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange?.(e.target.value)}
+            placeholder="Add keywords, paste a link, or try a prompt like 'climactic mountain summit at dawn'"
+          />
+          {hasSearchQuery && (
+            <button
+              type="button"
+              className="search-bar-clear-btn"
+              aria-label="Clear search"
+              onClick={() => onSearchQueryChange?.('')}
+            >
+              <img src="/icons/Close.svg" alt="" aria-hidden />
+            </button>
+          )}
         </div>
         <div className="header-end-wide">
           <nav className="header-nav-wide" aria-label="Main navigation">

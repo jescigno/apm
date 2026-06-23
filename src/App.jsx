@@ -76,6 +76,7 @@ function AppContent() {
   const [enterHighlightTrackNum, setEnterHighlightTrackNum] = useState(null);
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
   const [activeProjectFolderId, setActiveProjectFolderId] = useState(CURRENT_PROJECT_FOLDER_ID);
+  const [searchQuery, setSearchQuery] = useState('');
   const { currentTrack } = usePlayer();
 
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
@@ -215,6 +216,8 @@ function AppContent() {
   useEffect(() => {
     if (location.pathname === ROUTE_SEARCH) {
       setProjectsPanelOpen(false);
+    } else {
+      setSearchQuery('');
     }
   }, [location.pathname]);
 
@@ -268,9 +271,17 @@ function AppContent() {
   const mainPaddingRight = rightPanelOpen ? Math.min(rightPanelWidth, PANEL_MIN_WIDTH) : 0;
   const isSearchRoute = location.pathname === ROUTE_SEARCH;
 
+  const handleRecentSearchSelect = useCallback((item) => {
+    setSearchQuery(item.label);
+  }, []);
+
   return (
     <div className={currentTrack ? 'app-root player-visible' : 'app-root'}>
-      <Header onOpenProjectsPanel={openProjectsPanel} />
+      <Header
+        onOpenProjectsPanel={openProjectsPanel}
+        searchQuery={isSearchRoute ? searchQuery : ''}
+        onSearchQueryChange={isSearchRoute ? setSearchQuery : undefined}
+      />
       <Sidebar />
       <div
         className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}`}
@@ -316,7 +327,21 @@ function AppContent() {
                 />
               }
             />
-            <Route path={ROUTE_SEARCH} element={<SearchPage />} />
+            <Route
+              path={ROUTE_SEARCH}
+              element={
+                <SearchPage
+                  searchQuery={searchQuery}
+                  onRecentSearchSelect={handleRecentSearchSelect}
+                  soundsLikePanelOpen={soundsLikePanelOpen}
+                  onSoundsLikeClick={openSoundsLikePanel}
+                  onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
+                  tracks={mergedProjects}
+                  enterHighlightTrackNum={enterHighlightTrackNum}
+                  scrollToBottomSignal={scrollToBottomSignal}
+                />
+              }
+            />
           </Routes>
         </main>
       </div>

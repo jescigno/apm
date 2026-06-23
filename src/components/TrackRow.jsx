@@ -214,7 +214,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, isSelected = false, onSelectChange }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, isSelected = false, onSelectChange }) {
   const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -704,7 +704,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           <span className="track-label">Main</span>
         </>
       )}
-      {!compact && (
+      {!compact && !hideTrackComments && (
         <div className="track-comment-cell">
           <TrackCommentCompose
             draft={commentDraft}
@@ -742,7 +742,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           )}
         </div>
         <div className={`track-actions-overflow track-actions-collapsed${compact ? ' track-actions-overflow--compact' : ''}`} ref={overflowRef}>
-            {compact && (
+            {compact && !hideTrackComments && (
               <>
                 <span className="track-comment-with-count">
                   <button
@@ -876,7 +876,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         </div>,
         document.body
       )}
-      {compact && commentOverlayOpen && commentButtonRect && createPortal(
+      {compact && !hideTrackComments && commentOverlayOpen && commentButtonRect && createPortal(
         (() => {
           const popoverMaxWidth = 380;
           const leftPadding = 16;

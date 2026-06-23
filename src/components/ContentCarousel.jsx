@@ -1,6 +1,6 @@
 import SearchCarouselCard from './SearchCarouselCard';
 
-export default function ContentCarousel({ id, title, variant, items, onRemoveFromHistory }) {
+export default function ContentCarousel({ id, title, variant, items, onRemoveFromHistory, onItemSelect }) {
   if (!items?.length) return null;
 
   return (
@@ -16,6 +16,7 @@ export default function ContentCarousel({ id, title, variant, items, onRemoveFro
               variant={variant}
               item={item}
               onRemoveFromHistory={onRemoveFromHistory}
+              onSelect={onItemSelect ? () => onItemSelect(item) : undefined}
             />
           </div>
         ))}

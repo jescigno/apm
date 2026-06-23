@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import ContentCarousel from './ContentCarousel';
 import { SEARCH_HOME_CAROUSELS } from '../constants/searchHomeCarousels';
 
-export default function SearchHomeContent() {
+export default function SearchHomeContent({ onRecentSearchSelect }) {
   const recentSearchesSeed = useMemo(
     () => SEARCH_HOME_CAROUSELS.find((carousel) => carousel.id === 'recent-searches')?.items ?? [],
     []
@@ -44,6 +44,7 @@ export default function SearchHomeContent() {
                 ? handleRemoveFromHistory
                 : undefined
           }
+          onItemSelect={carousel.id === 'recent-searches' ? onRecentSearchSelect : undefined}
         />
       ))}
     </div>

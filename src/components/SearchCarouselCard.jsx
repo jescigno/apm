@@ -17,7 +17,7 @@ const RECENTLY_PLAYED_MENU_ITEMS = [
   { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/Close.svg' },
 ];
 
-function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFromHistory, showOnHover }) {
+function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFromHistory, onMenuAction, showOnHover }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const overflowRef = useRef(null);
 
@@ -44,6 +44,8 @@ function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFrom
   const handleMenuAction = (actionId) => {
     if (actionId === 'remove-from-history') {
       onRemoveFromHistory?.(itemId);
+    } else {
+      onMenuAction?.(actionId);
     }
     setMenuOpen(false);
   };
@@ -87,10 +89,18 @@ function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFrom
   );
 }
 
-function RecentSearchCard({ item, onRemoveFromHistory }) {
+function RecentSearchCard({ item, onRemoveFromHistory, onSelect }) {
+  const handleMenuAction = (actionId) => {
+    if (actionId === 'search') onSelect?.();
+  };
+
   return (
     <div className="search-carousel-card search-carousel-card--search">
-      <button type="button" className="search-carousel-card-search-main">
+      <button
+        type="button"
+        className="search-carousel-card-search-main"
+        onClick={onSelect}
+      >
         <img
           src="/icons/Search.svg"
           alt=""
@@ -110,6 +120,7 @@ function RecentSearchCard({ item, onRemoveFromHistory }) {
         itemId={item.id}
         menuItems={RECENT_SEARCH_MENU_ITEMS}
         onRemoveFromHistory={onRemoveFromHistory}
+        onMenuAction={handleMenuAction}
       />
     </div>
   );
@@ -137,10 +148,10 @@ function RecentlyPlayedCard({ item, onRemoveFromHistory }) {
   );
 }
 
-function SearchCarouselCard({ variant, item, onRemoveFromHistory }) {
+function SearchCarouselCard({ variant, item, onRemoveFromHistory, onSelect }) {
   switch (variant) {
     case 'search':
-      return <RecentSearchCard item={item} onRemoveFromHistory={onRemoveFromHistory} />;
+      return <RecentSearchCard item={item} onRemoveFromHistory={onRemoveFromHistory} onSelect={onSelect} />;
 
     case 'project':
       return (

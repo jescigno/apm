@@ -230,8 +230,9 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect })
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, compactTrackRows, headerActionsVariant = 'default', hideTrackComments = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, sectionClassName }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
+  const compact = compactTrackRows ?? tabsInBreadcrumb;
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
@@ -314,8 +315,26 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       ? `${ALBUMS.length} Albums`
       : '0 Searches';
 
+  const tracksActions = headerActionsVariant === 'search' ? (
+    <>
+      <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
+      </button>
+      <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+      <button type="button" className="btn-secondary"><img src="/Sort.svg" alt="" /> SORT</button>
+    </>
+  ) : (
+    <>
+      <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
+      <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
+      </button>
+      <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+    </>
+  );
+
   return (
-    <div className="tracks-section">
+    <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}`}>
       {hasHeaderContent && (
         <div className="tracks-header">
           <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
@@ -329,11 +348,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                 )}
                 {!foldersOnlyView && (
                 <div className="tracks-actions">
-                  <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
-                  <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
-                  </button>
-                  <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+                  {tracksActions}
                 </div>
                 )}
               </>
@@ -359,9 +374,15 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                 <span className="tracks-mobile-toolbar-count">{trackCountLabel}</span>
               )}
               {!foldersOnlyView && (
-              <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
-                <img src="/Reorder.svg" alt="" /> REORDER
-              </button>
+              headerActionsVariant === 'search' ? (
+                <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
+                  <img src="/Sort.svg" alt="" /> SORT
+                </button>
+              ) : (
+                <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
+                  <img src="/Reorder.svg" alt="" /> REORDER
+                </button>
+              )
               )}
             </>
           )}
@@ -391,7 +412,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               onTogglePause={togglePlayPause}
               isCurrentTrack={isCurrentTrack(track)}
               isPlaying={isPlaying}
-              compact={tabsInBreadcrumb}
+              compact={compact}
               mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               titleBadge={trackTitleBadges?.[track.num]}
@@ -400,6 +421,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                 Number(track.num) === Number(enterHighlightTrackNum)
               }
               showVersionsStems={showVersionsStems}
+              hideTrackComments={hideTrackComments}
               isSelected={selectedIds.has(track.id)}
               onSelectChange={handleSelectChange}
             />
@@ -421,10 +443,11 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               onTogglePause={togglePlayPause}
               isCurrentTrack={isCurrentTrack(album)}
               isPlaying={isPlaying}
-              compact={tabsInBreadcrumb}
+              compact={compact}
               mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               showVersionsStems={showVersionsStems}
+              hideTrackComments={hideTrackComments}
               isSelected={selectedIds.has(album.id)}
               onSelectChange={handleSelectChange}
             />
