@@ -6,6 +6,7 @@ import TrackList from '../components/TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import {
   CURRENT_PROJECT_FOLDER_ID,
+  EMPTY_PROJECT_FOLDER_ID,
   getFolderChildren,
   getFolderPath,
   PROJECTS_PANEL_FOLDER_TREE,
@@ -149,6 +150,7 @@ export default function ProjectsPage({
       : activeFolder?.description ?? '';
 
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
+  const [trackViewMode, setTrackViewMode] = useState('expanded');
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
     const sync = () => setHideTracksHeader(mq.matches);
@@ -219,6 +221,15 @@ export default function ProjectsPage({
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
+        compactTrackRows={trackViewMode === 'condensed' || trackViewMode === 'simplified'}
+        trackViewMode={trackViewMode}
+        onTrackViewModeChange={setTrackViewMode}
+        customizeViewOptions={[
+          { id: 'condensed', label: 'Condensed' },
+          { id: 'simplified', label: 'Simplified' },
+          { id: 'expanded', label: 'Expanded' },
+        ]}
+        emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."
       />
     </div>

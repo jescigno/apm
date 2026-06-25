@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import TrackRow from './TrackRow';
 import ProjectFolderRow from './ProjectFolderRow';
+import CustomizeViewMenu from './CustomizeViewMenu';
 import { usePlayer } from '../context/PlayerContext';
 import { getFolderTrackCount } from '../constants/projectsPanelTree';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+
+export const PROJECTS_CUSTOMIZE_VIEW_OPTIONS = [
+  { id: 'condensed', label: 'Condensed' },
+  { id: 'simplified', label: 'Simplified' },
+  { id: 'expanded', label: 'Expanded' },
+];
 
 export const SAMPLE_AUDIO = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
@@ -115,7 +122,23 @@ const PROJECTS_TRACKS = TRACKS_BASE.map((t) => {
   return { ...t };
 });
 
-export { PROJECTS_TRACKS, FAVORITES_TRACKS };
+const SEARCH_EXTRA_TRACKS = [
+  { num: 16, title: 'Monday Night Opener', versions: 4, commentCount: 2, desc: 'Broadcast opener with bold drums, anthemic guitars, and instant prime-time energy.', audioUrl: SAMPLE_AUDIO },
+  { num: 17, title: 'End Zone Celebration', versions: 3, commentCount: 0, desc: 'Triumphant scoring moment with brass stabs, crowd lift, and celebratory percussion.', audioUrl: SAMPLE_AUDIO },
+  { num: 18, title: 'Sideline Intensity', versions: 5, commentCount: 4, desc: 'Tight, punchy rock with rhythmic grit for bench reactions and sideline cutaways.', audioUrl: SAMPLE_AUDIO },
+  { num: 19, title: 'Replay Highlight', versions: 3, commentCount: 1, desc: 'Dynamic build-and-release groove tailored for slow-motion replay packages.', audioUrl: SAMPLE_AUDIO },
+  { num: 20, title: 'Locker Room Victory', versions: 4, commentCount: 3, desc: 'Post-game celebration with soaring hooks, wide dynamics, and championship feel.', audioUrl: SAMPLE_AUDIO },
+].map((t) => ({
+  ...t,
+  id: generateTrackId(),
+  hasLyrics: Math.random() > 0.45,
+  stems: [4, 3, 5, 3, 4][t.num - 16],
+  recorded: ['2019', '06/14/2022', '2021', '11/03/2020', '2024'][t.num - 16],
+}));
+
+const SEARCH_RESULTS_TRACKS = [...PROJECTS_TRACKS, ...SEARCH_EXTRA_TRACKS];
+
+export { PROJECTS_TRACKS, FAVORITES_TRACKS, SEARCH_RESULTS_TRACKS };
 
 const ALBUMS = [
   { num: 1, title: 'Stadium Anthems', commentCount: 0, desc: 'Collection of high-energy stadium rock tracks for Monday Night Football.', audioUrl: SAMPLE_AUDIO },
@@ -146,26 +169,31 @@ const ALBUMS = [
   ][a.num - 1],
 }));
 
-export function TrackListTabs({ activeTab, onTabChange, className, showSearchesTab }) {
+export function TrackListTabs({ activeTab, onTabChange, className, showSearchesTab, showAlbumsTab = true }) {
   return (
     <div className={`tabs ${className || ''}`.trim()}>
       <button
         type="button"
+        data-tab="tracks"
         className={`tab ${activeTab === 'tracks' ? 'active' : ''}`}
         onClick={() => onTabChange('tracks')}
       >
         Tracks
       </button>
-      <button
-        type="button"
-        className={`tab ${activeTab === 'albums' ? 'active' : ''}`}
-        onClick={() => onTabChange('albums')}
-      >
-        Albums
-      </button>
+      {showAlbumsTab && (
+        <button
+          type="button"
+          data-tab="albums"
+          className={`tab ${activeTab === 'albums' ? 'active' : ''}`}
+          onClick={() => onTabChange('albums')}
+        >
+          Albums
+        </button>
+      )}
       {showSearchesTab && (
         <button
           type="button"
+          data-tab="searches"
           className={`tab ${activeTab === 'searches' ? 'active' : ''}`}
           onClick={() => onTabChange('searches')}
         >
@@ -186,7 +214,7 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
-function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect }) {
+function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, showRemove, onRemove }) {
   const label = selectedCount === 1 ? '1 TRACK SELECTED' : `${selectedCount} TRACKS SELECTED`;
 
   return (
@@ -225,26 +253,57 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect })
           <img src="/SoundsLike.svg" alt="" />
           <span className="tracks-selection-action-label">Sounds Like</span>
         </button>
+        {showRemove && (
+          <button type="button" className="tracks-selection-action" onClick={onRemove} aria-label="Remove">
+            <img src="/icons/Close.svg" alt="" />
+            <span className="tracks-selection-action-label">Remove</span>
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, compactTrackRows, headerActionsVariant = 'default', hideTrackComments = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, sectionClassName }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, compactTrackRows, trackViewMode, onTrackViewModeChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const compact = compactTrackRows ?? tabsInBreadcrumb;
+  const condensedViewActions = trackViewMode === 'condensed';
+  const simplifiedViewActions = trackViewMode === 'simplified';
+  const showRemoveFromProject =
+    simplifiedViewActions ||
+    (condensedViewActions && headerActionsVariant !== 'search');
+  const showSelectionRemove = headerActionsVariant !== 'search' && !tabsInBreadcrumb;
+  const customizeOptions =
+    customizeViewOptions ??
+    (onTrackViewModeChange && headerActionsVariant !== 'search'
+      ? PROJECTS_CUSTOMIZE_VIEW_OPTIONS
+      : undefined);
   const [internalTab, setInternalTab] = useState('tracks');
   const activeTab = controlledTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
   const hasChildFolders =
-    activeTab === 'tracks' &&
     Array.isArray(childFolders) &&
     childFolders.length > 0;
+  const isEmptyProject = emptyState === 'empty-project';
   const foldersOnlyView = hasChildFolders && tracks.length === 0;
+  const showChildFolders =
+    hasChildFolders &&
+    (activeTab === 'tracks' || activeTab === 'albums');
+  const canCollapseFolders = hasChildFolders && childFolders.length > 1;
+  const showAlbumRows =
+    activeTab === 'albums' &&
+    !isEmptyProject &&
+    !foldersOnlyView;
   const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const listEndRef = useRef(null);
   const [mobileTrackLayout, setMobileTrackLayout] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [foldersCollapsed, setFoldersCollapsed] = useState(false);
+  const childFolderIdsKey = (childFolders ?? []).map((folder) => folder.id).join(',');
+
+  useEffect(() => {
+    setFoldersCollapsed(false);
+  }, [childFolderIdsKey]);
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -292,6 +351,10 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     setSelectedIds(new Set());
   };
 
+  const handleRemoveSelected = () => {
+    setSelectedIds(new Set());
+  };
+
   const handleSoundsLikeSelected = () => {
     const selected = currentTracks.filter((item) => selectedIds.has(item.id));
     if (selected.length > 0) {
@@ -306,35 +369,53 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       onPlay={handlePlaySelected}
       onSoundsLike={handleSoundsLikeSelected}
       onDeselect={handleDeselectAll}
+      showRemove={showSelectionRemove}
+      onRemove={handleRemoveSelected}
     />
   ) : null;
 
   const trackCountLabel = activeTab === 'tracks'
     ? `${tracks.length} TITLES`
     : activeTab === 'albums'
-      ? `${ALBUMS.length} Albums`
+      ? isEmptyProject ? '0 Albums' : `${ALBUMS.length} Albums`
       : '0 Searches';
+
+  const showEmptyProjectState =
+    isEmptyProject &&
+    (activeTab === 'tracks' || activeTab === 'albums') &&
+    tracks.length === 0 &&
+    !hasChildFolders;
 
   const tracksActions = headerActionsVariant === 'search' ? (
     <>
       <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
       </button>
-      <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+      {onTrackViewModeChange ? (
+        <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+      ) : (
+        <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+      )}
       <button type="button" className="btn-secondary"><img src="/Sort.svg" alt="" /> SORT</button>
     </>
   ) : (
-    <>
-      <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
-      <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
-      </button>
-      <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
-    </>
+    !showEmptyProjectState && (
+      <>
+        <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
+        <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
+        </button>
+        {onTrackViewModeChange ? (
+          <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+        ) : (
+          <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+        )}
+      </>
+    )
   );
 
   return (
-    <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}`}>
+    <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}${condensedViewActions ? ' tracks-section--condensed-view' : ''}${simplifiedViewActions ? ' tracks-section--simplified-view' : ''}${showEmptyProjectState ? ' tracks-section--empty-project' : ''}`}>
       {hasHeaderContent && (
         <div className="tracks-header">
           <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
@@ -346,7 +427,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                 {!foldersOnlyView && (
                   <span className="track-count">{trackCountLabel}</span>
                 )}
-                {!foldersOnlyView && (
+                {!foldersOnlyView && tracksActions && (
                 <div className="tracks-actions">
                   {tracksActions}
                 </div>
@@ -374,31 +455,54 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                 <span className="tracks-mobile-toolbar-count">{trackCountLabel}</span>
               )}
               {!foldersOnlyView && (
-              headerActionsVariant === 'search' ? (
-                <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
-                  <img src="/Sort.svg" alt="" /> SORT
-                </button>
-              ) : (
-                <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
-                  <img src="/Reorder.svg" alt="" /> REORDER
-                </button>
-              )
+              <div className="tracks-mobile-toolbar-actions">
+              {headerActionsVariant === 'search' ? (
+                <>
+                  {onTrackViewModeChange ? (
+                    <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+                  ) : null}
+                  <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
+                    <img src="/Sort.svg" alt="" /> SORT
+                  </button>
+                </>
+              ) : !showEmptyProjectState ? (
+                <>
+                  {onTrackViewModeChange ? (
+                    <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+                  ) : null}
+                  <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
+                    <img src="/Reorder.svg" alt="" /> REORDER
+                  </button>
+                </>
+              ) : null}
+              </div>
               )}
             </>
           )}
         </div>
       )}
       <div className="track-list">
-        {hasChildFolders &&
+        {showChildFolders && canCollapseFolders && foldersCollapsed ? (
+          <ProjectFolderRow
+            key="folder-collapsed-summary"
+            collapsedSummary
+            folderCount={childFolders.length}
+            onIconClick={() => setFoldersCollapsed(false)}
+            mobileLayout={mobileTrackLayout}
+          />
+        ) : (
+          showChildFolders &&
           childFolders.map((folder) => (
             <ProjectFolderRow
               key={`folder-${folder.id}`}
               folder={folder}
               trackCount={getFolderTrackCount(folder, projectTrackCount)}
               onSelect={onFolderSelect}
+              onIconClick={canCollapseFolders ? () => setFoldersCollapsed(true) : undefined}
               mobileLayout={mobileTrackLayout}
             />
-          ))}
+          ))
+        )}
         {activeTab === 'tracks' &&
           tracks.map((track) => (
             <TrackRow
@@ -413,6 +517,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               isCurrentTrack={isCurrentTrack(track)}
               isPlaying={isPlaying}
               compact={compact}
+              condensedViewActions={condensedViewActions}
+              simplifiedViewActions={simplifiedViewActions}
+              showRemoveFromProject={showRemoveFromProject}
               mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
               titleBadge={trackTitleBadges?.[track.num]}
@@ -422,14 +529,26 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               }
               showVersionsStems={showVersionsStems}
               hideTrackComments={hideTrackComments}
+              hideCloseAction={hideCloseAction}
+              disableWaveformHighlights={disableWaveformHighlights}
               isSelected={selectedIds.has(track.id)}
               onSelectChange={handleSelectChange}
             />
           ))}
-        {activeTab === 'tracks' && tracks.length === 0 && !hasChildFolders && emptyTracksMessage && (
+        {showEmptyProjectState && (
+          <div className="track-list-empty-project">
+            <div className="track-list-empty-project__panel">
+              <h2 className="track-list-empty-project__title">Empty Project</h2>
+              <p className="track-list-empty-project__text">
+                Looks like you haven&apos;t added any tracks yet. Click the add icon next to any track or album and they will display here.
+              </p>
+            </div>
+          </div>
+        )}
+        {activeTab === 'tracks' && tracks.length === 0 && !hasChildFolders && !showEmptyProjectState && emptyTracksMessage && (
           <div className="track-list-empty">{emptyTracksMessage}</div>
         )}
-        {activeTab === 'albums' &&
+        {showAlbumRows &&
           ALBUMS.map((album) => (
             <TrackRow
               key={`album-${album.num}`}
@@ -444,10 +563,16 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               isCurrentTrack={isCurrentTrack(album)}
               isPlaying={isPlaying}
               compact={compact}
+              compactAlbumTallLayout={compact && !tabsInBreadcrumb && !showVersionsStems}
+              condensedViewActions={condensedViewActions}
+              simplifiedViewActions={simplifiedViewActions}
+              showRemoveFromProject={showRemoveFromProject}
               mobileTrackLayout={mobileTrackLayout}
               enableTrackDetailsOverlay={enableTrackDetailsOverlay}
-              showVersionsStems={showVersionsStems}
+              showVersionsStems={false}
               hideTrackComments={hideTrackComments}
+              hideCloseAction={hideCloseAction}
+              disableWaveformHighlights={disableWaveformHighlights}
               isSelected={selectedIds.has(album.id)}
               onSelectChange={handleSelectChange}
             />

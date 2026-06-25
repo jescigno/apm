@@ -1,6 +1,6 @@
 import SearchHomeContent from '../components/SearchHomeContent';
 import SearchResultsContent from '../components/SearchResultsContent';
-import { PROJECTS_TRACKS } from '../components/TrackList';
+import { SEARCH_RESULTS_TRACKS } from '../components/TrackList';
 
 export default function SearchPage({
   searchQuery,
@@ -8,7 +8,7 @@ export default function SearchPage({
   soundsLikePanelOpen,
   onSoundsLikeClick,
   onSoundsLikeWithSelection,
-  tracks = PROJECTS_TRACKS,
+  tracks = SEARCH_RESULTS_TRACKS,
   enterHighlightTrackNum,
   scrollToBottomSignal,
 }) {

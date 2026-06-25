@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import TrackList, { PROJECTS_TRACKS } from './TrackList';
+import TrackList, { SEARCH_RESULTS_TRACKS } from './TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 export default function SearchResultsContent({
   soundsLikePanelOpen,
   onSoundsLikeClick,
   onSoundsLikeWithSelection,
-  tracks = PROJECTS_TRACKS,
+  tracks = SEARCH_RESULTS_TRACKS,
   enterHighlightTrackNum,
   scrollToBottomSignal,
 }) {
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
+  const [trackViewMode, setTrackViewMode] = useState('expanded');
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -26,6 +27,7 @@ export default function SearchResultsContent({
         sectionClassName="tracks-section--search-results"
         headerActionsVariant="search"
         hideTrackComments
+        hideCloseAction
         soundsLikePanelOpen={soundsLikePanelOpen}
         onSoundsLikeClick={onSoundsLikeClick}
         onSoundsLikeWithSelection={onSoundsLikeWithSelection}
@@ -33,6 +35,10 @@ export default function SearchResultsContent({
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
+        disableWaveformHighlights
+        compactTrackRows={trackViewMode === 'condensed'}
+        trackViewMode={trackViewMode}
+        onTrackViewModeChange={setTrackViewMode}
       />
     </div>
   );

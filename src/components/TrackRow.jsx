@@ -1,6 +1,18 @@
-import { useState, useRef, useEffect, memo, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, memo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import TrackWaveform from './TrackWaveform';
+import { usePlayer } from '../context/PlayerContext';
+import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/overflowDropdownPosition';
+import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
+
+function getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject = false } = {}) {
+  if (!triggerEl) return null;
+  const menuHeight = getTrackOverflowMenuHeight({ compact, showRemoveFromProject });
+  return {
+    ...getOverflowDropdownStyle(triggerEl.getBoundingClientRect(), { menuHeight }),
+    zIndex: 1100,
+  };
+}
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 
@@ -17,6 +29,298 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
   );
 });
 const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
+
+const STEM_LABELS = ['Drums', 'Bass', 'Guitars', 'Keys', 'Synth', 'Strings', 'Percussion', 'Vocals'];
+
+function getStemItems(parentTrack) {
+  const count = parentTrack.stems ?? 4;
+  return Array.from({ length: count }, (_, index) => ({
+    id: `${parentTrack.id}-stem-${index + 1}`,
+    name: STEM_LABELS[index % STEM_LABELS.length],
+    waveformIndex: parentTrack.num * 10 + index + 1,
+    audioUrl: parentTrack.audioUrl,
+    title: `${parentTrack.title} — ${STEM_LABELS[index % STEM_LABELS.length]}`,
+  }));
+}
+
+const SOUNDS_LIKE_ICON = (
+  <svg viewBox="0 0 16 16" fill="currentColor">
+    <path d="M7.73242 1.26757C8.1425 1.24947 8.49219 1.62908 8.49219 2.02734V2.0459C8.50405 2.50778 8.49219 2.97363 8.49219 3.43847V13.4394C8.49219 13.865 8.1425 14.1816 7.73242 14.2002C7.32214 14.2186 6.97168 13.8379 6.97168 13.4394V13.4219C6.95981 12.96 6.97168 12.4941 6.97168 12.0293L6.97168 2.02734C6.97168 1.60162 7.32214 1.28539 7.73242 1.26757ZM4.83594 3.11035C5.24618 3.09199 5.5957 3.47173 5.5957 3.87011L5.5957 11.334C5.59544 11.7594 5.24603 12.0753 4.83594 12.0937C4.42582 12.1121 4.07645 11.7322 4.07617 11.334V3.87011C4.07617 3.44143 4.42566 3.12816 4.83594 3.11035ZM10.3643 3.11035C10.7744 3.09216 11.124 3.47182 11.124 3.87011V11.334C11.1238 11.7593 10.7742 12.0752 10.3643 12.0937C9.95414 12.1121 9.6038 11.7322 9.60352 11.334V3.87011C9.60352 3.44143 9.95398 3.12816 10.3643 3.11035ZM1.99707 4.39257C2.40726 4.37423 2.75675 4.75402 2.75684 5.15234L2.75684 10.0508C2.75662 10.4763 2.40718 10.7921 1.99707 10.8105C1.58693 10.8289 1.23754 10.449 1.2373 10.0508L1.2373 5.15234C1.23739 4.72729 1.58386 4.41098 1.99707 4.39257ZM13.2012 4.39257C13.6114 4.37417 13.9618 4.75399 13.9619 5.15234V10.0508C13.9617 10.4763 13.6113 10.7921 13.2012 10.8105C12.7912 10.8287 12.4416 10.4489 12.4414 10.0508V5.15234C12.4415 4.72742 12.7911 4.41115 13.2012 4.39257Z" />
+  </svg>
+);
+
+function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false, isAlbum = false }) {
+  return (
+    <>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/TrackDetails.svg" alt="" />
+        {isAlbum ? 'Go to Album' : 'Go to Track'}
+      </button>
+      <button
+        type="button"
+        className="track-actions-overflow-dropdown-item"
+        onClick={() => {
+          onSoundsLikeClick?.(item);
+          onClose();
+        }}
+      >
+        <img src="/player-actions/SoundsLike.svg" alt="" />
+        Sounds Like
+      </button>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/icons/Upload.svg" alt="" />
+        Share
+      </button>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/icons/Add.svg" alt="" />
+        Add to a Project
+      </button>
+      {showRemoveFromProject && (
+        <>
+          <div className="track-actions-overflow-dropdown-divider" aria-hidden="true" />
+          <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+            <img src="/icons/Close.svg" alt="" />
+            Remove from Project
+          </button>
+        </>
+      )}
+    </>
+  );
+}
+
+function TrackRowActions({
+  className = '',
+  compact,
+  condensedViewActions = false,
+  simplifiedViewActions = false,
+  showRemoveFromProject = false,
+  hideTrackComments,
+  hideCloseAction,
+  hideSoundsLike = false,
+  isAlbum = false,
+  item,
+  onSoundsLikeClick,
+  liked,
+  onToggleLike,
+  commentBtnRef,
+  onCommentClick,
+}) {
+  const getMenuStyle = useCallback(
+    (triggerEl) => getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject }),
+    [compact, showRemoveFromProject]
+  );
+  const {
+    open: overflowMenuOpen,
+    style: dropdownStyle,
+    triggerRef: menuBtnRef,
+    containerRef: overflowRef,
+    toggle: toggleOverflowMenu,
+    close: closeOverflowMenu,
+  } = useOverflowDropdownMenu({ getStyle: getMenuStyle, deps: [compact, showRemoveFromProject] });
+
+  const showInlineCondensedIcons = condensedViewActions;
+  const showCompactFavoritesActions =
+    simplifiedViewActions || (compact && !condensedViewActions && !hideTrackComments);
+
+  return (
+    <div className={`track-actions${className ? ` ${className}` : ''}`}>
+      <div className="track-action-icons track-actions-expanded">
+        {(!compact || showInlineCondensedIcons) && (
+          <>
+            <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
+              <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+            </button>
+            <button type="button" className="icon-btn" aria-label="Upload">
+              <img src="/icons/Upload.svg" alt="" />
+            </button>
+            <button type="button" className="icon-btn" aria-label="Add">
+              <img src="/icons/Add.svg" alt="" />
+            </button>
+            <button type="button" className="icon-btn" aria-label="Download">
+              <img src="/icons/Download.svg" alt="" />
+            </button>
+            {!hideCloseAction && !condensedViewActions && (
+              <button type="button" className="icon-btn" aria-label="Close">
+                <img src="/icons/Close.svg" alt="" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      <div className={`track-actions-overflow track-actions-collapsed${compact ? ' track-actions-overflow--compact' : ''}`} ref={overflowRef}>
+        {showCompactFavoritesActions && (
+          <>
+            <span className="track-comment-with-count">
+              <button
+                ref={commentBtnRef}
+                type="button"
+                className="icon-btn"
+                aria-label="Comment"
+                onClick={onCommentClick}
+              >
+                <img src="/Comment.svg" alt="" />
+              </button>
+              <span className={`track-comment-count${!item?.commentCount || item?.commentCount === 0 || (!isAlbum && [2, 4, 8].includes(item?.num)) ? ' track-comment-count--hidden' : ''}`}>
+                {item?.commentCount ?? 0}
+              </span>
+            </span>
+            <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
+              <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+            </button>
+          </>
+        )}
+        <button
+          ref={menuBtnRef}
+          type="button"
+          className="icon-btn track-actions-menu-btn"
+          onClick={toggleOverflowMenu}
+          aria-label="More actions"
+          aria-expanded={overflowMenuOpen}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="19" cy="12" r="1.5" />
+          </svg>
+        </button>
+        {overflowMenuOpen && createPortal(
+          <div
+            data-track-dropdown-portal
+            className={`track-actions-overflow-dropdown track-actions-overflow-dropdown--portal${compact ? ' track-actions-overflow-dropdown--segment-style' : ''}`}
+            style={dropdownStyle ?? { position: 'fixed', zIndex: 1100, visibility: 'hidden' }}
+          >
+            {compact ? (
+              <CompactTrackOverflowMenuItems
+                item={item}
+                onSoundsLikeClick={onSoundsLikeClick}
+                onClose={closeOverflowMenu}
+                showRemoveFromProject={showRemoveFromProject}
+                isAlbum={isAlbum}
+              />
+            ) : (
+              <>
+                <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
+                  <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+                </button>
+                <button type="button" className="icon-btn" aria-label="Upload">
+                  <img src="/icons/Upload.svg" alt="" />
+                </button>
+                <button type="button" className="icon-btn" aria-label="Add">
+                  <img src="/icons/Add.svg" alt="" />
+                </button>
+                <button type="button" className="icon-btn" aria-label="Download">
+                  <img src="/icons/Download.svg" alt="" />
+                </button>
+                {!hideCloseAction && (
+                  <button type="button" className="icon-btn" aria-label="Close">
+                    <img src="/icons/Close.svg" alt="" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>,
+          document.body
+        )}
+      </div>
+      {!isAlbum && !compact && !hideSoundsLike && (
+        <button type="button" className="btn-sounds-like small track-sounds-like" onClick={() => onSoundsLikeClick?.(item)}>
+          {SOUNDS_LIKE_ICON}
+          Sounds like
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TrackStemRow({
+  stem,
+  compact,
+  condensedViewActions = false,
+  simplifiedViewActions = false,
+  showRemoveFromProject = false,
+  hideTrackComments,
+  parentItem,
+  onSoundsLikeClick,
+  onPlay,
+  onTogglePause,
+  isCurrentTrack,
+  isPlaying,
+}) {
+  const [playHovered, setPlayHovered] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [selected, setSelected] = useState(false);
+  const canPlay = Boolean(stem.audioUrl && onPlay);
+  const showPlayingIcon = isCurrentTrack && isPlaying;
+
+  const handlePlay = (event) => {
+    event.stopPropagation();
+    if (canPlay) onPlay?.({ ...stem, id: stem.id, num: stem.waveformIndex });
+  };
+
+  return (
+    <div
+      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${selected ? ' track-stem-row--selected' : ''}`}
+    >
+      <span className="track-stem-row__col-spacer" aria-hidden="true" />
+      <div className="track-stem-row__meta">
+        <span className="track-stem-row__align-spacer" aria-hidden="true" />
+        <div className="track-stem-row__title-group">
+          <div className="track-stem-row__lead">
+            <input
+              type="checkbox"
+              className="track-checkbox"
+              checked={selected}
+              onChange={(event) => setSelected(event.target.checked)}
+              aria-label={`Select ${stem.name} stem`}
+              onClick={(event) => event.stopPropagation()}
+            />
+            {showPlayingIcon ? (
+              <span className="track-stem-play-btn track-stem-play-btn--playing" aria-label={`Now playing ${stem.name}`}>
+                <PlayingAudioIcon />
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="track-stem-play-btn"
+                onMouseEnter={() => setPlayHovered(true)}
+                onMouseLeave={() => setPlayHovered(false)}
+                onClick={handlePlay}
+                disabled={!canPlay}
+                aria-label={`Play ${stem.name}`}
+              >
+                <img
+                  src={playHovered ? '/icons/PlayinCircle.svg' : '/icons/PlayinCircle-Off.svg'}
+                  alt=""
+                />
+              </button>
+            )}
+          </div>
+          <span className="track-stem-row__name">{stem.name}</span>
+        </div>
+      </div>
+      <div className="track-stem-row__waveform">
+        <TrackWaveform trackNum={stem.waveformIndex} className="track-waveform track-waveform-svg" />
+      </div>
+      <TrackRowActions
+        className="track-stem-row__actions"
+        compact={compact}
+        condensedViewActions={condensedViewActions}
+        simplifiedViewActions={simplifiedViewActions}
+        showRemoveFromProject={showRemoveFromProject}
+        hideTrackComments={hideTrackComments}
+        hideCloseAction
+        hideSoundsLike
+        item={parentItem}
+        onSoundsLikeClick={onSoundsLikeClick}
+        liked={liked}
+        onToggleLike={(event) => {
+          event.stopPropagation();
+          setLiked((prev) => !prev);
+        }}
+      />
+    </div>
+  );
+}
 
 const TRACK_COMMENT_SEND_ICON = (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -214,8 +518,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, isSelected = false, onSelectChange }) {
-  const [overflowMenuOpen, setOverflowMenuOpen] = useState(false);
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, onSelectChange }) {
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
   const [trackDetailsOverlayOpen, setTrackDetailsOverlayOpen] = useState(false);
@@ -227,30 +530,28 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const [popoverCommentDraft, setPopoverCommentDraft] = useState('');
   const [popoverSavedComment, setPopoverSavedComment] = useState('');
   const [popoverCommentFocused, setPopoverCommentFocused] = useState(false);
+  const [stemsOpen, setStemsOpen] = useState(false);
   const commentInputRef = useRef(null);
   const popoverCommentInputRef = useRef(null);
-  const overflowRef = useRef(null);
-  const menuBtnRef = useRef(null);
   const commentBtnRef = useRef(null);
-  const [dropdownRect, setDropdownRect] = useState(null);
+  const getMobileMenuStyle = useCallback(
+    (triggerEl) => getMenuDropdownStyle(triggerEl, { compact: true, showRemoveFromProject }),
+    [showRemoveFromProject]
+  );
+  const {
+    open: overflowMenuOpen,
+    style: dropdownStyle,
+    triggerRef: menuBtnRef,
+    containerRef: overflowRef,
+    toggle: toggleOverflowMenu,
+    close: closeOverflowMenu,
+  } = useOverflowDropdownMenu({ getStyle: getMobileMenuStyle, deps: [showRemoveFromProject] });
+  const { currentTrack } = usePlayer();
 
   const toggleLike = (e) => {
     e.stopPropagation();
     setLiked((prev) => !prev);
   };
-
-  useEffect(() => {
-    if (!overflowMenuOpen) return;
-    function handleClickOutside(e) {
-      const inOverflow = overflowRef.current?.contains(e.target);
-      const inPortaledDropdown = e.target.closest('[data-track-dropdown-portal]');
-      if (!inOverflow && !inPortaledDropdown) {
-        setOverflowMenuOpen(false);
-      }
-    }
-    document.addEventListener('click', handleClickOutside, true);
-    return () => document.removeEventListener('click', handleClickOutside, true);
-  }, [overflowMenuOpen]);
 
   useEffect(() => {
     if (!commentOverlayOpen) return;
@@ -295,24 +596,6 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     return () => cancelAnimationFrame(frame);
   }, [commentOverlayOpen]);
 
-  useEffect(() => {
-    if (overflowMenuOpen && menuBtnRef.current) {
-      const update = () => {
-        if (menuBtnRef.current) {
-          const r = menuBtnRef.current.getBoundingClientRect();
-          setDropdownRect({ right: r.right, top: r.top });
-        }
-      };
-      update();
-      window.addEventListener('scroll', update, true);
-      window.addEventListener('resize', update);
-      return () => {
-        window.removeEventListener('scroll', update, true);
-        window.removeEventListener('resize', update);
-      };
-    }
-    setDropdownRect(null);
-  }, [overflowMenuOpen]);
   const item = album || track;
   const isAlbum = variant === 'album';
   const thumbIndex = isAlbum
@@ -405,6 +688,8 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected);
 
+  const stemItems = track && !isAlbum ? getStemItems(track) : [];
+
   const renderSelectCheckbox = () => {
     if (!showSelectCheckbox) {
       if (showPauseIcon) {
@@ -478,7 +763,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             ref={menuBtnRef}
             type="button"
             className="icon-btn track-actions-menu-btn"
-            onClick={() => setOverflowMenuOpen(!overflowMenuOpen)}
+            onClick={toggleOverflowMenu}
             aria-label="More actions"
             aria-expanded={overflowMenuOpen}
           >
@@ -488,39 +773,19 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               <circle cx="19" cy="12" r="1.5" />
             </svg>
           </button>
-          {overflowMenuOpen && dropdownRect && createPortal(
+          {overflowMenuOpen && createPortal(
             <div
               data-track-dropdown-portal
               className="track-actions-overflow-dropdown track-actions-overflow-dropdown--segment-style track-actions-overflow-dropdown--portal"
-              style={{
-                position: 'fixed',
-                right: window.innerWidth - dropdownRect.right,
-                bottom: window.innerHeight - dropdownRect.top + 4,
-              }}
+              style={dropdownStyle ?? { position: 'fixed', zIndex: 1100, visibility: 'hidden' }}
             >
-              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                <img src="/TrackDetails.svg" alt="" />
-                Go to Track
-              </button>
-              <button
-                type="button"
-                className="track-actions-overflow-dropdown-item"
-                onClick={() => {
-                  onSoundsLikeClick?.(item);
-                  setOverflowMenuOpen(false);
-                }}
-              >
-                <img src="/player-actions/SoundsLike.svg" alt="" />
-                Sounds Like
-              </button>
-              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                <img src="/icons/Upload.svg" alt="" />
-                Share
-              </button>
-              <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                <img src="/icons/Add.svg" alt="" />
-                Add to a Project
-              </button>
+              <CompactTrackOverflowMenuItems
+                item={item}
+                onSoundsLikeClick={onSoundsLikeClick}
+                onClose={closeOverflowMenu}
+                showRemoveFromProject={showRemoveFromProject}
+                isAlbum={isAlbum}
+              />
             </div>,
             document.body
           )}
@@ -561,8 +826,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   }
 
   return (
+    <>
+    <div className={`track-row-group${stemsOpen ? ' track-row-group--stems-open' : ''}`}>
     <div
-      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems ? ' track-row--compact-versions-stems' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -617,7 +884,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         ) : (
           <>
             {renderSelectCheckbox()}
-            {item.num}
+            <span className="track-num-value">{item.num}</span>
           </>
         )}
       </span>
@@ -659,45 +926,59 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           ) : (!compact || showVersionsStems) ? (
             <div className="track-dropdowns">
               <span className="track-dropdown-label">Versions ({track.versions})</span>
-              <span className="track-dropdown-label">Stems ({track.stems ?? 4})</span>
+              <button
+                type="button"
+                className={`track-dropdown-label track-dropdown-label--toggle${stemsOpen ? ' track-dropdown-label--open' : ''}`}
+                aria-expanded={stemsOpen}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setStemsOpen((open) => !open);
+                }}
+              >
+                Stems ({track.stems ?? 4})
+              </button>
             </div>
           ) : null}
         </div>
       </div>
       {compact ? (
+        isAlbum && compactAlbumTallLayout ? (
+          <p className="track-desc track-desc--compact-album">{item.desc}</p>
+        ) : (
         <div className="track-waveform-cell">
           <TrackWaveform
             trackNum={item.num}
             className="track-waveform track-waveform-svg"
-            {...(item.num === 2 && {
+            {...(!disableWaveformHighlights && item.num === 2 && {
               outlineRange: [70, 170],
               outlineHeightScale: 3,
               outlineColor: '#841FCC',
               outlineOverlayText: '0:28 - 1:08',
               outlineOverlaySegmentTime: '0:28 - 1:08',
             })}
-            {...(item.num === 3 && {
+            {...(!disableWaveformHighlights && item.num === 3 && {
               accentColor: '#841FCC',
               accentRanges: [[30, 55]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
             })}
-            {...(item.num === 6 && {
+            {...(!disableWaveformHighlights && item.num === 6 && {
               accentColor: '#841FCC',
               accentRanges: [[10, 25], [55, 85], [270, 315]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
             })}
-            {...(item.num === 5 && {
+            {...(!disableWaveformHighlights && item.num === 5 && {
               outlineRange: [122, 222],
               outlineHeightScale: 3,
               outlineColor: '#841FCC',
               outlineOverlayText: '0:45 - 1:30',
               outlineOverlaySegmentTime: '0:45 - 1:30',
             })}
-            {...(isAlbum && item.num !== 2 && item.num !== 5 && { outlineColor: '#ffffff' })}
+            {...(!disableWaveformHighlights && isAlbum && item.num !== 2 && item.num !== 5 && { outlineColor: '#ffffff' })}
           />
         </div>
+        )
       ) : (
         <>
           <p className="track-desc">{item.desc}</p>
@@ -719,132 +1000,53 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           />
         </div>
       )}
-      <div className="track-actions">
-        <div className="track-action-icons track-actions-expanded">
-          {!compact && (
-            <>
-              <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={toggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-                <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
-              </button>
-              <button type="button" className="icon-btn" aria-label="Upload">
-                <img src="/icons/Upload.svg" alt="" />
-              </button>
-              <button type="button" className="icon-btn" aria-label="Add">
-                <img src="/icons/Add.svg" alt="" />
-              </button>
-              <button type="button" className="icon-btn" aria-label="Download">
-                <img src="/icons/Download.svg" alt="" />
-              </button>
-              <button type="button" className="icon-btn" aria-label="Close">
-                <img src="/icons/Close.svg" alt="" />
-              </button>
-            </>
-          )}
-        </div>
-        <div className={`track-actions-overflow track-actions-collapsed${compact ? ' track-actions-overflow--compact' : ''}`} ref={overflowRef}>
-            {compact && !hideTrackComments && (
-              <>
-                <span className="track-comment-with-count">
-                  <button
-                    ref={commentBtnRef}
-                    type="button"
-                    className="icon-btn"
-                    aria-label="Comment"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const r = e.currentTarget.getBoundingClientRect();
-                      setCommentButtonRect({ left: r.left, top: r.top, width: r.width, height: r.height });
-                      setCommentOverlayOpen(true);
-                    }}
-                  >
-                    <img src="/Comment.svg" alt="" />
-                  </button>
-                  <span className={`track-comment-count${!item.commentCount || item.commentCount === 0 || (!isAlbum && [2, 4, 8].includes(item.num)) ? ' track-comment-count--hidden' : ''}`}>
-                    {item.commentCount ?? 0}
-                  </span>
-                </span>
-                <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={toggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-                  <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
-                </button>
-              </>
-            )}
-            <button
-              ref={menuBtnRef}
-              type="button"
-              className="icon-btn track-actions-menu-btn"
-              onClick={() => setOverflowMenuOpen(!overflowMenuOpen)}
-              aria-label="More actions"
-              aria-expanded={overflowMenuOpen}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="5" cy="12" r="1.5" />
-                <circle cx="12" cy="12" r="1.5" />
-                <circle cx="19" cy="12" r="1.5" />
-              </svg>
-            </button>
-            {overflowMenuOpen && dropdownRect && createPortal(
-              <div
-                data-track-dropdown-portal
-                className={`track-actions-overflow-dropdown track-actions-overflow-dropdown--portal${compact ? ' track-actions-overflow-dropdown--segment-style' : ''}`}
-                style={{
-                  position: 'fixed',
-                  right: window.innerWidth - dropdownRect.right,
-                  bottom: window.innerHeight - dropdownRect.top + 4,
-                }}
-              >
-                {compact ? (
-                  <>
-                    <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                      <img src="/TrackDetails.svg" alt="" />
-                      Go to Track
-                    </button>
-                    <button
-                      type="button"
-                      className="track-actions-overflow-dropdown-item"
-                      onClick={() => { onSoundsLikeClick?.(item); setOverflowMenuOpen(false); }}
-                    >
-                      <img src="/player-actions/SoundsLike.svg" alt="" />
-                      Sounds Like
-                    </button>
-                    <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                      <img src="/icons/Upload.svg" alt="" />
-                      Share
-                    </button>
-                    <button type="button" className="track-actions-overflow-dropdown-item" onClick={() => setOverflowMenuOpen(false)}>
-                      <img src="/icons/Add.svg" alt="" />
-                      Add to a Project
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={toggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-                      <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
-                    </button>
-                    <button type="button" className="icon-btn" aria-label="Upload">
-                      <img src="/icons/Upload.svg" alt="" />
-                    </button>
-                    <button type="button" className="icon-btn" aria-label="Add">
-                      <img src="/icons/Add.svg" alt="" />
-                    </button>
-                    <button type="button" className="icon-btn" aria-label="Download">
-                      <img src="/icons/Download.svg" alt="" />
-                    </button>
-                    <button type="button" className="icon-btn" aria-label="Close">
-                      <img src="/icons/Close.svg" alt="" />
-                    </button>
-                  </>
-                )}
-              </div>,
-              document.body
-            )}
-          </div>
-        {!isAlbum && !compact && (
-          <button type="button" className="btn-sounds-like small track-sounds-like" onClick={() => onSoundsLikeClick?.(item)}>
-            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.73242 1.26757C8.1425 1.24947 8.49219 1.62908 8.49219 2.02734V2.0459C8.50405 2.50778 8.49219 2.97363 8.49219 3.43847V13.4394C8.49219 13.865 8.1425 14.1816 7.73242 14.2002C7.32214 14.2186 6.97168 13.8379 6.97168 13.4394V13.4219C6.95981 12.96 6.97168 12.4941 6.97168 12.0293L6.97168 2.02734C6.97168 1.60162 7.32214 1.28539 7.73242 1.26757ZM4.83594 3.11035C5.24618 3.09199 5.5957 3.47173 5.5957 3.87011L5.5957 11.334C5.59544 11.7594 5.24603 12.0753 4.83594 12.0937C4.42582 12.1121 4.07645 11.7322 4.07617 11.334V3.87011C4.07617 3.44143 4.42566 3.12816 4.83594 3.11035ZM10.3643 3.11035C10.7744 3.09216 11.124 3.47182 11.124 3.87011V11.334C11.1238 11.7593 10.7742 12.0752 10.3643 12.0937C9.95414 12.1121 9.6038 11.7322 9.60352 11.334V3.87011C9.60352 3.44143 9.95398 3.12816 10.3643 3.11035ZM1.99707 4.39257C2.40726 4.37423 2.75675 4.75402 2.75684 5.15234L2.75684 10.0508C2.75662 10.4763 2.40718 10.7921 1.99707 10.8105C1.58693 10.8289 1.23754 10.449 1.2373 10.0508L1.2373 5.15234C1.23739 4.72729 1.58386 4.41098 1.99707 4.39257ZM13.2012 4.39257C13.6114 4.37417 13.9618 4.75399 13.9619 5.15234V10.0508C13.9617 10.4763 13.6113 10.7921 13.2012 10.8105C12.7912 10.8287 12.4416 10.4489 12.4414 10.0508V5.15234C12.4415 4.72742 12.7911 4.41115 13.2012 4.39257Z"/></svg>
-            Sounds like
-          </button>
-        )}
+      <TrackRowActions
+        compact={compact}
+        condensedViewActions={condensedViewActions}
+        simplifiedViewActions={simplifiedViewActions}
+        showRemoveFromProject={showRemoveFromProject}
+        hideTrackComments={hideTrackComments}
+        hideCloseAction={hideCloseAction}
+        isAlbum={isAlbum}
+        item={item}
+        onSoundsLikeClick={onSoundsLikeClick}
+        liked={liked}
+        onToggleLike={toggleLike}
+        commentBtnRef={commentBtnRef}
+        onCommentClick={(e) => {
+          if (compact) {
+            const r = e.currentTarget.getBoundingClientRect();
+            setCommentButtonRect({ left: r.left, top: r.top, width: r.width, height: r.height });
+            setCommentOverlayOpen(true);
+          } else {
+            handleTrackCommentFocus();
+            commentInputRef.current?.focus();
+          }
+        }}
+      />
+    </div>
+    {stemsOpen && stemItems.length > 0 && (
+      <div className="track-stems-nested" role="group" aria-label={`Stems for ${item.title}`}>
+        {stemItems.map((stem) => (
+          <TrackStemRow
+            key={stem.id}
+            stem={stem}
+            compact={compact}
+            condensedViewActions={condensedViewActions}
+            simplifiedViewActions={simplifiedViewActions}
+            showRemoveFromProject={showRemoveFromProject}
+            hideTrackComments={hideTrackComments}
+            parentItem={item}
+            onSoundsLikeClick={onSoundsLikeClick}
+            onPlay={onPlay}
+            onTogglePause={onTogglePause}
+            isCurrentTrack={currentTrack?.id === stem.id}
+            isPlaying={isPlaying}
+          />
+        ))}
       </div>
+    )}
+    </div>
       {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
         <div className="track-details-overlay">
           <div
@@ -1001,7 +1203,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         })(),
         document.body
       )}
-    </div>
+    </>
   );
 }
 

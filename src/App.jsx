@@ -14,9 +14,13 @@ import ClockPanel from './components/ClockPanel';
 import AudioPlayer from './components/AudioPlayer';
 import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from './constants/routes';
 import { CURRENT_PROJECT_FOLDER_ID, folderHasProjectTracks } from './constants/projectsPanelTree';
+import { getFreshFifteenTracksForFolder } from './constants/freshFifteenTracks';
+import { getMoreLikeTracksForFolder } from './constants/moreLikeTracks';
+import { getMilanUpdatesTracksForFolder } from './constants/milanUpdatesTracks';
 import {
   PROJECTS_TRACKS,
   FAVORITES_TRACKS,
+  SEARCH_RESULTS_TRACKS,
   SAMPLE_AUDIO,
   generateTrackId,
   generateSoundsLikeTrackDescription,
@@ -80,10 +84,16 @@ function AppContent() {
   const { currentTrack } = usePlayer();
 
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
-  const projectPageTracks = useMemo(
-    () => (folderHasProjectTracks(activeProjectFolderId) ? mergedProjects : []),
-    [activeProjectFolderId, mergedProjects]
-  );
+  const projectPageTracks = useMemo(() => {
+    if (!folderHasProjectTracks(activeProjectFolderId)) return [];
+    const milanUpdatesTracks = getMilanUpdatesTracksForFolder(activeProjectFolderId);
+    if (milanUpdatesTracks) return milanUpdatesTracks;
+    const freshFifteenTracks = getFreshFifteenTracksForFolder(activeProjectFolderId);
+    if (freshFifteenTracks) return freshFifteenTracks;
+    const moreLikeTracks = getMoreLikeTracksForFolder(activeProjectFolderId);
+    if (moreLikeTracks) return moreLikeTracks;
+    return mergedProjects;
+  }, [activeProjectFolderId, mergedProjects]);
 
   const handleProjectFolderSelect = useCallback(
     (folderId) => {
@@ -308,7 +318,7 @@ function AppContent() {
                   onCommentsClick={openCommentsPanel}
                   onClockClick={openClockPanel}
                   tracks={projectPageTracks}
-                  projectTrackCount={mergedProjects.length}
+                  projectTrackCount={projectPageTracks.length}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
                 />
@@ -336,7 +346,7 @@ function AppContent() {
                   soundsLikePanelOpen={soundsLikePanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
                   onSoundsLikeWithSelection={openSoundsLikePanelWithSelection}
-                  tracks={mergedProjects}
+                  tracks={SEARCH_RESULTS_TRACKS}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
                 />

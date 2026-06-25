@@ -1,7 +1,7 @@
 /**
  * Right panel for projects folder tree. Uses only `projects-panel-*` classes in index.css.
  */
-import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import {
   PROJECTS_PANEL_FOLDER_MORE_ACTIONS,
@@ -544,20 +544,24 @@ function ProjectsPanel({
         aria-label={`Actions for ${folderMoreMenu.folderName}`}
       >
         {PROJECTS_PANEL_FOLDER_MORE_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            role="menuitem"
-            className="projects-panel-folder-more-menu-item"
-            onClick={() => {
-              if (action.id === 'view') {
-                onFolderSelect?.(folderMoreMenu.folderId);
-              }
-              closeFolderMoreMenu();
-            }}
-          >
-            {action.label}
-          </button>
+          <Fragment key={action.id}>
+            {action.id === 'archive' && (
+              <div className="projects-panel-folder-more-menu-divider" aria-hidden="true" />
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              className="projects-panel-folder-more-menu-item"
+              onClick={() => {
+                if (action.id === 'view') {
+                  onFolderSelect?.(folderMoreMenu.folderId);
+                }
+                closeFolderMoreMenu();
+              }}
+            >
+              {action.label}
+            </button>
+          </Fragment>
         ))}
       </div>,
       document.body
