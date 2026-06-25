@@ -7424,6 +7424,24 @@ html:has(.app-content-wrapper--search) {
   background: #1D415E;
 }
 
+.track-stem-row--playing:not(.track-stem-row--selected) {
+  background: #343434;
+}
+
+.track-stem-row--playing {
+  position: relative;
+}
+
+.track-stem-row--playing::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent-red);
+}
+
 .track-stem-row--compact {
   grid-template-columns: 28px 320px minmax(0, 1fr) 168px;
   column-gap: 12px;
@@ -7474,8 +7492,19 @@ html:has(.app-content-wrapper--search) {
   display: block;
 }
 
+.track-stem-play-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .track-stem-play-btn--playing {
-  cursor: default;
+  cursor: pointer;
+}
+
+.track-stem-play-btn.track-play-btn {
+  padding: 0;
 }
 
 .track-stem-play-btn--playing .track-playing-icon {

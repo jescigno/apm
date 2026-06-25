@@ -257,9 +257,14 @@ function TrackStemRow({
     if (canPlay) onPlay?.({ ...stem, id: stem.id, num: stem.waveformIndex });
   };
 
+  const handlePause = (event) => {
+    event.stopPropagation();
+    onTogglePause?.();
+  };
+
   return (
     <div
-      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${selected ? ' track-stem-row--selected' : ''}`}
+      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${selected ? ' track-stem-row--selected' : ''}${isCurrentTrack ? ' track-stem-row--playing' : ''}`}
     >
       <span className="track-stem-row__col-spacer" aria-hidden="true" />
       <div className="track-stem-row__meta">
@@ -275,8 +280,27 @@ function TrackStemRow({
               onClick={(event) => event.stopPropagation()}
             />
             {showPlayingIcon ? (
-              <span className="track-stem-play-btn track-stem-play-btn--playing" aria-label={`Now playing ${stem.name}`}>
-                <PlayingAudioIcon />
+              <span
+                className="track-stem-play-slot"
+                onMouseEnter={() => setPlayHovered(true)}
+                onMouseLeave={() => setPlayHovered(false)}
+              >
+                {playHovered ? (
+                  <button
+                    type="button"
+                    className="track-play-btn track-pause-btn track-stem-play-btn"
+                    onClick={handlePause}
+                    aria-label={`Pause ${stem.name}`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                    </svg>
+                  </button>
+                ) : (
+                  <span className="track-stem-play-btn track-stem-play-btn--playing" aria-hidden="true">
+                    <PlayingAudioIcon />
+                  </span>
+                )}
               </span>
             ) : (
               <button
