@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from '../constants/routes';
+import { ROUTE_DESIGN_SYSTEM, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from '../constants/routes';
 
 const LEFT_NAV_SEARCH_ICONS = {
   active: '/icons/LeftNav-Search-Active.svg?v=5',
@@ -61,6 +61,15 @@ function Sidebar() {
           )
         )}
       </nav>
+      <div className="sidebar-footer">
+        <NavLink
+          to={ROUTE_DESIGN_SYSTEM}
+          className={({ isActive }) => `nav-item nav-item--design-system${isActive ? ' nav-item--active' : ''}`}
+          title="Design System"
+        >
+          <img src="/icons/design-system.svg" alt="" />
+        </NavLink>
+      </div>
     </aside>
   );
 }

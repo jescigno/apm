@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
-import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS } from '../constants/routes';
+import { ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
 
 const HEADER_MENU_OPTIONS = [
   { label: 'Discover', href: '#' },
@@ -44,20 +44,19 @@ const HEADER_NAV_DROPDOWNS = {
 /** Profile icon menu (wide + mobile My APM section). Set routes as pages exist. */
 const PROFILE_MENU_ITEMS = [
   { label: 'Projects', action: 'projectsPanel' },
-  { label: 'Project Details', to: ROUTE_PROJECT_DETAILS },
-  { label: 'Notifications', to: '/notifications' },
+  { label: 'Notifications', to: ROUTE_ACCOUNT_NOTIFICATIONS },
   { label: 'Favorites', to: ROUTE_FAVORITES },
   { label: 'History', to: '/history' },
+  { label: 'My Account', to: ROUTE_ACCOUNT },
   { type: 'divider' },
-  { label: 'My Account', to: '/account' },
   { label: 'Logout', action: 'logout' },
 ];
 
 /**
- * Items under the “My APM” hamburger accordion (logout last). Excludes divider and My Account.
+ * Items under the “My APM” hamburger accordion (logout last). Excludes divider.
  */
 const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(
-  (o) => o.type !== 'divider' && o.label !== 'My Account'
+  (o) => o.type !== 'divider'
 );
 
 function ModeToggle({ isDark, setIsDark, className = '' }) {

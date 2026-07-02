@@ -245,10 +245,11 @@ function TrackStemRow({
   onTogglePause,
   isCurrentTrack,
   isPlaying,
+  isSelected = false,
+  onSelectChange,
 }) {
   const [playHovered, setPlayHovered] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [selected, setSelected] = useState(false);
   const canPlay = Boolean(stem.audioUrl && onPlay);
   const showPlayingIcon = isCurrentTrack && isPlaying;
 
@@ -264,7 +265,7 @@ function TrackStemRow({
 
   return (
     <div
-      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${selected ? ' track-stem-row--selected' : ''}${isCurrentTrack ? ' track-stem-row--playing' : ''}`}
+      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${isSelected ? ' track-stem-row--selected' : ''}${isCurrentTrack ? ' track-stem-row--playing' : ''}`}
     >
       <span className="track-stem-row__col-spacer" aria-hidden="true" />
       <div className="track-stem-row__meta">
@@ -274,8 +275,8 @@ function TrackStemRow({
             <input
               type="checkbox"
               className="track-checkbox"
-              checked={selected}
-              onChange={(event) => setSelected(event.target.checked)}
+              checked={isSelected}
+              onChange={(event) => onSelectChange?.(stem.id, event.target.checked)}
               aria-label={`Select ${stem.name} stem`}
               onClick={(event) => event.stopPropagation()}
             />
@@ -555,9 +556,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const [popoverSavedComment, setPopoverSavedComment] = useState('');
   const [popoverCommentFocused, setPopoverCommentFocused] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
+  const [selectedStemIds, setSelectedStemIds] = useState(() => new Set());
   const commentInputRef = useRef(null);
   const popoverCommentInputRef = useRef(null);
   const commentBtnRef = useRef(null);
+  const selectAllStemsRef = useRef(null);
   const getMobileMenuStyle = useCallback(
     (triggerEl) => getMenuDropdownStyle(triggerEl, { compact: true, showRemoveFromProject }),
     [showRemoveFromProject]
@@ -713,6 +716,51 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected);
 
   const stemItems = track && !isAlbum ? getStemItems(track) : [];
+
+  useEffect(() => {
+    if (!stemsOpen) setSelectedStemIds(new Set());
+  }, [stemsOpen]);
+
+  useEffect(() => {
+    setSelectedStemIds(new Set());
+  }, [track?.id]);
+
+  const handleStemSelectChange = (stemId, checked) => {
+    setSelectedStemIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(stemId);
+      else next.delete(stemId);
+      return next;
+    });
+  };
+
+  const handleSelectAllStemsToggle = (event) => {
+    event.stopPropagation();
+    const allSelected =
+      stemItems.length > 0 && stemItems.every((stem) => selectedStemIds.has(stem.id));
+    setSelectedStemIds(
+      allSelected ? new Set() : new Set(stemItems.map((stem) => stem.id))
+    );
+  };
+
+  const handleDeselectAllStems = (event) => {
+    event.stopPropagation();
+    setSelectedStemIds(new Set());
+  };
+
+  const allStemsSelected =
+    stemItems.length > 0 && stemItems.every((stem) => selectedStemIds.has(stem.id));
+  const someStemsSelected =
+    selectedStemIds.size > 0 && !allStemsSelected;
+  const hasStemSelection = selectedStemIds.size > 0;
+  const stemSelectionLabel =
+    selectedStemIds.size === 1 ? '1 STEM SELECTED' : `${selectedStemIds.size} STEMS SELECTED`;
+
+  useEffect(() => {
+    const el = selectAllStemsRef.current;
+    if (!el) return;
+    el.indeterminate = someStemsSelected;
+  }, [someStemsSelected, stemsOpen, stemItems.length]);
 
   const renderSelectCheckbox = () => {
     if (!showSelectCheckbox) {
@@ -1050,7 +1098,72 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
       />
     </div>
     {stemsOpen && stemItems.length > 0 && (
-      <div className="track-stems-nested" role="group" aria-label={`Stems for ${item.title}`}>
+      <div
+        className={`track-stems-nested${compact ? ' track-stems-nested--compact' : ''}`}
+        role="group"
+        aria-label={`Stems for ${item.title}`}
+      >
+        <div className={`track-stems-select-all${hasStemSelection ? ' track-stems-select-all--has-selection' : ''}`}>
+          <span className="track-stem-row__col-spacer" aria-hidden="true" />
+          <div className="track-stem-row__meta">
+            <span className="track-stem-row__align-spacer" aria-hidden="true" />
+            <div className="track-stem-row__title-group">
+              <div className="track-stem-row__lead">
+                <input
+                  ref={selectAllStemsRef}
+                  type="checkbox"
+                  className="track-checkbox"
+                  checked={allStemsSelected}
+                  onChange={handleSelectAllStemsToggle}
+                  aria-label="Select all stems"
+                  onClick={(event) => event.stopPropagation()}
+                />
+              </div>
+              {hasStemSelection ? (
+                <div className="tracks-selection-meta">
+                  <span className="tracks-selection-count">{stemSelectionLabel}</span>
+                  <span className="tracks-selection-divider" aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="tracks-selection-deselect"
+                    onClick={handleDeselectAllStems}
+                  >
+                    DESELECT
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="track-stems-select-all__btn"
+                  onClick={handleSelectAllStemsToggle}
+                >
+                  Select All
+                </button>
+              )}
+            </div>
+          </div>
+          <div
+            className={`track-stems-select-all__actions tracks-selection-actions${hasStemSelection ? '' : ' track-stems-select-all__actions--hidden'}`}
+            aria-hidden={!hasStemSelection}
+          >
+            <button type="button" className="tracks-selection-action" aria-label="Favorite" tabIndex={hasStemSelection ? 0 : -1}>
+              <img src="/icons/FavoriteOutline.svg" alt="" />
+              <span className="tracks-selection-action-label">Favorite</span>
+            </button>
+            <button type="button" className="tracks-selection-action" aria-label="Share" tabIndex={hasStemSelection ? 0 : -1}>
+              <img src="/icons/Share.svg" alt="" />
+              <span className="tracks-selection-action-label">Share</span>
+            </button>
+            <button type="button" className="tracks-selection-action" aria-label="Add to Project" tabIndex={hasStemSelection ? 0 : -1}>
+              <img src="/icons/Add.svg" alt="" />
+              <span className="tracks-selection-action-label">Add to Project</span>
+            </button>
+            <button type="button" className="tracks-selection-action" aria-label="Download" tabIndex={hasStemSelection ? 0 : -1}>
+              <img src="/icons/Download.svg" alt="" />
+              <span className="tracks-selection-action-label">Download</span>
+            </button>
+          </div>
+        </div>
         {stemItems.map((stem) => (
           <TrackStemRow
             key={stem.id}
@@ -1066,6 +1179,8 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             onTogglePause={onTogglePause}
             isCurrentTrack={currentTrack?.id === stem.id}
             isPlaying={isPlaying}
+            isSelected={selectedStemIds.has(stem.id)}
+            onSelectChange={handleStemSelectChange}
           />
         ))}
       </div>

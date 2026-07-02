@@ -6,13 +6,15 @@ import Sidebar from './components/Sidebar';
 import ProjectsPage from './pages/ProjectsPage';
 import FavoritesPage from './pages/FavoritesPage';
 import SearchPage from './pages/SearchPage';
+import AccountPage from './pages/AccountPage';
+import DesignSystemPage from './pages/DesignSystemPage';
 import SearchFiltersPanel from './components/SearchFiltersPanel';
 import SoundsLikePanel from './components/SoundsLikePanel';
 import ProjectsPanel from './components/ProjectsPanel';
 import CommentsPanel from './components/CommentsPanel';
 import ClockPanel from './components/ClockPanel';
 import AudioPlayer from './components/AudioPlayer';
-import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from './constants/routes';
+import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH, ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS, ROUTE_DESIGN_SYSTEM } from './constants/routes';
 import { CURRENT_PROJECT_FOLDER_ID, folderHasProjectTracks } from './constants/projectsPanelTree';
 import { getFreshFifteenTracksForFolder } from './constants/freshFifteenTracks';
 import { getMoreLikeTracksForFolder } from './constants/moreLikeTracks';
@@ -280,6 +282,11 @@ function AppContent() {
   /** Reserve min panel width so main layout stays fixed; wider panel draws on top without reflow. */
   const mainPaddingRight = rightPanelOpen ? Math.min(rightPanelWidth, PANEL_MIN_WIDTH) : 0;
   const isSearchRoute = location.pathname === ROUTE_SEARCH;
+  const isProjectsRoute = location.pathname === ROUTE_PROJECT_DETAILS;
+  const isAccountRoute =
+    location.pathname === ROUTE_ACCOUNT || location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS;
+  const isDesignSystemRoute = location.pathname === ROUTE_DESIGN_SYSTEM;
+  const isFullBleedRoute = isAccountRoute || isDesignSystemRoute;
 
   const handleRecentSearchSelect = useCallback((item) => {
     setSearchQuery(item.label);
@@ -294,7 +301,7 @@ function AppContent() {
       />
       <Sidebar />
       <div
-        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}`}
+        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isFullBleedRoute ? ' app-content-wrapper--account' : ''}`}
         style={rightPanelOpen ? { paddingRight: `${mainPaddingRight}px` } : undefined}
       >
         {isSearchRoute && <SearchFiltersPanel />}
@@ -352,6 +359,10 @@ function AppContent() {
                 />
               }
             />
+            <Route path="/notifications" element={<Navigate to={ROUTE_ACCOUNT_NOTIFICATIONS} replace />} />
+            <Route path={ROUTE_ACCOUNT} element={<AccountPage />} />
+            <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage />} />
+            <Route path={ROUTE_DESIGN_SYSTEM} element={<DesignSystemPage />} />
           </Routes>
         </main>
       </div>

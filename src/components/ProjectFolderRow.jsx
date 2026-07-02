@@ -12,6 +12,61 @@ const FOLDER_MORE_ACTIONS = [
   { id: 'delete', label: 'Delete' },
 ];
 
+function FolderHoverHint({ text, tooltipRect }) {
+  if (!text || !tooltipRect) return null;
+
+  return createPortal(
+    <span
+      className="app-hover-tooltip app-hover-tooltip-portal"
+      role="tooltip"
+      style={{
+        left: tooltipRect.left,
+        bottom: window.innerHeight - tooltipRect.top + 6,
+      }}
+    >
+      {text}
+    </span>,
+    document.body
+  );
+}
+
+function useFolderExpandHint(iconRef, enabled) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipRect, setTooltipRect] = useState(null);
+
+  const updateTooltipRect = useCallback(() => {
+    if (!enabled) return;
+    const el = iconRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setTooltipRect({ left: rect.left + rect.width / 2, top: rect.top });
+  }, [enabled, iconRef]);
+
+  useEffect(() => {
+    if (!isHovered || !enabled) return;
+    updateTooltipRect();
+    const onUpdate = () => updateTooltipRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [isHovered, enabled, updateTooltipRect]);
+
+  const bindHover = enabled
+    ? {
+        onMouseEnter: () => {
+          setIsHovered(true);
+          updateTooltipRect();
+        },
+        onMouseLeave: () => setIsHovered(false),
+      }
+    : {};
+
+  return { isHovered, tooltipRect, bindHover };
+}
+
 function ProjectFolderRow({
   folder,
   trackCount = 0,
@@ -22,11 +77,14 @@ function ProjectFolderRow({
   folderCount = 0,
 }) {
   const instanceId = useId();
+  const iconRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef(null);
   const [menuRect, setMenuRect] = useState(null);
   const dateLabel = folder ? getFolderUpdatedAtLabel(folder) : '';
   const trackCountLabel = `${trackCount} ${trackCount === 1 ? 'Track' : 'Tracks'}`;
+  const expandHint = collapsedSummary ? 'Expand' : onIconClick ? 'Collapse' : null;
+  const { isHovered, tooltipRect, bindHover } = useFolderExpandHint(iconRef, Boolean(expandHint));
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -93,6 +151,7 @@ function ProjectFolderRow({
         className={`project-folder-row project-folder-row--collapsed-summary${mobileLayout ? ' project-folder-row--mobile' : ''}`}
       >
         <button
+          ref={iconRef}
           type="button"
           className="project-folder-row__icon project-folder-row__icon--interactive"
           onClick={(event) => {
@@ -100,6 +159,7 @@ function ProjectFolderRow({
             onIconClick?.();
           }}
           aria-label={`${label}. Click to expand.`}
+          {...bindHover}
         >
           <img src="/icons/Folder.svg" alt="" width="18" height="18" />
         </button>
@@ -115,6 +175,7 @@ function ProjectFolderRow({
         </div>
         <span className="project-folder-row__date project-folder-row__date--placeholder" aria-hidden="true" />
         <div className="project-folder-row__more project-folder-row__more--placeholder" aria-hidden="true" />
+        {isHovered && <FolderHoverHint text={expandHint} tooltipRect={tooltipRect} />}
       </div>
     );
   }
@@ -158,6 +219,7 @@ function ProjectFolderRow({
     >
       {onIconClick ? (
         <button
+          ref={iconRef}
           type="button"
           className="project-folder-row__icon project-folder-row__icon--interactive"
           onClick={(event) => {
@@ -165,11 +227,12 @@ function ProjectFolderRow({
             onIconClick();
           }}
           aria-label={`${folder.name} folder. Click to collapse folders.`}
+          {...bindHover}
         >
           <img src="/icons/Folder.svg" alt="" width="18" height="18" />
         </button>
       ) : (
-        <span className="project-folder-row__icon" aria-hidden="true">
+        <span ref={iconRef} className="project-folder-row__icon" aria-hidden="true">
           <img src="/icons/Folder.svg" alt="" width="18" height="18" />
         </span>
       )}
@@ -198,6 +261,7 @@ function ProjectFolderRow({
         </button>
       </div>
       {moreMenu}
+      {isHovered && <FolderHoverHint text={expandHint} tooltipRect={tooltipRect} />}
     </div>
   );
 }
