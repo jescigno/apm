@@ -1,34 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ICON_DELETE } from '../constants/designSystem';
 import { ACCOUNT_NOTIFICATIONS } from '../constants/accountNotifications';
 import { getProfileColorVar } from '../constants/profileColors';
 import AccountNotificationSettingsOverlay from './AccountNotificationSettingsOverlay';
-
-function NotificationBellIcon({ muted }) {
-  if (muted) {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
-        <path
-          d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 4l16 16" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
-      <path
-        d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 function NotificationMessage({ parts }) {
   return (
@@ -48,11 +22,10 @@ function AccountNotificationRow({
   notification,
   selected,
   onSelectChange,
-  onMuteToggle,
   mobileLayout = false,
   selectionMode = false,
 }) {
-  const { initials, parts, timestamp, bellMuted } = notification;
+  const { initials, parts, timestamp } = notification;
   const showCheckbox = !mobileLayout || selectionMode;
   const useRowTapSelect = mobileLayout && !selectionMode;
 
@@ -105,21 +78,6 @@ function AccountNotificationRow({
       <time className="account-notification__time" dateTime={timestamp}>
         {timestamp}
       </time>
-      {!mobileLayout && (
-        <div className="account-notification__actions">
-          <button
-            type="button"
-            className="account-notification__action"
-            aria-label={bellMuted ? 'Unmute notification' : 'Mute notification'}
-            onClick={() => onMuteToggle(notification.id)}
-          >
-            <NotificationBellIcon muted={bellMuted} />
-          </button>
-          <button type="button" className="account-notification__action" aria-label="Delete notification">
-            <img src="/Trash.svg" alt="" />
-          </button>
-        </div>
-      )}
     </li>
   );
 }
@@ -128,8 +86,7 @@ export default function AccountNotificationsTab({
   settingsOpen: controlledSettingsOpen,
   onSettingsOpenChange,
   hideToolbarSettings = false,
-  mobileActionsRef,
-  onMobileSelectionModeChange,
+  onSettingsClick,
 }) {
   const [notifications, setNotifications] = useState(() => [...ACCOUNT_NOTIFICATIONS]);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
@@ -164,10 +121,6 @@ export default function AccountNotificationsTab({
     });
   }, []);
 
-  useEffect(() => {
-    onMobileSelectionModeChange?.(selectionMode);
-  }, [onMobileSelectionModeChange, selectionMode]);
-
   const handleSelectAllToggle = useCallback(() => {
     setSelectedIds((prev) => {
       const everySelected =
@@ -175,14 +128,6 @@ export default function AccountNotificationsTab({
       return everySelected ? new Set() : new Set(notifications.map((item) => item.id));
     });
   }, [notifications]);
-
-  useEffect(() => {
-    if (!mobileActionsRef) return undefined;
-    mobileActionsRef.current = { toggleSelectionMode };
-    return () => {
-      mobileActionsRef.current = null;
-    };
-  }, [mobileActionsRef, toggleSelectionMode]);
 
   const handleDeselectAll = () => {
     setSelectedIds(new Set());
@@ -220,144 +165,181 @@ export default function AccountNotificationsTab({
     setSelectedIds(new Set());
   };
 
-  const handleMuteSelected = () => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        selectedIds.has(item.id) ? { ...item, bellMuted: true } : item
-      )
-    );
-    setSelectedIds(new Set());
+  const handleSettingsClick = () => {
+    if (onSettingsClick) {
+      onSettingsClick();
+      return;
+    }
+    setSettingsOpen(true);
   };
 
-  const handleUnmuteSelected = () => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        selectedIds.has(item.id) ? { ...item, bellMuted: false } : item
-      )
-    );
-    setSelectedIds(new Set());
-  };
+  const batchActions = (
+    <div
+      className={`account-notifications-batch-actions tracks-selection-actions${hasSelection ? '' : ' account-notifications-toolbar-slot--hidden'}`}
+      aria-hidden={!hasSelection}
+    >
+      <button
+        type="button"
+        className="tracks-selection-action"
+        onClick={handleMarkAsRead}
+        tabIndex={hasSelection ? 0 : -1}
+        aria-label="Mark Read"
+      >
+        <img src="/icons/mark-as-read.svg" alt="" />
+        <span className="tracks-selection-action-label">Mark Read</span>
+      </button>
+      <button
+        type="button"
+        className="tracks-selection-action"
+        onClick={handleMarkAsUnread}
+        tabIndex={hasSelection ? 0 : -1}
+        aria-label="Mark Unread"
+      >
+        <img src="/icons/mark-as-unread.svg" alt="" />
+        <span className="tracks-selection-action-label">Mark Unread</span>
+      </button>
+      <button
+        type="button"
+        className="tracks-selection-action"
+        onClick={handleDeleteSelected}
+        tabIndex={hasSelection ? 0 : -1}
+        aria-label="Delete"
+      >
+        <img src={ICON_DELETE} alt="" />
+        <span className="tracks-selection-action-label">Delete</span>
+      </button>
+    </div>
+  );
 
-  const handleMuteToggle = (id) => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, bellMuted: !item.bellMuted } : item
-      )
-    );
-  };
+  const selectAllControls = (
+    <div className="account-notifications-select-all">
+      <input
+        ref={selectAllRef}
+        type="checkbox"
+        className="track-checkbox account-notifications-toolbar__checkbox"
+        checked={allSelected}
+        onChange={handleSelectAllToggle}
+        aria-label="Select all notifications"
+      />
+      <div className="account-notifications-select-all-label">
+        <div
+          className={`tracks-selection-meta${hasSelection ? '' : ' account-notifications-toolbar-slot--hidden'}`}
+          aria-hidden={!hasSelection}
+        >
+          <span className="tracks-selection-count">{selectionLabel}</span>
+          <span className="tracks-selection-divider" aria-hidden="true" />
+          <button
+            type="button"
+            className="tracks-selection-deselect"
+            onClick={handleDeselectAll}
+            tabIndex={hasSelection ? 0 : -1}
+          >
+            DESELECT
+          </button>
+        </div>
+        <button
+          type="button"
+          className={`tracks-selection-deselect account-notifications-select-all__btn${hasSelection ? ' account-notifications-toolbar-slot--hidden' : ''}`}
+          onClick={handleSelectAllToggle}
+          aria-hidden={hasSelection}
+          tabIndex={hasSelection ? -1 : 0}
+        >
+          SELECT ALL
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div
       className={`account-notifications${hideToolbarSettings ? ' account-notifications--mobile-header-actions' : ''}${selectionMode ? ' account-notifications--selection-mode' : ''}`}
     >
-      <div
-        className={`account-notifications-toolbar${hideToolbarSettings && !selectionMode && !hasSelection ? ' account-notifications-toolbar--mobile-collapsed' : ''}`}
-      >
-        <div className="account-notifications-select-all">
-          {(!hideToolbarSettings || selectionMode) && (
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              className="track-checkbox account-notifications-toolbar__checkbox"
-              checked={allSelected}
-              onChange={handleSelectAllToggle}
-              aria-label="Select all notifications"
-            />
-          )}
-          <div className="account-notifications-select-all-label">
-            <div
-              className={`tracks-selection-meta${hasSelection ? '' : ' account-notifications-toolbar-slot--hidden'}`}
-              aria-hidden={!hasSelection}
-            >
-              <span className="tracks-selection-count">{selectionLabel}</span>
-              <span className="tracks-selection-divider" aria-hidden="true" />
+      {hideToolbarSettings && (
+        <div className="notifications-page-mobile-selection-bar">
+          <div
+            className={`notifications-page-mobile-selection-bar__start${selectionMode ? '' : ' notifications-page-mobile-selection-bar__start--hidden'}`}
+            aria-hidden={!selectionMode}
+          >
+            <div className="notifications-page-mobile-selection-bar__select-all">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                className="track-checkbox account-notifications-toolbar__checkbox"
+                checked={allSelected}
+                onChange={handleSelectAllToggle}
+                aria-label="Select all notifications"
+              />
               <button
                 type="button"
-                className="tracks-selection-deselect"
-                onClick={handleDeselectAll}
-                tabIndex={hasSelection ? 0 : -1}
+                className="tracks-selection-deselect account-notifications-select-all__btn"
+                onClick={handleSelectAllToggle}
               >
-                DESELECT
+                SELECT ALL
               </button>
             </div>
-            <button
-              type="button"
-              className={`tracks-selection-deselect account-notifications-select-all__btn${hasSelection ? ' account-notifications-toolbar-slot--hidden' : ''}`}
-              onClick={handleSelectAllToggle}
-              aria-hidden={hasSelection || !selectionMode}
-              tabIndex={hasSelection || !selectionMode ? -1 : 0}
+            <div
+              className={`notifications-page-mobile-selection-bar__bulk account-notifications-batch-actions tracks-selection-actions account-notifications-batch-actions--mobile-inline${hasSelection ? '' : ' notifications-page-mobile-selection-bar__bulk--hidden'}`}
+              aria-hidden={!hasSelection}
             >
-              SELECT ALL
-            </button>
+              <button
+                type="button"
+                className="tracks-selection-action"
+                onClick={handleMarkAsRead}
+                tabIndex={hasSelection ? 0 : -1}
+                aria-label="Mark Read"
+              >
+                <img src="/icons/mark-as-read.svg" alt="" />
+                <span className="tracks-selection-action-label">Mark Read</span>
+              </button>
+              <button
+                type="button"
+                className="tracks-selection-action"
+                onClick={handleMarkAsUnread}
+                tabIndex={hasSelection ? 0 : -1}
+                aria-label="Mark Unread"
+              >
+                <img src="/icons/mark-as-unread.svg" alt="" />
+                <span className="tracks-selection-action-label">Mark Unread</span>
+              </button>
+              <button
+                type="button"
+                className="tracks-selection-action"
+                onClick={handleDeleteSelected}
+                tabIndex={hasSelection ? 0 : -1}
+                aria-label="Delete"
+              >
+                <img src={ICON_DELETE} alt="" />
+                <span className="tracks-selection-action-label">Delete</span>
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="account-notifications-toolbar-end">
-          <div
-            className={`account-notifications-batch-actions tracks-selection-actions${hasSelection ? '' : ' account-notifications-toolbar-slot--hidden'}`}
-            aria-hidden={!hasSelection}
+          <button
+            type="button"
+            className={`account-page-tabs-select${selectionMode ? ' account-page-tabs-select--done' : ''}`}
+            aria-pressed={selectionMode}
+            onClick={toggleSelectionMode}
           >
-            <button
-              type="button"
-              className="tracks-selection-action"
-              onClick={handleMarkAsRead}
-              tabIndex={hasSelection ? 0 : -1}
-              aria-label="Mark as Read"
-            >
-              <img src="/icons/mark-as-read.svg" alt="" />
-              <span className="tracks-selection-action-label">Mark as Read</span>
-            </button>
-            <button
-              type="button"
-              className="tracks-selection-action"
-              onClick={handleMarkAsUnread}
-              tabIndex={hasSelection ? 0 : -1}
-              aria-label="Mark as Unread"
-            >
-              <img src="/icons/mark-as-unread.svg" alt="" />
-              <span className="tracks-selection-action-label">Mark as Unread</span>
-            </button>
-            <button
-              type="button"
-              className="tracks-selection-action"
-              onClick={handleMuteSelected}
-              tabIndex={hasSelection ? 0 : -1}
-              aria-label="Mute"
-            >
-              <NotificationBellIcon muted={false} />
-              <span className="tracks-selection-action-label">Mute</span>
-            </button>
-            <button
-              type="button"
-              className="tracks-selection-action"
-              onClick={handleUnmuteSelected}
-              tabIndex={hasSelection ? 0 : -1}
-              aria-label="Unmute"
-            >
-              <NotificationBellIcon muted />
-              <span className="tracks-selection-action-label">Unmute</span>
-            </button>
-            <button
-              type="button"
-              className="tracks-selection-action"
-              onClick={handleDeleteSelected}
-              tabIndex={hasSelection ? 0 : -1}
-              aria-label="Delete"
-            >
-              <img src="/Trash.svg" alt="" />
-              <span className="tracks-selection-action-label">Delete</span>
-            </button>
-          </div>
+            {selectionMode ? 'Done' : 'Select'}
+          </button>
+        </div>
+      )}
+      <div
+        className={`account-notifications-toolbar${hideToolbarSettings ? ' account-notifications-toolbar--mobile-collapsed' : ''}`}
+      >
+        {!hideToolbarSettings && selectAllControls}
+        <div className="account-notifications-toolbar-end">
+          {!hideToolbarSettings && batchActions}
           <div
             className={`account-notifications-toolbar-meta${hasSelection || hideToolbarSettings ? ' account-notifications-toolbar-slot--hidden' : ''}`}
             aria-hidden={hasSelection || hideToolbarSettings}
           >
-            <span className="account-notifications-toolbar-label">Notifications</span>
+            <span className="account-notifications-toolbar-label">Settings</span>
             <button
               type="button"
               className="account-notification__action account-notification__action--settings"
               aria-label="Notification settings"
               tabIndex={hasSelection || hideToolbarSettings ? -1 : 0}
-              onClick={() => setSettingsOpen(true)}
+              onClick={handleSettingsClick}
             >
               <img src="/icons/Settings.svg" alt="" />
             </button>
@@ -371,16 +353,17 @@ export default function AccountNotificationsTab({
             notification={notification}
             selected={selectedIds.has(notification.id)}
             onSelectChange={handleSelectChange}
-            onMuteToggle={handleMuteToggle}
             mobileLayout={hideToolbarSettings}
             selectionMode={selectionMode}
           />
         ))}
       </ul>
-      <AccountNotificationSettingsOverlay
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
+      {!onSettingsClick && (
+        <AccountNotificationSettingsOverlay
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }

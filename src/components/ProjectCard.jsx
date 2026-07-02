@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { PROJECT_DETAIL_ACTIONS } from '../constants/designSystem';
 
 const PROJECT_IMAGES = [
   '/project-thumb-1.png',
@@ -23,6 +24,19 @@ const GRID_HEIGHTS = [
   { mq: '(max-width: 1280px)', height: 170 },
   { mq: '', height: 220 },
 ];
+
+function ProjectDetailActions({ className = '' }) {
+  return (
+    <div className={`project-actions${className ? ` ${className}` : ''}`}>
+      {PROJECT_DETAIL_ACTIONS.map(({ id, label, src }) => (
+        <button key={id} type="button" className="project-action-btn" aria-label={label}>
+          <img src={src} alt="" />
+          <span className="project-action-btn-label">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ProjectThumbnailVisual({ useDefaultThumbnail }) {
   if (useDefaultThumbnail) {
@@ -207,7 +221,7 @@ function ProjectCard({
           onClick={() => setIsOverlayOpen(false)}
           aria-label="Close overlay"
         >
-          <img src="/icons/Close.svg" alt="" />
+          <img src="/icons/close.svg" alt="" />
         </button>
         <div className="project-details-overlay-panel">
           <div className="project-details-overlay-panel-scroll">
@@ -281,7 +295,7 @@ function ProjectCard({
               View Full Details
             </button>
             <div className="project-mobile-hero__actions">
-              <img src="/Actions.svg" alt="" className="project-actions-icons" />
+              <ProjectDetailActions />
             </div>
           </div>
         </div>
@@ -299,7 +313,7 @@ function ProjectCard({
       <div className="project-visuals">
         <ProjectThumbnailVisual useDefaultThumbnail={useDefaultThumbnail} />
         <div className="project-actions project-actions-inline">
-          <img src="/Actions.svg" alt="Project actions" className="project-actions-icons" />
+          <ProjectDetailActions />
         </div>
       </div>
       <div className="project-details">

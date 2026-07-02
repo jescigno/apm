@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import TrackList, { TrackListTabs, TrackListTrackCount } from '../components/TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+import { ICON_SORT, ICON_CUSTOMIZE } from '../constants/designSystem';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -132,8 +133,8 @@ export default function FavoritesPage({
           <TrackListTrackCount activeTab={activeTab} tracks={tracks} />
         </div>
         <div className="breadcrumb-actions">
-          <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
-          <button type="button" className="btn-secondary"><img src="/Sort.svg" alt="" /> SORT</button>
+          <button type="button" className="btn-secondary"><img src={ICON_CUSTOMIZE} alt="" /> CUSTOMIZE</button>
+          <button type="button" className="btn-secondary"><img src={ICON_SORT} alt="" /> SORT</button>
         </div>
       </div>
 

@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import { ICON_TRACK_DETAILS } from '../constants/designSystem';
 
 const RECENT_SEARCH_MENU_ITEMS = [
-  { id: 'search', label: 'Search', icon: '/icons/Search.svg' },
+  { id: 'search', label: 'Search', icon: '/icons/search.svg' },
   { id: 'sounds-like', label: 'Sounds Like', icon: '/player-actions/SoundsLike.svg' },
   { id: 'share', label: 'Share', icon: '/icons/Upload.svg' },
   { id: 'add-to-favorites', label: 'Add to Favorites', icon: '/player-actions/Favorite.svg' },
-  { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/Close.svg' },
+  { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/close.svg' },
 ];
 
 const RECENTLY_PLAYED_MENU_ITEMS = [
-  { id: 'go-to-track', label: 'Go to Track', icon: '/TrackDetails.svg' },
+  { id: 'go-to-track', label: 'Go to Track', icon: ICON_TRACK_DETAILS },
   { id: 'sounds-like', label: 'Sounds Like', icon: '/player-actions/SoundsLike.svg' },
   { id: 'share', label: 'Share', icon: '/icons/Upload.svg' },
   { id: 'add-to-favorites', label: 'Add to Favorites', icon: '/player-actions/Favorite.svg' },
-  { id: 'add-to-project', label: 'Add to a Project', icon: '/icons/Add.svg' },
-  { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/Close.svg' },
+  { id: 'add-to-project', label: 'Add to a Project', icon: '/icons/add.svg' },
+  { id: 'remove-from-history', label: 'Remove from History', icon: '/icons/close.svg' },
 ];
 
 function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFromHistory, onMenuAction, showOnHover }) {
@@ -63,7 +64,7 @@ function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFrom
         aria-haspopup="menu"
         onClick={() => setMenuOpen((open) => !open)}
       >
-        <img src="/icons/MoreMenu.svg" alt="" aria-hidden />
+        <img src="/icons/moreMenu.svg" alt="" aria-hidden />
       </button>
       {menuOpen && (
         <div
@@ -102,7 +103,7 @@ function RecentSearchCard({ item, onRemoveFromHistory, onSelect }) {
         onClick={onSelect}
       >
         <img
-          src="/icons/Search.svg"
+          src="/icons/search.svg"
           alt=""
           className="search-carousel-card-search-icon"
           width={18}

@@ -11,6 +11,7 @@ import {
   getFolderPath,
   PROJECTS_PANEL_FOLDER_TREE,
 } from '../constants/projectsPanelTree';
+import { COMMENTS_PANEL_INITIAL_ITEMS } from '../constants/commentsPanel';
 
 const ITALY_PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
 const ITALY_PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
@@ -193,8 +194,10 @@ export default function ProjectsPage({
           soundsLikePanelOpen={soundsLikePanelOpen}
           onCommentsClick={onCommentsClick}
           commentsPanelOpen={commentsPanelOpen}
+          commentsActive={COMMENTS_PANEL_INITIAL_ITEMS.length > 0}
           onClockClick={onClockClick}
           clockPanelOpen={clockPanelOpen}
+          collabsActive
         />
       </div>
 

@@ -68,7 +68,7 @@ function ClockPanel({
         </div>
         <div className="clock-panel-actions">
           <button type="button" className="clock-panel-icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/icons/Close.svg" alt="" />
+            <img src="/icons/close.svg" alt="" />
           </button>
         </div>
       </div>

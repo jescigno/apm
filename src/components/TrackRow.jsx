@@ -2,6 +2,14 @@ import { useState, useRef, useEffect, useLayoutEffect, memo, useCallback } from 
 import { createPortal } from 'react-dom';
 import TrackWaveform from './TrackWaveform';
 import { usePlayer } from '../context/PlayerContext';
+import {
+  ICON_PLAY_IN_CIRCLE_ON,
+  ICON_PLAY_IN_CIRCLE_OFF,
+  ICON_COMMENTS,
+  ICON_COMMENTS_ACTIVE,
+  ICON_TRACK_DETAILS,
+  ICON_DELETE,
+} from '../constants/designSystem';
 import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/overflowDropdownPosition';
 import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
 
@@ -53,7 +61,7 @@ function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showR
   return (
     <>
       <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-        <img src="/TrackDetails.svg" alt="" />
+        <img src={ICON_TRACK_DETAILS} alt="" />
         {isAlbum ? 'Go to Album' : 'Go to Track'}
       </button>
       <button
@@ -72,14 +80,14 @@ function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showR
         Share
       </button>
       <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-        <img src="/icons/Add.svg" alt="" />
+        <img src="/icons/add.svg" alt="" />
         Add to a Project
       </button>
       {showRemoveFromProject && (
         <>
           <div className="track-actions-overflow-dropdown-divider" aria-hidden="true" />
           <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-            <img src="/icons/Close.svg" alt="" />
+            <img src="/icons/close.svg" alt="" />
             Remove from Project
           </button>
         </>
@@ -121,6 +129,8 @@ function TrackRowActions({
   const showInlineCondensedIcons = condensedViewActions;
   const showCompactFavoritesActions =
     simplifiedViewActions || (compact && !condensedViewActions && !hideTrackComments);
+  const hasComments =
+    item?.commentCount > 0 && (isAlbum || ![2, 4, 8].includes(item?.num));
 
   return (
     <div className={`track-actions${className ? ` ${className}` : ''}`}>
@@ -128,20 +138,20 @@ function TrackRowActions({
         {(!compact || showInlineCondensedIcons) && (
           <>
             <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-              <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+              <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
             </button>
             <button type="button" className="icon-btn" aria-label="Upload">
               <img src="/icons/Upload.svg" alt="" />
             </button>
             <button type="button" className="icon-btn" aria-label="Add">
-              <img src="/icons/Add.svg" alt="" />
+              <img src="/icons/add.svg" alt="" />
             </button>
             <button type="button" className="icon-btn" aria-label="Download">
-              <img src="/icons/Download.svg" alt="" />
+              <img src="/icons/download.svg" alt="" />
             </button>
             {!hideCloseAction && !condensedViewActions && (
               <button type="button" className="icon-btn" aria-label="Close">
-                <img src="/icons/Close.svg" alt="" />
+                <img src="/icons/close.svg" alt="" />
               </button>
             )}
           </>
@@ -158,14 +168,14 @@ function TrackRowActions({
                 aria-label="Comment"
                 onClick={onCommentClick}
               >
-                <img src="/Comment.svg" alt="" />
+                <img src={hasComments ? ICON_COMMENTS_ACTIVE : ICON_COMMENTS} alt="" />
               </button>
-              <span className={`track-comment-count${!item?.commentCount || item?.commentCount === 0 || (!isAlbum && [2, 4, 8].includes(item?.num)) ? ' track-comment-count--hidden' : ''}`}>
+              <span className={`track-comment-count${!hasComments ? ' track-comment-count--hidden' : ''}`}>
                 {item?.commentCount ?? 0}
               </span>
             </span>
             <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-              <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+              <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
             </button>
           </>
         )}
@@ -200,20 +210,20 @@ function TrackRowActions({
             ) : (
               <>
                 <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-                  <img src={liked ? '/icons/Favorite.svg' : '/icons/FavoriteOutline.svg'} alt="" />
+                  <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
                 </button>
                 <button type="button" className="icon-btn" aria-label="Upload">
                   <img src="/icons/Upload.svg" alt="" />
                 </button>
                 <button type="button" className="icon-btn" aria-label="Add">
-                  <img src="/icons/Add.svg" alt="" />
+                  <img src="/icons/add.svg" alt="" />
                 </button>
                 <button type="button" className="icon-btn" aria-label="Download">
-                  <img src="/icons/Download.svg" alt="" />
+                  <img src="/icons/download.svg" alt="" />
                 </button>
                 {!hideCloseAction && (
                   <button type="button" className="icon-btn" aria-label="Close">
-                    <img src="/icons/Close.svg" alt="" />
+                    <img src="/icons/close.svg" alt="" />
                   </button>
                 )}
               </>
@@ -314,7 +324,7 @@ function TrackStemRow({
                 aria-label={`Play ${stem.name}`}
               >
                 <img
-                  src={playHovered ? '/icons/PlayinCircle.svg' : '/icons/PlayinCircle-Off.svg'}
+                  src={playHovered ? ICON_PLAY_IN_CIRCLE_ON : ICON_PLAY_IN_CIRCLE_OFF}
                   alt=""
                 />
               </button>
@@ -809,14 +819,12 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             ) : (
               <button
                 type="button"
-                className="track-play-btn"
+                className="track-play-btn track-play-btn--play-in-circle"
                 onClick={handlePlay}
                 disabled={!canPlay}
                 aria-label={`Play ${item.title}`}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+                <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
               </button>
             )}
           </div>
@@ -894,7 +902,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 onClick={() => setTrackDetailsOverlayOpen(false)}
                 aria-label="Close overlay"
               >
-                <img src="/icons/Close.svg" alt="" />
+                <img src="/icons/close.svg" alt="" />
               </button>
               <div className="track-details-overlay-panel">
                 <h3 className="track-details-overlay-title">Track Details</h3>
@@ -940,13 +948,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {renderSelectCheckbox()}
             <button
               type="button"
-              className="track-play-btn"
+              className="track-play-btn track-play-btn--play-in-circle"
               onClick={handlePause}
               aria-label={`Play ${item.title}`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
             </button>
           </>
         ) : canPlay && isHovered ? (
@@ -954,13 +960,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {renderSelectCheckbox()}
             <button
               type="button"
-              className="track-play-btn"
+              className="track-play-btn track-play-btn--play-in-circle"
               onClick={handlePlay}
               aria-label={`Play ${item.title}`}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
+              <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
             </button>
           </>
         ) : (
@@ -1169,7 +1173,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               <span className="tracks-selection-action-label">Play</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Favorite" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/Favorite.svg" alt="" />
+              <img src="/icons/favorite.svg" alt="" />
               <span className="tracks-selection-action-label">Favorite</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Share" tabIndex={hasStemSelection ? 0 : -1}>
@@ -1177,11 +1181,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               <span className="tracks-selection-action-label">Share</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Add" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/Add.svg" alt="" />
+              <img src="/icons/add.svg" alt="" />
               <span className="tracks-selection-action-label">Add</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Download" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/Download.svg" alt="" />
+              <img src="/icons/download.svg" alt="" />
               <span className="tracks-selection-action-label">Download</span>
             </button>
           </div>
@@ -1230,7 +1234,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               onClick={() => setTrackDetailsOverlayOpen(false)}
               aria-label="Close overlay"
             >
-              <img src="/icons/Close.svg" alt="" />
+              <img src="/icons/close.svg" alt="" />
             </button>
             <div className="track-details-overlay-panel">
               <h3 className="track-details-overlay-title">Track Details</h3>
@@ -1327,7 +1331,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                               </svg>
                             </button>
                             <button type="button" className="track-comment-popover-action-btn" aria-label="Delete comment">
-                              <img src="/Trash.svg" alt="" />
+                              <img src={ICON_DELETE} alt="" />
                             </button>
                           </div>
                         </div>
@@ -1356,7 +1360,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               onClick={() => setCommentOverlayOpen(false)}
               aria-label="Close"
             >
-              <img src="/icons/Close.svg" alt="" />
+              <img src="/icons/close.svg" alt="" />
             </button>
           </div>
         </div>

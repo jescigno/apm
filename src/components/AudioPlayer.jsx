@@ -36,6 +36,9 @@ function AudioPlayer({ onSoundsLikeClick }) {
     playPrev,
     seek,
     setLoopSegment,
+    isPlayerClosing,
+    beginClosePlayer,
+    closePlayer,
   } = usePlayer();
   const progressRef = useRef(null);
   const dragStateRef = useRef(null);
@@ -302,8 +305,30 @@ function AudioPlayer({ onSoundsLikeClick }) {
     if (!isPlaying) togglePlayPause();
   };
 
+  const handleClosePlayer = () => {
+    if (isPlayerClosing) return;
+    beginClosePlayer();
+  };
+
+  const handlePlayerTransitionEnd = (event) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.propertyName !== 'transform' || !isPlayerClosing) return;
+    closePlayer();
+  };
+
   return (
-    <div className="audio-player">
+    <div
+      className={`audio-player${isPlayerClosing ? ' audio-player--closing' : ''}`}
+      onTransitionEnd={handlePlayerTransitionEnd}
+    >
+      <button
+        type="button"
+        className="audio-player-close"
+        onClick={handleClosePlayer}
+        aria-label="Close player"
+      >
+        <img src="/icons/close.svg" alt="" />
+      </button>
       <div className="audio-player-inner">
         <div className="audio-player-track-info">
           <div
@@ -406,7 +431,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                             Sounds Like
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setSelectionFavorited((f) => !f)}>
-                            <img src={selectionFavorited ? '/icons/Favorite.svg' : '/player-actions/Favorite.svg'} alt="" />
+                            <img src={selectionFavorited ? '/icons/favorite.svg' : '/player-actions/Favorite.svg'} alt="" />
                             {selectionFavorited ? 'Remove from Favorites' : 'Add to Favorites'}
                           </button>
                           <button
@@ -427,7 +452,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                             Share
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setOptionsMenuOpen(false)}>
-                            <img src="/icons/Add.svg" alt="" />
+                            <img src="/icons/add.svg" alt="" />
                             Add to a Project
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => { setSelection(null); setOptionsMenuOpen(false); }}>

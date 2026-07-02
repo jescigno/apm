@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
@@ -9,7 +9,7 @@ import {
 } from '../constants/accountPage';
 import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
 import { HeaderMenuButton } from '../components/Header';
-import AccountNotificationsTab from '../components/AccountNotificationsTab';
+import AccountNotificationSettingsContent from '../components/AccountNotificationSettingsContent';
 import AccountSettingsTab from '../components/AccountSettingsTab';
 
 function AccountEditButton({ label }) {
@@ -142,9 +142,6 @@ export default function AccountPage({ headerMenuRef }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileLayout, setMobileLayout] = useState(false);
-  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
-  const [mobileNotificationSelectionMode, setMobileNotificationSelectionMode] = useState(false);
-  const notificationMobileActionsRef = useRef(null);
   const [activeTab, setActiveTab] = useState(() =>
     location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS ? 'notifications' : 'personal'
   );
@@ -165,9 +162,6 @@ export default function AccountPage({ headerMenuRef }) {
 
   const handleTabChange = (id) => {
     setActiveTab(id);
-    if (id !== 'notifications') {
-      setMobileNotificationSelectionMode(false);
-    }
     if (id === 'notifications') {
       navigate(ROUTE_ACCOUNT_NOTIFICATIONS);
       return;
@@ -206,33 +200,11 @@ export default function AccountPage({ headerMenuRef }) {
               </button>
             ))}
           </div>
-          {mobileLayout && activeTab === 'notifications' && (
-            <div className="account-page-tabs-actions">
-              <button
-                type="button"
-                className={`account-page-tabs-select${mobileNotificationSelectionMode ? ' account-page-tabs-select--done' : ''}`}
-                aria-pressed={mobileNotificationSelectionMode}
-                onClick={() => notificationMobileActionsRef.current?.toggleSelectionMode()}
-              >
-                {mobileNotificationSelectionMode ? 'Done' : 'Select'}
-              </button>
-              {!mobileNotificationSelectionMode && (
-                <button
-                  type="button"
-                  className="account-notification__action account-notification__action--settings account-page-tabs-settings"
-                  aria-label="Notification settings"
-                  onClick={() => setNotificationSettingsOpen(true)}
-                >
-                  <img src="/icons/Settings.svg" alt="" />
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
       <div className="account-page-body">
-        {ACCOUNT_TABS.map(({ id, label }) => (
+        {ACCOUNT_TABS.map(({ id }) => (
           <div
             key={id}
             id={`account-panel-${id}`}
@@ -244,13 +216,7 @@ export default function AccountPage({ headerMenuRef }) {
             {id === 'personal' && <AccountPersonalTab />}
             {id === 'settings' && <AccountSettingsTab />}
             {id === 'notifications' && (
-              <AccountNotificationsTab
-                settingsOpen={mobileLayout ? notificationSettingsOpen : undefined}
-                onSettingsOpenChange={mobileLayout ? setNotificationSettingsOpen : undefined}
-                hideToolbarSettings={mobileLayout}
-                mobileActionsRef={mobileLayout ? notificationMobileActionsRef : undefined}
-                onMobileSelectionModeChange={mobileLayout ? setMobileNotificationSelectionMode : undefined}
-              />
+              <AccountNotificationSettingsContent className="account-notification-settings-tab" />
             )}
           </div>
         ))}

@@ -11,6 +11,7 @@ import {
   getFolderAncestorIds,
   getFolderUpdatedAtLabel,
 } from '../constants/projectsPanelTree';
+import { ICON_SORT, ICON_ARCHIVE, ICON_DELETE } from '../constants/designSystem';
 
 const FOLDER_MORE_MENU_WIDTH = 220;
 
@@ -100,7 +101,7 @@ function ProjectsPanelSourceIcon({ sourceId }) {
       return (
         <img
           className="projects-panel-source-menu-icon-img"
-          src="/Archive.svg"
+          src={ICON_ARCHIVE}
           alt=""
           width={18}
           height={18}
@@ -111,7 +112,7 @@ function ProjectsPanelSourceIcon({ sourceId }) {
       return (
         <img
           className="projects-panel-source-menu-icon-img"
-          src="/Trash.svg"
+          src={ICON_DELETE}
           alt=""
           width={18}
           height={18}
@@ -126,7 +127,7 @@ function ProjectsPanelSourceIcon({ sourceId }) {
 function FolderGlyph() {
   return (
     <span className="projects-panel-folder-glyph" aria-hidden>
-      <img src="/icons/Folder.svg" alt="" className="projects-panel-folder-glyph-img" width="18" height="18" />
+      <img src="/icons/folder.svg" alt="" className="projects-panel-folder-glyph-img" width="18" height="18" />
     </span>
   );
 }
@@ -233,7 +234,7 @@ function FolderRow({
             onFolderMoreClick?.(folder, e.currentTarget);
           }}
         >
-          <img src="/icons/MoreMenu.svg" alt="" />
+          <img src="/icons/moreMenu.svg" alt="" />
         </button>
       </div>
       {hasChildren && expanded && canShowNested && (
@@ -284,6 +285,7 @@ function ProjectsPanel({
   const [menuPosition, setMenuPosition] = useState(null);
   const folderMoreAnchorRef = useRef(null);
   const [folderMoreMenu, setFolderMoreMenu] = useState(null);
+  const [folderNotificationsDisabled, setFolderNotificationsDisabled] = useState(() => new Set());
   const [inlineNavTracksTypoFits, setInlineNavTracksTypoFits] = useState(false);
 
   const updateMenuPosition = useCallback(() => {
@@ -352,6 +354,15 @@ function ProjectsPanel({
   const closeFolderMoreMenu = useCallback(() => {
     folderMoreAnchorRef.current = null;
     setFolderMoreMenu(null);
+  }, []);
+
+  const toggleFolderNotifications = useCallback((folderId, allowed) => {
+    setFolderNotificationsDisabled((prev) => {
+      const next = new Set(prev);
+      if (allowed) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
   }, []);
 
   const openFolderMoreMenu = useCallback((folder, anchorEl) => {
@@ -548,19 +559,42 @@ function ProjectsPanel({
             {action.id === 'archive' && (
               <div className="projects-panel-folder-more-menu-divider" aria-hidden="true" />
             )}
-            <button
-              type="button"
-              role="menuitem"
-              className="projects-panel-folder-more-menu-item"
-              onClick={() => {
-                if (action.id === 'view') {
-                  onFolderSelect?.(folderMoreMenu.folderId);
-                }
-                closeFolderMoreMenu();
-              }}
-            >
-              {action.label}
-            </button>
+            {action.toggle ? (
+              <div
+                className="projects-panel-folder-more-menu-row projects-panel-folder-more-menu-row--toggle"
+                role="none"
+              >
+                <span className="projects-panel-folder-more-menu-row__label">{action.label}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!folderNotificationsDisabled.has(folderMoreMenu.folderId)}
+                  aria-label={`${action.label} for ${folderMoreMenu.folderName}`}
+                  className={`account-notification-settings-toggle${!folderNotificationsDisabled.has(folderMoreMenu.folderId) ? ' account-notification-settings-toggle--on' : ''}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    const allowed = folderNotificationsDisabled.has(folderMoreMenu.folderId);
+                    toggleFolderNotifications(folderMoreMenu.folderId, allowed);
+                  }}
+                >
+                  <span className="account-notification-settings-toggle__slider" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                className="projects-panel-folder-more-menu-item"
+                onClick={() => {
+                  if (action.id === 'view') {
+                    onFolderSelect?.(folderMoreMenu.folderId);
+                  }
+                  closeFolderMoreMenu();
+                }}
+              >
+                {action.label}
+              </button>
+            )}
           </Fragment>
         ))}
       </div>,
@@ -633,16 +667,16 @@ function ProjectsPanel({
                 <span className="projects-panel-toolbar-btn-label">Search My Projects</span>
               </button>
               <button type="button" className="projects-panel-toolbar-btn" aria-label="New Project">
-                <img src="/icons/Folder-New.svg" alt="" aria-hidden />
+                <img src="/icons/folderNew.svg" alt="" aria-hidden />
                 <span className="projects-panel-toolbar-btn-label">New Project</span>
               </button>
               <button type="button" className="projects-panel-toolbar-btn" aria-label="SORT: DATE MODIFIED">
-                <img src="/Sort.svg" alt="" aria-hidden />
+                <img src={ICON_SORT} alt="" aria-hidden />
                 <span className="projects-panel-toolbar-btn-label">SORT: DATE MODIFIED</span>
               </button>
             </div>
             <button type="button" className="projects-panel-toolbar-btn projects-panel-toolbar-btn--close" onClick={onClose} aria-label="Close panel">
-              <img src="/icons/Close.svg" alt="" />
+              <img src="/icons/close.svg" alt="" />
             </button>
           </div>
         </div>

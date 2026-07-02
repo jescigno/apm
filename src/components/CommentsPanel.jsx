@@ -2,6 +2,7 @@
  * Right panel for project comments. Uses only `comments-panel-*` classes in index.css.
  */
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { ICON_DELETE } from '../constants/designSystem';
 
 const COMMENT_EXIT_ANIM_MS = 220;
 
@@ -204,7 +205,7 @@ function CommentsPanel({
         </div>
         <div className="comments-panel-actions">
           <button type="button" className="comments-panel-icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/icons/Close.svg" alt="" />
+            <img src="/icons/close.svg" alt="" />
           </button>
         </div>
       </div>
@@ -238,7 +239,7 @@ function CommentsPanel({
                         }}
                         disabled={isExiting}
                       >
-                        <img src="/Trash.svg" alt="" />
+                        <img src={ICON_DELETE} alt="" />
                       </button>
                     </div>
                   )}

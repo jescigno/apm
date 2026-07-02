@@ -82,6 +82,55 @@ export const DESIGN_SYSTEM_COLORS = [
   },
 ];
 
+/** Track row / stem play control — red circle (on) and triangle-only (off). */
+export const ICON_PLAY_IN_CIRCLE_ON = '/icons/PlayinCircle.svg';
+export const ICON_PLAY_IN_CIRCLE_OFF = '/icons/PlayinCircle-Off.svg';
+
+export const ICON_SHARE = '/icons/Upload.svg';
+export const ICON_COPY = '/icons/copy.svg';
+export const ICON_ADD = '/icons/add.svg';
+export const ICON_MOVE_TO = '/icons/moveTo.svg';
+export const ICON_DOWNLOAD = '/icons/download.svg';
+export const ICON_FAVORITE = '/icons/favorite.svg';
+export const ICON_FAVORITE_OUTLINE = '/icons/favoriteOutline.svg';
+export const ICON_ARCHIVE = '/icons/archive.svg';
+export const ICON_DELETE = '/icons/Trash.svg';
+export const ICON_SOUNDS_LIKE = '/icons/soundsLike.svg';
+export const ICON_CUSTOMIZE = '/icons/customize.svg';
+export const ICON_REORDER = '/icons/reorder.svg';
+export const ICON_CLOSE = '/icons/close.svg';
+export const ICON_COMMENTS = '/icons/comments.svg';
+export const ICON_COMMENTS_ACTIVE = '/icons/comments-active.svg';
+export const ICON_TRACK_DETAILS = '/icons/TrackDetails.svg';
+export const ICON_SORT = '/icons/sort.svg';
+export const ICON_REFRESH = '/icons/refresh.svg';
+export const ICON_SEARCH = '/icons/search.svg';
+export const ICON_MORE_MENU = '/icons/moreMenu.svg';
+export const ICON_FOLDER = '/icons/folder.svg';
+export const ICON_FOLDER_NEW = '/icons/folderNew.svg';
+export const ICON_HISTORY = '/icons/history.svg';
+export const ICON_COLLABS = '/icons/collabs.svg';
+export const ICON_COLLABS_ACTIVE = '/icons/collabs-active.svg';
+
+/** Breadcrumb collab actions on project details. */
+export const PROJECT_COLLAB_ACTIONS = [
+  { id: 'sounds-like', label: 'Sounds Like', src: ICON_SOUNDS_LIKE },
+  { id: 'history', label: 'History', src: ICON_HISTORY },
+  { id: 'comments', label: 'Comments', src: ICON_COMMENTS, activeSrc: ICON_COMMENTS_ACTIVE },
+  { id: 'collabs', label: 'Collaborators', src: ICON_COLLABS, activeSrc: ICON_COLLABS_ACTIVE, wide: true },
+];
+
+/** Project details hero — actions under the thumbnail grid. */
+export const PROJECT_DETAIL_ACTIONS = [
+  { id: 'share', label: 'Share', src: ICON_SHARE },
+  { id: 'copy', label: 'Copy', src: ICON_COPY },
+  { id: 'add', label: 'Add', src: ICON_ADD },
+  { id: 'move', label: 'Move', src: ICON_MOVE_TO },
+  { id: 'download', label: 'Download', src: ICON_DOWNLOAD },
+  { id: 'archive', label: 'Archive', src: ICON_ARCHIVE },
+  { id: 'delete', label: 'Delete', src: ICON_DELETE },
+];
+
 /** Main sections — used for in-page jump navigation. */
 export const DESIGN_SYSTEM_SECTIONS = [
   { id: 'typography', label: 'Typography' },
@@ -123,20 +172,22 @@ export const DESIGN_SYSTEM_ICONS = [
   {
     group: 'Common UI',
     icons: [
-      { name: 'Search', src: '/icons/Search.svg' },
-      { name: 'Close', src: '/icons/Close.svg' },
-      { name: 'Add', src: '/icons/Add.svg' },
-      { name: 'Share', src: '/icons/Upload.svg' },
-      { name: 'Download', src: '/icons/Download.svg' },
-      { name: 'Favorite (filled)', src: '/icons/Favorite.svg' },
-      { name: 'Favorite (outline)', src: '/icons/FavoriteOutline.svg' },
-      { name: 'Play (on)', src: '/icons/PlayinCircle.svg' },
-      { name: 'Play (off)', src: '/icons/PlayinCircle-Off.svg' },
-      { name: 'More menu', src: '/icons/MoreMenu.svg' },
+      { name: 'Search', src: ICON_SEARCH },
+      { name: 'Close', src: ICON_CLOSE },
+      { name: 'Add', src: ICON_ADD },
+      { name: 'Share', src: ICON_SHARE },
+      { name: 'Copy', src: ICON_COPY },
+      { name: 'Move', src: ICON_MOVE_TO },
+      { name: 'Download', src: ICON_DOWNLOAD },
+      { name: 'Favorite (filled)', src: ICON_FAVORITE },
+      { name: 'Favorite (outline)', src: ICON_FAVORITE_OUTLINE },
+      { name: 'Play (on)', src: ICON_PLAY_IN_CIRCLE_ON },
+      { name: 'Play (off)', src: ICON_PLAY_IN_CIRCLE_OFF },
+      { name: 'More menu', src: ICON_MORE_MENU },
       { name: 'Track info', src: '/icons/TrackInfo.svg' },
       { name: 'Track lyrics', src: '/icons/TrackLyrics.svg' },
-      { name: 'Folder', src: '/icons/Folder.svg' },
-      { name: 'New folder', src: '/icons/Folder-New.svg' },
+      { name: 'Folder', src: ICON_FOLDER },
+      { name: 'New folder', src: ICON_FOLDER_NEW },
       { name: 'Settings', src: '/icons/Settings.svg' },
       { name: 'Mark as read', src: '/icons/mark-as-read.svg' },
       { name: 'Mark as unread', src: '/icons/mark-as-unread.svg' },
@@ -145,23 +196,37 @@ export const DESIGN_SYSTEM_ICONS = [
   {
     group: 'Track & list actions',
     icons: [
-      { name: 'Track details', src: '/TrackDetails.svg' },
-      { name: 'Comment', src: '/Comment.svg' },
-      { name: 'Sounds Like', src: '/SoundsLike.svg' },
-      { name: 'Trash', src: '/Trash.svg' },
-      { name: 'Customize', src: '/Customize.svg' },
-      { name: 'Sort', src: '/Sort.svg' },
-      { name: 'Reorder', src: '/Reorder.svg' },
-      { name: 'Refresh', src: '/Refresh.svg' },
-      { name: 'Archive', src: '/Archive.svg' },
+      { name: 'Track details', src: ICON_TRACK_DETAILS },
+      { name: 'Comments', src: ICON_COMMENTS },
+      { name: 'Comments (active)', src: ICON_COMMENTS_ACTIVE },
+      { name: 'Sounds Like', src: ICON_SOUNDS_LIKE },
+      { name: 'Trash', src: ICON_DELETE },
+      { name: 'Customize', src: ICON_CUSTOMIZE },
+      { name: 'Sort', src: ICON_SORT },
+      { name: 'Reorder', src: ICON_REORDER },
+      { name: 'Refresh', src: ICON_REFRESH },
+      { name: 'Archive', src: ICON_ARCHIVE },
+    ],
+  },
+  {
+    group: 'Project detail actions',
+    icons: PROJECT_DETAIL_ACTIONS.map(({ label, src }) => ({ name: label, src })),
+  },
+  {
+    group: 'Project collab bar',
+    icons: [
+      { name: 'Sounds Like', src: ICON_SOUNDS_LIKE },
+      { name: 'History', src: ICON_HISTORY },
+      { name: 'Comments', src: ICON_COMMENTS },
+      { name: 'Comments (active)', src: ICON_COMMENTS_ACTIVE },
+      { name: 'Collabs', src: ICON_COLLABS, wide: true },
+      { name: 'Collabs (active)', src: ICON_COLLABS_ACTIVE, wide: true },
     ],
   },
   {
     group: 'Projects & panels',
     icons: [
       { name: 'Search (panel)', src: '/nav-icons/Search.svg' },
-      { name: 'Project actions', src: '/Actions.svg', wide: true },
-      { name: 'Collab bar', src: '/BC-icons.svg', wide: true },
     ],
   },
   {

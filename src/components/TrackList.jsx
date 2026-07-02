@@ -5,6 +5,7 @@ import CustomizeViewMenu from './CustomizeViewMenu';
 import { usePlayer } from '../context/PlayerContext';
 import { getFolderTrackCount } from '../constants/projectsPanelTree';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+import { ICON_SORT, ICON_SOUNDS_LIKE, ICON_CUSTOMIZE, ICON_REORDER } from '../constants/designSystem';
 
 export const PROJECTS_CUSTOMIZE_VIEW_OPTIONS = [
   { id: 'condensed', label: 'Condensed' },
@@ -214,7 +215,7 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
-function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, showRemove, onRemove }) {
+function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, showRemove, onRemove, showSoundsLike = true }) {
   const label = selectedCount === 1 ? '1 TRACK SELECTED' : `${selectedCount} TRACKS SELECTED`;
 
   return (
@@ -234,7 +235,7 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, s
           <span className="tracks-selection-action-label">Play</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Favorite">
-          <img src="/icons/Favorite.svg" alt="" />
+          <img src="/icons/favorite.svg" alt="" />
           <span className="tracks-selection-action-label">Favorite</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Share">
@@ -242,20 +243,22 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, s
           <span className="tracks-selection-action-label">Share</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Add">
-          <img src="/icons/Add.svg" alt="" />
+          <img src="/icons/add.svg" alt="" />
           <span className="tracks-selection-action-label">Add</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Download">
-          <img src="/icons/Download.svg" alt="" />
+          <img src="/icons/download.svg" alt="" />
           <span className="tracks-selection-action-label">Download</span>
         </button>
-        <button type="button" className="tracks-selection-action" onClick={onSoundsLike} aria-label="Sounds like">
-          <img src="/SoundsLike.svg" alt="" />
-          <span className="tracks-selection-action-label">Sounds Like</span>
-        </button>
+        {showSoundsLike && (
+          <button type="button" className="tracks-selection-action" onClick={onSoundsLike} aria-label="Sounds like">
+            <img src={ICON_SOUNDS_LIKE} alt="" />
+            <span className="tracks-selection-action-label">Sounds Like</span>
+          </button>
+        )}
         {showRemove && (
           <button type="button" className="tracks-selection-action" onClick={onRemove} aria-label="Remove">
-            <img src="/icons/Close.svg" alt="" />
+            <img src="/icons/close.svg" alt="" />
             <span className="tracks-selection-action-label">Remove</span>
           </button>
         )}
@@ -363,7 +366,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     }
   };
 
-  const selectionBar = hasSelection ? (
+  const selectionBar = (
     <TracksSelectionBar
       selectedCount={selectedCount}
       onPlay={handlePlaySelected}
@@ -371,8 +374,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       onDeselect={handleDeselectAll}
       showRemove={showSelectionRemove}
       onRemove={handleRemoveSelected}
+      showSoundsLike={headerActionsVariant !== 'search'}
     />
-  ) : null;
+  );
 
   const trackCountLabel = activeTab === 'tracks'
     ? `${tracks.length} TITLES`
@@ -394,21 +398,21 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       {onTrackViewModeChange ? (
         <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
       ) : (
-        <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+        <button type="button" className="btn-secondary"><img src={ICON_CUSTOMIZE} alt="" /> CUSTOMIZE</button>
       )}
-      <button type="button" className="btn-secondary"><img src="/Sort.svg" alt="" /> SORT</button>
+      <button type="button" className="btn-secondary"><img src={ICON_SORT} alt="" /> SORT</button>
     </>
   ) : (
     !showEmptyProjectState && (
       <>
-        <button type="button" className="btn-secondary"><img src="/Reorder.svg" alt="" /> REORDER</button>
+        <button type="button" className="btn-secondary"><img src={ICON_REORDER} alt="" /> REORDER</button>
         <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
         </button>
         {onTrackViewModeChange ? (
           <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
         ) : (
-          <button type="button" className="btn-secondary"><img src="/Customize.svg" alt="" /> CUSTOMIZE</button>
+          <button type="button" className="btn-secondary"><img src={ICON_CUSTOMIZE} alt="" /> CUSTOMIZE</button>
         )}
       </>
     )
@@ -420,20 +424,25 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
         <div className="tracks-header">
           <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
           <div className="tracks-header-meta">
-            {hasSelection ? (
-              selectionBar
-            ) : (
-              <>
-                {!foldersOnlyView && (
-                  <span className="track-count">{trackCountLabel}</span>
-                )}
-                {!foldersOnlyView && tracksActions && (
+            <div
+              className={`tracks-header-meta-default${hasSelection ? ' tracks-header-toolbar-slot--hidden' : ''}`}
+              aria-hidden={hasSelection}
+            >
+              {!foldersOnlyView && (
+                <span className="track-count">{trackCountLabel}</span>
+              )}
+              {!foldersOnlyView && tracksActions && (
                 <div className="tracks-actions">
                   {tracksActions}
                 </div>
-                )}
-              </>
-            )}
+              )}
+            </div>
+            <div
+              className={`tracks-header-meta-selection${hasSelection ? '' : ' tracks-header-toolbar-slot--hidden'}`}
+              aria-hidden={!hasSelection}
+            >
+              {selectionBar}
+            </div>
           </div>
         </div>
       )}
@@ -447,38 +456,43 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       )}
       {hideTracksHeader && activeTab === 'tracks' && (hasSelection || !foldersOnlyView) && (
         <div className="tracks-mobile-toolbar">
-          {hasSelection ? (
-            selectionBar
-          ) : (
-            <>
-              {!foldersOnlyView && (
-                <span className="tracks-mobile-toolbar-count">{trackCountLabel}</span>
-              )}
-              {!foldersOnlyView && (
+          <div
+            className={`tracks-mobile-toolbar-default${hasSelection ? ' tracks-header-toolbar-slot--hidden' : ''}`}
+            aria-hidden={hasSelection}
+          >
+            {!foldersOnlyView && (
+              <span className="tracks-mobile-toolbar-count">{trackCountLabel}</span>
+            )}
+            {!foldersOnlyView && (
               <div className="tracks-mobile-toolbar-actions">
-              {headerActionsVariant === 'search' ? (
-                <>
-                  {onTrackViewModeChange ? (
-                    <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
-                  ) : null}
-                  <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
-                    <img src="/Sort.svg" alt="" /> SORT
-                  </button>
-                </>
-              ) : !showEmptyProjectState ? (
-                <>
-                  {onTrackViewModeChange ? (
-                    <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
-                  ) : null}
-                  <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
-                    <img src="/Reorder.svg" alt="" /> REORDER
-                  </button>
-                </>
-              ) : null}
+                {headerActionsVariant === 'search' ? (
+                  <>
+                    {onTrackViewModeChange ? (
+                      <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+                    ) : null}
+                    <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
+                      <img src={ICON_SORT} alt="" /> SORT
+                    </button>
+                  </>
+                ) : !showEmptyProjectState ? (
+                  <>
+                    {onTrackViewModeChange ? (
+                      <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+                    ) : null}
+                    <button type="button" className="btn-secondary tracks-mobile-toolbar-reorder">
+                      <img src={ICON_REORDER} alt="" /> REORDER
+                    </button>
+                  </>
+                ) : null}
               </div>
-              )}
-            </>
-          )}
+            )}
+          </div>
+          <div
+            className={`tracks-mobile-toolbar-selection${hasSelection ? '' : ' tracks-header-toolbar-slot--hidden'}`}
+            aria-hidden={!hasSelection}
+          >
+            {selectionBar}
+          </div>
         </div>
       )}
       <div className="track-list">

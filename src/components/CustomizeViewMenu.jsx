@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { ICON_CUSTOMIZE } from '../constants/designSystem';
 
 const DEFAULT_VIEW_OPTIONS = [
   { id: 'condensed', label: 'Condensed' },
@@ -123,7 +124,7 @@ export default function CustomizeViewMenu({ viewMode = 'expanded', onViewModeCha
         aria-expanded={open}
         onClick={toggleOpen}
       >
-        <img src="/Customize.svg" alt="" />
+        <img src={ICON_CUSTOMIZE} alt="" />
         CUSTOMIZE
       </button>
       {menu}

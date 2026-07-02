@@ -473,6 +473,7 @@ export const PROJECTS_PANEL_FOLDER_MORE_ACTIONS = [
   { id: 'copy', label: 'Copy' },
   { id: 'moveTo', label: 'Move To' },
   { id: 'newSubProject', label: 'New Sub-Project' },
+  { id: 'allowNotifications', label: 'Notifications', toggle: true },
   { id: 'archive', label: 'Archive' },
   { id: 'delete', label: 'Delete' },
 ];

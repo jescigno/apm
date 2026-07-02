@@ -1,105 +1,65 @@
 /**
- * Breadcrumb collab icon strip (BC-icons.svg). Audio, clock, and comment icons open right panels.
+ * Project details collab actions — individual icons from the design system.
  */
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-
-function CollabHitButton({ label, className, onClick, ariaPressed }) {
-  const hitRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [tooltipRect, setTooltipRect] = useState(null);
-
-  const updateTooltipRect = () => {
-    const el = hitRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setTooltipRect({ left: rect.left + rect.width / 2, top: rect.top });
-  };
-
-  useEffect(() => {
-    if (!isHovered) return;
-    updateTooltipRect();
-    const onUpdate = () => updateTooltipRect();
-    window.addEventListener('scroll', onUpdate, true);
-    window.addEventListener('resize', onUpdate);
-    return () => {
-      window.removeEventListener('scroll', onUpdate, true);
-      window.removeEventListener('resize', onUpdate);
-    };
-  }, [isHovered]);
-
-  const tooltip =
-    isHovered &&
-    tooltipRect &&
-    createPortal(
-      <span
-        className="app-hover-tooltip app-hover-tooltip-portal"
-        role="tooltip"
-        style={{
-          left: tooltipRect.left,
-          bottom: window.innerHeight - tooltipRect.top + 6,
-        }}
-      >
-        {label}
-      </span>,
-      document.body
-    );
-
-  return (
-    <>
-      <button
-        ref={hitRef}
-        type="button"
-        className={className}
-        aria-label={label}
-        aria-pressed={ariaPressed}
-        onClick={onClick}
-        onMouseEnter={() => {
-          setIsHovered(true);
-          updateTooltipRect();
-        }}
-        onMouseLeave={() => setIsHovered(false)}
-        onFocus={() => {
-          setIsHovered(true);
-          updateTooltipRect();
-        }}
-        onBlur={() => setIsHovered(false)}
-      />
-      {tooltip}
-    </>
-  );
-}
+import { PROJECT_COLLAB_ACTIONS } from '../constants/designSystem';
 
 function ProjectCollabBar({
   onSoundsLikeClick,
   soundsLikePanelOpen,
   onCommentsClick,
   commentsPanelOpen,
+  commentsActive = false,
   onClockClick,
   clockPanelOpen,
+  onCollabsClick,
+  collabsPanelOpen = false,
+  collabsActive = false,
+  onInviteClick,
 }) {
+  const panelOpenById = {
+    'sounds-like': soundsLikePanelOpen,
+    history: clockPanelOpen,
+    comments: commentsPanelOpen,
+    collabs: collabsPanelOpen,
+  };
+
+  const iconActiveById = {
+    comments: commentsActive,
+    collabs: collabsActive,
+  };
+
+  const onClickById = {
+    'sounds-like': onSoundsLikeClick,
+    history: onClockClick,
+    comments: onCommentsClick,
+    collabs: onCollabsClick,
+  };
+
   return (
     <div className="project-collabs">
-      <div className="project-collabs-strip">
-        <img src="/BC-icons.svg" alt="" className="project-collabs-icons" aria-hidden="true" />
-        <CollabHitButton
-          label="Sounds like"
-          className={`project-collabs-hit project-collabs-hit--sounds-like${soundsLikePanelOpen ? ' project-collabs-hit--active' : ''}`}
-          ariaPressed={soundsLikePanelOpen}
-          onClick={() => onSoundsLikeClick?.()}
-        />
-        <CollabHitButton
-          label="History"
-          className={`project-collabs-hit project-collabs-hit--clock${clockPanelOpen ? ' project-collabs-hit--active' : ''}`}
-          ariaPressed={clockPanelOpen}
-          onClick={() => onClockClick?.()}
-        />
-        <CollabHitButton
-          label="Comments"
-          className={`project-collabs-hit project-collabs-hit--comments${commentsPanelOpen ? ' project-collabs-hit--active' : ''}`}
-          ariaPressed={commentsPanelOpen}
-          onClick={() => onCommentsClick?.()}
-        />
+      <div className="project-collabs-actions">
+        {PROJECT_COLLAB_ACTIONS.map(({ id, label, src, activeSrc, wide }) => {
+          const isPanelOpen = Boolean(panelOpenById[id]);
+          const showActiveIcon = Boolean(iconActiveById[id]) && Boolean(activeSrc);
+          const iconSrc = showActiveIcon ? activeSrc : src;
+
+          return (
+            <button
+              key={id}
+              type="button"
+              className={`project-collab-btn${wide ? ' project-collab-btn--pill' : ' project-collab-btn--stroke'}${isPanelOpen ? ' project-collab-btn--active' : ''}`}
+              aria-label={label}
+              aria-pressed={isPanelOpen || undefined}
+              onClick={() => onClickById[id]?.()}
+            >
+              <img src={iconSrc} alt="" />
+              <span className="project-collab-btn-label">{label}</span>
+            </button>
+          );
+        })}
+        <button type="button" className="btn-invite project-collabs-invite" onClick={() => onInviteClick?.()}>
+          Invite
+        </button>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ export function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [loopSegment, setLoopSegment] = useState(null);
+  const [isPlayerClosing, setIsPlayerClosing] = useState(false);
 
   const currentTrack = currentIndex >= 0 && queue[currentIndex] ? queue[currentIndex] : null;
 
@@ -18,6 +19,7 @@ export function PlayerProvider({ children }) {
     const list = trackList.length > 0 ? trackList : [track];
     const idx = list.findIndex((t) => (t.id || t.num) === (track.id || track.num));
     const index = idx >= 0 ? idx : 0;
+    setIsPlayerClosing(false);
     setQueue(list);
     setCurrentIndex(index);
     setIsPlaying(true);
@@ -25,6 +27,7 @@ export function PlayerProvider({ children }) {
 
   const playQueue = useCallback((trackList, startIndex = 0) => {
     if (!trackList?.length) return;
+    setIsPlayerClosing(false);
     setQueue(trackList);
     setCurrentIndex(Math.min(startIndex, trackList.length - 1));
     setIsPlaying(true);
@@ -64,6 +67,30 @@ export function PlayerProvider({ children }) {
     setVolume(level);
     if (audioRef.current) audioRef.current.volume = level;
   }, []);
+
+  const closePlayer = useCallback(() => {
+    setIsPlayerClosing(false);
+    setIsPlaying(false);
+    setQueue([]);
+    setCurrentIndex(-1);
+    setCurrentTime(0);
+    setDuration(0);
+    setLoopSegment(null);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute('src');
+    }
+  }, []);
+
+  const beginClosePlayer = useCallback(() => {
+    setIsPlaying(false);
+    if (audioRef.current) audioRef.current.pause();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      closePlayer();
+      return;
+    }
+    setIsPlayerClosing(true);
+  }, [closePlayer]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -130,6 +157,9 @@ export function PlayerProvider({ children }) {
     setVolume: setVolumeLevel,
     setLoopSegment,
     loopSegment,
+    isPlayerClosing,
+    beginClosePlayer,
+    closePlayer,
     audioRef,
   };
 

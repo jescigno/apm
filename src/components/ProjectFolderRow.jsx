@@ -161,7 +161,7 @@ function ProjectFolderRow({
           aria-label={`${label}. Click to expand.`}
           {...bindHover}
         >
-          <img src="/icons/Folder.svg" alt="" width="18" height="18" />
+          <img src="/icons/folder.svg" alt="" width="18" height="18" />
         </button>
         <div className="project-folder-row__title-col">
           <button
@@ -229,11 +229,11 @@ function ProjectFolderRow({
           aria-label={`${folder.name} folder. Click to collapse folders.`}
           {...bindHover}
         >
-          <img src="/icons/Folder.svg" alt="" width="18" height="18" />
+          <img src="/icons/folder.svg" alt="" width="18" height="18" />
         </button>
       ) : (
         <span ref={iconRef} className="project-folder-row__icon" aria-hidden="true">
-          <img src="/icons/Folder.svg" alt="" width="18" height="18" />
+          <img src="/icons/folder.svg" alt="" width="18" height="18" />
         </span>
       )}
       <div className="project-folder-row__title-col">

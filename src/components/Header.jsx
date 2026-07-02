@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
-import { ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
+import { ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
 
 const HEADER_MENU_OPTIONS = [
   { label: 'Discover', href: '#' },
@@ -44,7 +44,7 @@ const HEADER_NAV_DROPDOWNS = {
 /** Profile icon menu (wide + mobile My APM section). Set routes as pages exist. */
 const PROFILE_MENU_ITEMS = [
   { label: 'Projects', action: 'projectsPanel' },
-  { label: 'Notifications', to: ROUTE_ACCOUNT_NOTIFICATIONS },
+  { label: 'Notifications', to: ROUTE_NOTIFICATIONS },
   { label: 'Favorites', to: ROUTE_FAVORITES },
   { label: 'History', to: '/history' },
   { label: 'My Account', to: ROUTE_ACCOUNT },
@@ -207,7 +207,7 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, he
         </a>
         <div className={`search-bar${hasSearchQuery ? ' search-bar--has-query' : ''}`}>
           <img
-            src="/icons/Search.svg"
+            src="/icons/search.svg"
             alt=""
             className="search-icon"
             width={18}
@@ -228,7 +228,7 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, he
               aria-label="Clear search"
               onClick={() => onSearchQueryChange?.('')}
             >
-              <img src="/icons/Close.svg" alt="" aria-hidden />
+              <img src="/icons/close.svg" alt="" aria-hidden />
             </button>
           )}
         </div>

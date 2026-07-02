@@ -3,6 +3,7 @@
  * Projects panel (ProjectsPanel.jsx) uses `projects-panel-*` — keep namespaces separate.
  */
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import { ICON_REFRESH, ICON_DELETE } from '../constants/designSystem';
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 
@@ -225,10 +226,10 @@ function SoundsLikePanel({
             onClick={() => onRefresh?.()}
             disabled={exitingId != null}
           >
-            <img src="/Refresh.svg" alt="" />
+            <img src={ICON_REFRESH} alt="" />
           </button>
           <button type="button" className="sounds-like-panel-icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/icons/Close.svg" alt="" />
+            <img src="/icons/close.svg" alt="" />
           </button>
         </div>
       </div>
@@ -246,7 +247,7 @@ function SoundsLikePanel({
                     aria-label={`Remove ${track.title}`}
                     onClick={() => onRemoveSourceTrack?.(track.id)}
                   >
-                    <img src="/Trash.svg" alt="" />
+                    <img src={ICON_DELETE} alt="" />
                   </button>
                 )}
                 {isSingleSourceTrack ? (
@@ -359,7 +360,7 @@ function SoundsLikePanel({
                           <img src="/icons/Upload.svg" alt="" />
                         </button>
                         <button type="button" className="sounds-like-track-icon" aria-label={`Download ${title}`}>
-                          <img src="/icons/Download.svg" alt="" />
+                          <img src="/icons/download.svg" alt="" />
                         </button>
                       </div>
                       <button
@@ -369,7 +370,7 @@ function SoundsLikePanel({
                         onClick={() => handleAdd(item)}
                         disabled={exitingId != null}
                       >
-                        <img src="/icons/Add.svg" alt="" />
+                        <img src="/icons/add.svg" alt="" />
                       </button>
                     </div>
                   </div>
