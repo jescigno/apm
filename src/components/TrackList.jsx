@@ -234,11 +234,11 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, s
           <span className="tracks-selection-action-label">Play</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Favorite">
-          <img src="/icons/FavoriteOutline.svg" alt="" />
+          <img src="/icons/Favorite.svg" alt="" />
           <span className="tracks-selection-action-label">Favorite</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Share">
-          <img src="/icons/Share.svg" alt="" />
+          <img src="/icons/Upload.svg" alt="" />
           <span className="tracks-selection-action-label">Share</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Add">

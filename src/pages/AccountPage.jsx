@@ -8,6 +8,7 @@ import {
   ACCOUNT_TABS,
 } from '../constants/accountPage';
 import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
+import { HeaderMenuButton } from '../components/Header';
 import AccountNotificationsTab from '../components/AccountNotificationsTab';
 import AccountSettingsTab from '../components/AccountSettingsTab';
 
@@ -112,18 +113,32 @@ function AccountPersonalTab() {
   );
 }
 
-function AccountMobileTitlePortal() {
+function AccountMobileTitlePortal({ headerMenuRef }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!headerMenuRef?.current) return undefined;
+    return headerMenuRef.current.subscribe(setMenuOpen);
+  }, [headerMenuRef]);
+
   return createPortal(
-    <h1 className="account-page-title project-mobile-hero__title account-page-title--mobile-portal" id="account-mobile-title">
-      <span className="project-mobile-hero__title-clip">
-        <span className="project-mobile-hero__title-text">My Account</span>
-      </span>
-    </h1>,
+    <div className="account-page-mobile-header-bar">
+      <h1 className="account-page-title project-mobile-hero__title account-page-title--mobile-portal" id="account-mobile-title">
+        <span className="project-mobile-hero__title-clip">
+          <span className="project-mobile-hero__title-text">My Account</span>
+        </span>
+      </h1>
+      <HeaderMenuButton
+        open={menuOpen}
+        onClick={() => headerMenuRef?.current?.toggleMenu()}
+        className="account-page-mobile-header-bar__menu"
+      />
+    </div>,
     document.body
   );
 }
 
-export default function AccountPage() {
+export default function AccountPage({ headerMenuRef }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileLayout, setMobileLayout] = useState(false);
@@ -164,7 +179,7 @@ export default function AccountPage() {
 
   return (
     <div className="account-page">
-      {mobileLayout && <AccountMobileTitlePortal />}
+      {mobileLayout && <AccountMobileTitlePortal headerMenuRef={headerMenuRef} />}
       <div className="account-page-header project-mobile-hero">
         {!mobileLayout && (
           <h1 className="account-page-title project-mobile-hero__title" id="account-mobile-title">

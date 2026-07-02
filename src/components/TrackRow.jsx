@@ -748,6 +748,16 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     setSelectedStemIds(new Set());
   };
 
+  const handlePlaySelectedStems = (event) => {
+    event.stopPropagation();
+    if (!onPlay) return;
+    const selected = stemItems
+      .filter((stem) => selectedStemIds.has(stem.id))
+      .map((stem) => ({ ...stem, id: stem.id, num: stem.waveformIndex }));
+    if (selected.length === 0) return;
+    onPlay(selected[0], selected);
+  };
+
   const allStemsSelected =
     stemItems.length > 0 && stemItems.every((stem) => selectedStemIds.has(stem.id));
   const someStemsSelected =
@@ -1134,10 +1144,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               ) : (
                 <button
                   type="button"
-                  className="track-stems-select-all__btn"
+                  className="tracks-selection-deselect"
                   onClick={handleSelectAllStemsToggle}
                 >
-                  Select All
+                  SELECT ALL
                 </button>
               )}
             </div>
@@ -1146,17 +1156,29 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             className={`track-stems-select-all__actions tracks-selection-actions${hasStemSelection ? '' : ' track-stems-select-all__actions--hidden'}`}
             aria-hidden={!hasStemSelection}
           >
+            <button
+              type="button"
+              className="tracks-selection-action tracks-selection-action--play"
+              onClick={handlePlaySelectedStems}
+              aria-label="Play"
+              tabIndex={hasStemSelection ? 0 : -1}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              <span className="tracks-selection-action-label">Play</span>
+            </button>
             <button type="button" className="tracks-selection-action" aria-label="Favorite" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/FavoriteOutline.svg" alt="" />
+              <img src="/icons/Favorite.svg" alt="" />
               <span className="tracks-selection-action-label">Favorite</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Share" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/Share.svg" alt="" />
+              <img src="/icons/Upload.svg" alt="" />
               <span className="tracks-selection-action-label">Share</span>
             </button>
-            <button type="button" className="tracks-selection-action" aria-label="Add to Project" tabIndex={hasStemSelection ? 0 : -1}>
+            <button type="button" className="tracks-selection-action" aria-label="Add" tabIndex={hasStemSelection ? 0 : -1}>
               <img src="/icons/Add.svg" alt="" />
-              <span className="tracks-selection-action-label">Add to Project</span>
+              <span className="tracks-selection-action-label">Add</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Download" tabIndex={hasStemSelection ? 0 : -1}>
               <img src="/icons/Download.svg" alt="" />

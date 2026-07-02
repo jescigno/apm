@@ -59,6 +59,31 @@ const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(
   (o) => o.type !== 'divider'
 );
 
+export function HeaderMenuButton({ open, onClick, className = '' }) {
+  return (
+    <button
+      type="button"
+      className={`icon-btn header-menu-btn ${open ? 'header-menu-btn--active' : ''} ${className}`.trim()}
+      title={open ? 'Close menu' : 'Menu'}
+      onClick={onClick}
+      aria-expanded={open}
+      aria-haspopup="true"
+    >
+      {open ? (
+        <svg className="header-menu-close-icon" viewBox="0 0 18 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="round">
+          <path d="M3.66 3.86L8.78 9.27M8.78 9.27l5.13 5.41M8.78 9.27l5.13-5.41M8.78 9.27L3.66 14.68" />
+        </svg>
+      ) : (
+        <span className="header-menu-icon">
+          <span className="header-menu-icon-bar header-menu-icon-bar-top" />
+          <span className="header-menu-icon-bar header-menu-icon-bar-mid" />
+          <span className="header-menu-icon-bar header-menu-icon-bar-bot" />
+        </span>
+      )}
+    </button>
+  );
+}
+
 function ModeToggle({ isDark, setIsDark, className = '' }) {
   return (
     <button
@@ -88,7 +113,7 @@ function ModeToggle({ isDark, setIsDark, className = '' }) {
   );
 }
 
-function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange }) {
+function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, headerMenuRef }) {
   const navigate = useNavigate();
   const hasSearchQuery = searchQuery.trim().length > 0;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -97,6 +122,8 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange }) 
   /** Hamburger menu only: after Logout, hide Logout and show Login / Register below Mode. */
   const [hamburgerLoggedOut, setHamburgerLoggedOut] = useState(false);
   const menuRef = useRef(null);
+  const menuOpenRef = useRef(false);
+  const menuOpenListenersRef = useRef(new Set());
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('apm-theme');
     if (stored === 'light' || stored === 'dark') return stored === 'dark';
@@ -107,6 +134,27 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange }) 
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
     localStorage.setItem('apm-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  menuOpenRef.current = menuOpen;
+
+  useEffect(() => {
+    menuOpenListenersRef.current.forEach((listener) => listener(menuOpen));
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!headerMenuRef) return undefined;
+    headerMenuRef.current = {
+      toggleMenu: () => setMenuOpen((open) => !open),
+      subscribe: (listener) => {
+        menuOpenListenersRef.current.add(listener);
+        listener(menuOpenRef.current);
+        return () => menuOpenListenersRef.current.delete(listener);
+      },
+    };
+    return () => {
+      headerMenuRef.current = null;
+    };
+  }, [headerMenuRef]);
 
   useEffect(() => {
     if (menuOpen) {
@@ -270,26 +318,7 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange }) 
         <div className="header-menu-spacer" aria-hidden="true" />
       </header>
       <div className="header-actions header-actions-floating">
-        <button
-          type="button"
-          className={`icon-btn header-menu-btn ${menuOpen ? 'header-menu-btn--active' : ''}`}
-          title={menuOpen ? 'Close menu' : 'Menu'}
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-expanded={menuOpen}
-          aria-haspopup="true"
-        >
-          {menuOpen ? (
-            <svg className="header-menu-close-icon" viewBox="0 0 18 19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="round">
-              <path d="M3.66 3.86L8.78 9.27M8.78 9.27l5.13 5.41M8.78 9.27l5.13-5.41M8.78 9.27L3.66 14.68" />
-            </svg>
-          ) : (
-            <span className="header-menu-icon">
-              <span className="header-menu-icon-bar header-menu-icon-bar-top" />
-              <span className="header-menu-icon-bar header-menu-icon-bar-mid" />
-              <span className="header-menu-icon-bar header-menu-icon-bar-bot" />
-            </span>
-          )}
-        </button>
+        <HeaderMenuButton open={menuOpen} onClick={() => setMenuOpen((o) => !o)} />
       </div>
       <div
         className={`header-menu-bar ${menuOpen ? 'header-menu-bar--open' : ''}`}

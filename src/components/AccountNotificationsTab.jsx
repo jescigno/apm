@@ -282,12 +282,12 @@ export default function AccountNotificationsTab({
             </div>
             <button
               type="button"
-              className={`account-notifications-select-all__btn${hasSelection ? ' account-notifications-toolbar-slot--hidden' : ''}`}
+              className={`tracks-selection-deselect account-notifications-select-all__btn${hasSelection ? ' account-notifications-toolbar-slot--hidden' : ''}`}
               onClick={handleSelectAllToggle}
               aria-hidden={hasSelection || !selectionMode}
               tabIndex={hasSelection || !selectionMode ? -1 : 0}
             >
-              Select All
+              SELECT ALL
             </button>
           </div>
         </div>

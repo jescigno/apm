@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import Header from './components/Header';
@@ -83,6 +83,7 @@ function AppContent() {
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
   const [activeProjectFolderId, setActiveProjectFolderId] = useState(CURRENT_PROJECT_FOLDER_ID);
   const [searchQuery, setSearchQuery] = useState('');
+  const headerMenuRef = useRef(null);
   const { currentTrack } = usePlayer();
 
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
@@ -298,6 +299,7 @@ function AppContent() {
         onOpenProjectsPanel={openProjectsPanel}
         searchQuery={isSearchRoute ? searchQuery : ''}
         onSearchQueryChange={isSearchRoute ? setSearchQuery : undefined}
+        headerMenuRef={headerMenuRef}
       />
       <Sidebar />
       <div
@@ -360,8 +362,8 @@ function AppContent() {
               }
             />
             <Route path="/notifications" element={<Navigate to={ROUTE_ACCOUNT_NOTIFICATIONS} replace />} />
-            <Route path={ROUTE_ACCOUNT} element={<AccountPage />} />
-            <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage />} />
+            <Route path={ROUTE_ACCOUNT} element={<AccountPage headerMenuRef={headerMenuRef} />} />
+            <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route path={ROUTE_DESIGN_SYSTEM} element={<DesignSystemPage />} />
           </Routes>
         </main>

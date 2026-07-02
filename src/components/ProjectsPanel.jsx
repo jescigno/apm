@@ -83,7 +83,7 @@ function ProjectsPanelSourceIcon({ sourceId }) {
       return (
         <img
           className="projects-panel-source-menu-icon-img"
-          src="/icons/Share.svg"
+          src="/icons/Upload.svg"
           alt=""
           width={18}
           height={18}

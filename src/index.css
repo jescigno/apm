@@ -1399,6 +1399,22 @@ html:has(.app-content-wrapper--projects) {
   margin-left: 0;
 }
 
+/* Search condensed: align bulk actions with row actions (right edge + 16px padding) */
+.tracks-section--search-results.tracks-section--condensed-view .tracks-header-meta .tracks-selection-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 4px 16px;
+  margin-right: 0;
+}
+
+.tracks-section--search-results.tracks-section--condensed-view .tracks-header-meta .tracks-selection-actions {
+  grid-column: 2;
+  margin-left: 0;
+  justify-content: flex-end;
+}
+
 /* Projects simplified: comment, favorite, more menu (never inline upload/add/download) */
 .tracks-section--simplified-view .track-row.track-row-compact .track-actions-expanded,
 .tracks-section--simplified-view .track-stem-row--compact .track-actions-expanded {
@@ -2393,8 +2409,7 @@ html:has(.app-content-wrapper--projects) {
   }
 
   .projects-page .project-mobile-hero__title,
-  .account-page .account-page-title.project-mobile-hero__title,
-  .account-page-title--mobile-portal.project-mobile-hero__title {
+  .account-page .account-page-title.project-mobile-hero__title:not(.account-page-title--mobile-portal) {
     position: fixed;
     top: 0;
     left: 0;
@@ -2426,14 +2441,56 @@ html:has(.app-content-wrapper--projects) {
     -webkit-tap-highlight-color: transparent;
   }
 
-  .account-page .account-page-title.project-mobile-hero__title,
-  .account-page-title--mobile-portal.project-mobile-hero__title {
-    pointer-events: none;
+  .account-page-mobile-header-bar {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    padding: 0 52px;
+    height: var(--header-height);
+    margin: 0;
+    padding: 0 12px 0 16px;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    z-index: 550;
+    background: #232323;
     border-bottom: 2px solid #000000;
+    box-sizing: border-box;
+  }
+
+  .account-page-mobile-header-bar .account-page-title--mobile-portal {
+    position: static;
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0 44px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-bottom: none;
+    background: transparent;
+    z-index: auto;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .account-page-mobile-header-bar__menu {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-shrink: 0;
+  }
+
+  html:has(.app-content-wrapper--account) .header-actions-floating {
+    display: none !important;
   }
 
   /* Flex min-width + overflow establish a hard clip rect for the marquee (fixes right-edge bleed). */
@@ -3023,6 +3080,9 @@ html:has(.app-content-wrapper--projects) {
 
 .customize-view-menu-wrap {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
 }
 
 .customize-view-menu {
@@ -3550,6 +3610,11 @@ html:has(.app-content-wrapper--projects) {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: 40px;
+}
+
+.projects-page .tracks-header,
+.projects-page .tracks-selection-bar-row {
+  top: 0;
 }
 
 .project-visuals {
@@ -6475,9 +6540,17 @@ html:has(.app-content-wrapper--projects) {
   flex-shrink: 0;
 }
 
+.tracks-selection-action img[src*="Favorite.svg"] {
+  filter: brightness(0) invert(1);
+}
+
 .tracks-selection-action--play svg {
   width: 20px;
   height: 20px;
+}
+
+.tracks-selection-action-label {
+  text-transform: uppercase;
 }
 
 
@@ -6545,6 +6618,7 @@ html:has(.app-content-wrapper--projects) {
   margin-left: auto;
   margin-top: 4px;
   display: flex;
+  align-items: center;
   gap: 2px;
   padding-right: 14px;
 }
@@ -6575,6 +6649,8 @@ html:has(.app-content-wrapper--projects) {
 .btn-secondary img {
   width: 16px;
   height: 16px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .btn-play-all svg {
@@ -8004,17 +8080,6 @@ html:has(.app-content-wrapper--projects) {
   padding: 8px 20px 6px;
   background: #2e2e2e;
   border-bottom: 1px solid var(--track-divider-color, #000);
-}
-
-.track-stems-select-all__btn {
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  text-align: left;
 }
 
 .track-stems-select-all .track-stem-row__title-group {
@@ -10041,6 +10106,57 @@ body:has(.account-page) {
     overflow-x: clip;
   }
 
+  html:has(.app-content-wrapper--account) .header-actions-floating {
+    display: none !important;
+  }
+
+  .account-page-mobile-header-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    margin: 0;
+    padding: 0 12px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 550;
+    background: #232323;
+    border-bottom: 2px solid #000000;
+    box-sizing: border-box;
+  }
+
+  .account-page-mobile-header-bar .account-page-title--mobile-portal {
+    position: static;
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0 44px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-bottom: none;
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .account-page-mobile-header-bar__menu {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-shrink: 0;
+  }
+
   .account-page .account-page-header.project-mobile-hero,
   .account-page .account-page-header {
     padding: 0;
@@ -10630,6 +10746,11 @@ body:has(.account-page) {
   color: var(--account-surface-text);
 }
 
+.account-notifications-toolbar .tracks-selection-deselect {
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
 .account-notifications-toolbar .tracks-selection-divider {
   background: rgba(255, 255, 255, 0.35);
 }
@@ -10639,13 +10760,6 @@ body:has(.account-page) {
 }
 
 .account-notifications-select-all__btn {
-  background: none;
-  border: none;
-  color: var(--account-surface-text);
-  font-size: 12px;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
   white-space: nowrap;
 }
 
