@@ -2699,8 +2699,14 @@ html:has(.app-content-wrapper--projects) {
     flex-shrink: 0;
   }
 
+  .account-page-tabs-select--done {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+  }
+
   .account-page-tabs-settings {
     flex-shrink: 0;
+    margin-left: 4px;
   }
 
   .account-notifications--mobile-header-actions .account-notifications-select-all {
@@ -10080,8 +10086,14 @@ body:has(.account-page) {
     flex-shrink: 0;
   }
 
+  .account-page-tabs-select--done {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+  }
+
   .account-page-tabs-settings {
     flex-shrink: 0;
+    margin-left: 4px;
   }
 
   .account-page-tabs .tab {

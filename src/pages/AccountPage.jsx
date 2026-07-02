@@ -195,20 +195,22 @@ export default function AccountPage() {
             <div className="account-page-tabs-actions">
               <button
                 type="button"
-                className="account-page-tabs-select"
+                className={`account-page-tabs-select${mobileNotificationSelectionMode ? ' account-page-tabs-select--done' : ''}`}
                 aria-pressed={mobileNotificationSelectionMode}
                 onClick={() => notificationMobileActionsRef.current?.toggleSelectionMode()}
               >
                 {mobileNotificationSelectionMode ? 'Done' : 'Select'}
               </button>
-              <button
-                type="button"
-                className="account-notification__action account-notification__action--settings account-page-tabs-settings"
-                aria-label="Notification settings"
-                onClick={() => setNotificationSettingsOpen(true)}
-              >
-                <img src="/icons/Settings.svg" alt="" />
-              </button>
+              {!mobileNotificationSelectionMode && (
+                <button
+                  type="button"
+                  className="account-notification__action account-notification__action--settings account-page-tabs-settings"
+                  aria-label="Notification settings"
+                  onClick={() => setNotificationSettingsOpen(true)}
+                >
+                  <img src="/icons/Settings.svg" alt="" />
+                </button>
+              )}
             </div>
           )}
         </div>
