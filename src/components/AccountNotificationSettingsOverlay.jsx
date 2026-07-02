@@ -116,6 +116,7 @@ export default function AccountNotificationSettingsOverlay({ open, onClose }) {
       allowNotifications: { ...allowNotifications },
       mutedProjectIds: new Set(mutedProjectIds),
     });
+    onClose();
   };
 
   const handleCancelSettings = () => {
