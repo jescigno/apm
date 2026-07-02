@@ -1,18 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ALLOW_NOTIFICATION_OPTIONS,
   DEFAULT_ALLOW_NOTIFICATIONS,
   MUTED_PROJECTS,
 } from '../constants/accountNotificationSettings';
-
-function setsEqual(a, b) {
-  if (a.size !== b.size) return false;
-  for (const value of a) {
-    if (!b.has(value)) return false;
-  }
-  return true;
-}
 
 function ProjectBellIcon({ muted }) {
   if (muted) {
@@ -63,20 +55,12 @@ export default function AccountNotificationSettingsOverlay({ open, onClose }) {
   const [mutedProjectIds, setMutedProjectIds] = useState(
     () => new Set(MUTED_PROJECTS.map(({ id }) => id))
   );
-  const [savedSnapshot, setSavedSnapshot] = useState(null);
 
   useEffect(() => {
     if (!open) return undefined;
 
-    const nextAllow = { ...DEFAULT_ALLOW_NOTIFICATIONS };
-    const nextMuted = new Set(MUTED_PROJECTS.map(({ id }) => id));
-
-    setAllowNotifications(nextAllow);
-    setMutedProjectIds(nextMuted);
-    setSavedSnapshot({
-      allowNotifications: nextAllow,
-      mutedProjectIds: nextMuted,
-    });
+    setAllowNotifications({ ...DEFAULT_ALLOW_NOTIFICATIONS });
+    setMutedProjectIds(new Set(MUTED_PROJECTS.map(({ id }) => id)));
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') onClose();
@@ -85,16 +69,6 @@ export default function AccountNotificationSettingsOverlay({ open, onClose }) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
-
-  const isDirty = useMemo(() => {
-    if (!savedSnapshot) return false;
-
-    for (const { id } of ALLOW_NOTIFICATION_OPTIONS) {
-      if (allowNotifications[id] !== savedSnapshot.allowNotifications[id]) return true;
-    }
-
-    return !setsEqual(mutedProjectIds, savedSnapshot.mutedProjectIds);
-  }, [allowNotifications, mutedProjectIds, savedSnapshot]);
 
   if (!open) return null;
 
@@ -109,21 +83,6 @@ export default function AccountNotificationSettingsOverlay({ open, onClose }) {
       else next.add(id);
       return next;
     });
-  };
-
-  const handleUpdateSettings = () => {
-    setSavedSnapshot({
-      allowNotifications: { ...allowNotifications },
-      mutedProjectIds: new Set(mutedProjectIds),
-    });
-    onClose();
-  };
-
-  const handleCancelSettings = () => {
-    if (!savedSnapshot) return;
-
-    setAllowNotifications({ ...savedSnapshot.allowNotifications });
-    setMutedProjectIds(new Set(savedSnapshot.mutedProjectIds));
   };
 
   return createPortal(
@@ -207,25 +166,6 @@ export default function AccountNotificationSettingsOverlay({ open, onClose }) {
               </div>
             </section>
           </div>
-
-          {isDirty && (
-            <div className="account-notification-settings-overlay__footer">
-              <button
-                type="button"
-                className="btn-cta btn-cta--secondary"
-                onClick={handleCancelSettings}
-              >
-                CANCEL
-              </button>
-              <button
-                type="button"
-                className="btn-cta btn-cta--primary"
-                onClick={handleUpdateSettings}
-              >
-                UPDATE
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>,

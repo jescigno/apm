@@ -11005,15 +11005,6 @@ body:has(.account-page) {
   height: 12px;
 }
 
-.account-notification-settings-overlay__footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  padding: 16px 0 0 0;
-}
-
 .account-notification-settings-overlay__body {
   display: flex;
   flex-direction: column;
