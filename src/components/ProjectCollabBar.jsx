@@ -2,6 +2,7 @@
  * Project details collab actions — individual icons from the design system.
  */
 import { PROJECT_COLLAB_ACTIONS } from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 function ProjectCollabBar({
   onSoundsLikeClick,
@@ -16,6 +17,8 @@ function ProjectCollabBar({
   collabsActive = false,
   onInviteClick,
 }) {
+  const theme = useThemeName();
+
   const panelOpenById = {
     'sounds-like': soundsLikePanelOpen,
     history: clockPanelOpen,
@@ -41,7 +44,9 @@ function ProjectCollabBar({
         {PROJECT_COLLAB_ACTIONS.map(({ id, label, src, activeSrc, wide }) => {
           const isPanelOpen = Boolean(panelOpenById[id]);
           const showActiveIcon = Boolean(iconActiveById[id]) && Boolean(activeSrc);
-          const iconSrc = showActiveIcon ? activeSrc : src;
+          const iconSrc = showActiveIcon
+            ? resolveThemedAsset(activeSrc, theme)
+            : resolveThemedAsset(src, theme);
 
           return (
             <button

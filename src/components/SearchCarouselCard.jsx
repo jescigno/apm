@@ -187,7 +187,7 @@ function SearchCarouselCard({ variant, item, onRemoveFromHistory, onSelect }) {
         <button type="button" className="search-carousel-card search-carousel-card--playlist">
           <span
             className="search-carousel-card-art search-carousel-card-art--playlist"
-            style={{ background: item.accent ?? '#3d3d3d' }}
+            style={{ background: item.accent ?? 'var(--carousel-accent-fallback)' }}
           >
             <span className="search-carousel-card-playlist-labels">
               <span className="search-carousel-card-playlist-title">{item.title}</span>

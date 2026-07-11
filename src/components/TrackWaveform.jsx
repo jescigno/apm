@@ -1,6 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
+import { CSS_VARS, themeVar } from '../constants/theme';
+
 /** Simple seeded random for consistent bar heights per track */
 function seededRandom(seed) {
   const x = Math.sin(seed) * 10000;
@@ -187,7 +189,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
 
   const getBarFill = (i) => {
     if (inAccentRange(i)) return accentColor;
-    if (shouldGrayNonHighlighted && !inOutlineRange(i)) return 'rgba(255, 255, 255, 0.12)';
+    if (shouldGrayNonHighlighted && !inOutlineRange(i)) return 'var(--waveform-muted-fill, rgba(255, 255, 255, 0.12))';
     return 'currentColor';
   };
 
@@ -227,7 +229,8 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
   );
 
   const strokeRectValid = outlineOverlayRect && outlineOverlayRect.leftEdge != null && typeof outlineOverlayRect.topEdge === 'number' && outlineOverlayRect.rightEdge > outlineOverlayRect.leftEdge && outlineOverlayRect.bottomEdge > outlineOverlayRect.topEdge;
-  const outlineStrokeColor = outlineColor || '#ffffff';
+  const soundsLikeOutline = outlineColor === themeVar(CSS_VARS.accent.soundsLike) || outlineColor === '#841FCC';
+  const outlineStrokeColor = outlineColor || themeVar(CSS_VARS.text.primary);
   const outlineStrokeOverlay = outlineHovered && outlineRange && strokeRectValid && createPortal(
     <div
       style={{
@@ -329,7 +332,7 @@ function TrackWaveform({ trackNum = 1, className = '', accentColor, accentRange,
               y={-maxHeight * (outlineHeightScale - 1) / 2}
               width={(outlineRange[1] - outlineRange[0]) * SEGMENT_PX}
               height={maxHeight * outlineHeightScale}
-              fill={outlineColor === '#841FCC' ? 'rgba(132, 31, 204, 0.3)' : 'rgba(255, 255, 255, 0.2)'}
+              fill={soundsLikeOutline ? 'rgba(132, 31, 204, 0.3)' : 'rgba(255, 255, 255, 0.2)'}
               style={outlineOverlayText ? { cursor: 'pointer' } : undefined}
               onMouseEnter={outlineOverlayText ? showOutlineOverlay : undefined}
               onMouseLeave={outlineOverlayText ? scheduleOutlineHide : undefined}

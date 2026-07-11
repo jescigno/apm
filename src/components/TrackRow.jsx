@@ -5,11 +5,15 @@ import { usePlayer } from '../context/PlayerContext';
 import {
   ICON_PLAY_IN_CIRCLE_ON,
   ICON_PLAY_IN_CIRCLE_OFF,
+  ICON_FAVORITE,
+  ICON_FAVORITE_OUTLINE,
   ICON_COMMENTS,
   ICON_COMMENTS_ACTIVE,
   ICON_TRACK_DETAILS,
   ICON_DELETE,
 } from '../constants/designSystem';
+import { CSS_VARS, themeVar } from '../constants/theme';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/overflowDropdownPosition';
 import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
 
@@ -113,6 +117,7 @@ function TrackRowActions({
   commentBtnRef,
   onCommentClick,
 }) {
+  const theme = useThemeName();
   const getMenuStyle = useCallback(
     (triggerEl) => getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject }),
     [compact, showRemoveFromProject]
@@ -138,7 +143,7 @@ function TrackRowActions({
         {(!compact || showInlineCondensedIcons) && (
           <>
             <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-              <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
+              <img src={liked ? resolveThemedAsset(ICON_FAVORITE, theme) : resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
             </button>
             <button type="button" className="icon-btn" aria-label="Upload">
               <img src="/icons/Upload.svg" alt="" />
@@ -168,14 +173,21 @@ function TrackRowActions({
                 aria-label="Comment"
                 onClick={onCommentClick}
               >
-                <img src={hasComments ? ICON_COMMENTS_ACTIVE : ICON_COMMENTS} alt="" />
+                <img
+                  src={
+                    hasComments
+                      ? resolveThemedAsset(ICON_COMMENTS_ACTIVE, theme)
+                      : ICON_COMMENTS
+                  }
+                  alt=""
+                />
               </button>
               <span className={`track-comment-count${!hasComments ? ' track-comment-count--hidden' : ''}`}>
                 {item?.commentCount ?? 0}
               </span>
             </span>
             <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-              <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
+              <img src={liked ? resolveThemedAsset(ICON_FAVORITE, theme) : resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
             </button>
           </>
         )}
@@ -210,7 +222,7 @@ function TrackRowActions({
             ) : (
               <>
                 <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-                  <img src={liked ? '/icons/favorite.svg' : '/icons/favoriteOutline.svg'} alt="" />
+                  <img src={liked ? resolveThemedAsset(ICON_FAVORITE, theme) : resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
                 </button>
                 <button type="button" className="icon-btn" aria-label="Upload">
                   <img src="/icons/Upload.svg" alt="" />
@@ -258,6 +270,7 @@ function TrackStemRow({
   isSelected = false,
   onSelectChange,
 }) {
+  const theme = useThemeName();
   const [playHovered, setPlayHovered] = useState(false);
   const [liked, setLiked] = useState(false);
   const canPlay = Boolean(stem.audioUrl && onPlay);
@@ -324,7 +337,7 @@ function TrackStemRow({
                 aria-label={`Play ${stem.name}`}
               >
                 <img
-                  src={playHovered ? ICON_PLAY_IN_CIRCLE_ON : ICON_PLAY_IN_CIRCLE_OFF}
+                  src={playHovered ? resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme) : resolveThemedAsset(ICON_PLAY_IN_CIRCLE_OFF, theme)}
                   alt=""
                 />
               </button>
@@ -554,6 +567,7 @@ function TrackCommentCompose({
 }
 
 function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, onSelectChange }) {
+  const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
   const [trackDetailsOverlayOpen, setTrackDetailsOverlayOpen] = useState(false);
@@ -806,6 +820,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     return (
       <div
         className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+        data-track-num={item.num}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -824,7 +839,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
                 disabled={!canPlay}
                 aria-label={`Play ${item.title}`}
               >
-                <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
+                <img src={resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme)} alt="" />
               </button>
             )}
           </div>
@@ -920,6 +935,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     <div className={`track-row-group${stemsOpen ? ' track-row-group--stems-open' : ''}`}>
     <div
       className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}`}
+      data-track-num={item.num}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -952,7 +968,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               onClick={handlePause}
               aria-label={`Play ${item.title}`}
             >
-              <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
+              <img src={resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme)} alt="" />
             </button>
           </>
         ) : canPlay && isHovered ? (
@@ -964,7 +980,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               onClick={handlePlay}
               aria-label={`Play ${item.title}`}
             >
-              <img src={ICON_PLAY_IN_CIRCLE_ON} alt="" />
+              <img src={resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme)} alt="" />
             </button>
           </>
         ) : (
@@ -1038,18 +1054,18 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {...(!disableWaveformHighlights && item.num === 2 && {
               outlineRange: [70, 170],
               outlineHeightScale: 3,
-              outlineColor: '#841FCC',
+              outlineColor: themeVar(CSS_VARS.accent.soundsLike),
               outlineOverlayText: '0:28 - 1:08',
               outlineOverlaySegmentTime: '0:28 - 1:08',
             })}
             {...(!disableWaveformHighlights && item.num === 3 && {
-              accentColor: '#841FCC',
+              accentColor: themeVar(CSS_VARS.accent.soundsLike),
               accentRanges: [[30, 55]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
             })}
             {...(!disableWaveformHighlights && item.num === 6 && {
-              accentColor: '#841FCC',
+              accentColor: themeVar(CSS_VARS.accent.soundsLike),
               accentRanges: [[10, 25], [55, 85], [270, 315]],
               overlayThumbnail: '/track-overlay-thumb.png',
               overlayTitle: 'Bubbly Groove',
@@ -1057,11 +1073,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             {...(!disableWaveformHighlights && item.num === 5 && {
               outlineRange: [122, 222],
               outlineHeightScale: 3,
-              outlineColor: '#841FCC',
+              outlineColor: themeVar(CSS_VARS.accent.soundsLike),
               outlineOverlayText: '0:45 - 1:30',
               outlineOverlaySegmentTime: '0:45 - 1:30',
             })}
-            {...(!disableWaveformHighlights && isAlbum && item.num !== 2 && item.num !== 5 && { outlineColor: '#ffffff' })}
+            {...(!disableWaveformHighlights && isAlbum && item.num !== 2 && item.num !== 5 && { outlineColor: themeVar(CSS_VARS.text.primary) })}
           />
         </div>
         )
@@ -1173,7 +1189,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               <span className="tracks-selection-action-label">Play</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Favorite" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/favorite.svg" alt="" />
+              <img src={resolveThemedAsset(ICON_FAVORITE, theme)} alt="" />
               <span className="tracks-selection-action-label">Favorite</span>
             </button>
             <button type="button" className="tracks-selection-action" aria-label="Share" tabIndex={hasStemSelection ? 0 : -1}>

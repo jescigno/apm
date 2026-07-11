@@ -5,6 +5,7 @@ import {
   DESIGN_SYSTEM_LAYOUT,
   DESIGN_SYSTEM_SECTIONS,
 } from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 function scrollToDesignSystemSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -33,10 +34,13 @@ function DesignSystemSection({ id, title, children }) {
 }
 
 function IconTile({ name, src, wide = false }) {
+  const theme = useThemeName();
+  const iconSrc = resolveThemedAsset(src, theme);
+
   return (
     <div className="ds-icon-tile">
       <div className={`ds-icon-tile__preview${wide ? ' ds-icon-tile__preview--wide' : ''}`}>
-        <img src={src} alt="" />
+        <img src={iconSrc} alt="" />
       </div>
       <span className="ds-icon-tile__name">{name}</span>
       <code className="ds-icon-tile__path">{src}</code>

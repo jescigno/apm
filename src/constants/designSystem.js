@@ -1,4 +1,5 @@
 import { PROFILE_COLORS } from './profileColors';
+import { CSS_VARS, THEME_PALETTES } from './theme';
 
 export const DESIGN_SYSTEM_FONTS = [
   {
@@ -27,41 +28,54 @@ export const DESIGN_SYSTEM_COLORS = [
   {
     group: 'Backgrounds',
     swatches: [
-      { name: 'Page dark', token: '--bg-dark', value: '#0a0a0a' },
-      { name: 'Card', token: '--bg-card', value: '#141414' },
-      { name: 'Elevated', token: '--bg-elevated', value: '#1e1e1e' },
-      { name: 'Account page', token: null, value: '#232323' },
-      { name: 'Account surface', token: '--account-surface', value: '#303030' },
-      { name: 'Overlay panel', token: null, value: '#333333' },
-      { name: 'Nested panel', token: null, value: '#262626' },
+      { name: 'Chrome (header/sidebar)', token: CSS_VARS.bg.chrome, value: THEME_PALETTES.dark[CSS_VARS.bg.chrome] },
+      { name: 'Page', token: CSS_VARS.bg.page, value: THEME_PALETTES.dark[CSS_VARS.bg.page] },
+      { name: 'Page dark (body)', token: CSS_VARS.bg.dark, value: THEME_PALETTES.dark[CSS_VARS.bg.dark] },
+      { name: 'Card', token: CSS_VARS.bg.card, value: THEME_PALETTES.dark[CSS_VARS.bg.card] },
+      { name: 'Elevated', token: CSS_VARS.bg.elevated, value: THEME_PALETTES.dark[CSS_VARS.bg.elevated] },
+      { name: 'Panel / overlay', token: CSS_VARS.bg.panel, value: THEME_PALETTES.dark[CSS_VARS.bg.panel] },
+      { name: 'Nested panel', token: CSS_VARS.bg.nested, value: THEME_PALETTES.dark[CSS_VARS.bg.nested] },
+    ],
+  },
+  {
+    group: 'Surfaces',
+    swatches: [
+      { name: 'Default surface', token: CSS_VARS.surface.default, value: THEME_PALETTES.dark[CSS_VARS.surface.default] },
+      { name: 'Raised surface', token: CSS_VARS.surface.raised, value: THEME_PALETTES.dark[CSS_VARS.surface.raised] },
+      { name: 'Muted surface', token: CSS_VARS.surface.muted, value: THEME_PALETTES.dark[CSS_VARS.surface.muted] },
+      { name: 'Hover surface', token: CSS_VARS.surface.hover, value: THEME_PALETTES.dark[CSS_VARS.surface.hover] },
+      { name: 'Selected surface', token: CSS_VARS.surface.selected, value: THEME_PALETTES.dark[CSS_VARS.surface.selected] },
     ],
   },
   {
     group: 'Text',
     swatches: [
-      { name: 'Primary', token: '--text-primary', value: '#ffffff' },
-      { name: 'Secondary', token: '--text-secondary', value: '#b0b0b0' },
-      { name: 'Muted', token: '--text-muted', value: '#6b6b6b' },
-      { name: 'Section label', token: null, value: '#888888' },
+      { name: 'Primary', token: CSS_VARS.text.primary, value: THEME_PALETTES.dark[CSS_VARS.text.primary] },
+      { name: 'Secondary', token: CSS_VARS.text.secondary, value: THEME_PALETTES.dark[CSS_VARS.text.secondary] },
+      { name: 'Muted', token: CSS_VARS.text.muted, value: THEME_PALETTES.dark[CSS_VARS.text.muted] },
+      { name: 'On chrome', token: CSS_VARS.text.onChrome, value: THEME_PALETTES.dark[CSS_VARS.text.onChrome] },
+      { name: 'Section label', token: CSS_VARS.text.section, value: THEME_PALETTES.dark[CSS_VARS.text.section] },
+      { name: 'Link / highlight', token: CSS_VARS.text.link, value: THEME_PALETTES.dark[CSS_VARS.text.link] },
     ],
   },
   {
     group: 'Accents',
     swatches: [
-      { name: 'Red (brand)', token: '--accent-red', value: '#CC1E3C' },
-      { name: 'Red hover', token: '--accent-red-hover', value: '#b01a33' },
-      { name: 'Violet', token: '--accent-purple', value: '#7c3aed' },
-      { name: 'Blue', token: '--accent-blue', value: '#3b82f6' },
-      { name: 'Toggle on', token: null, value: '#26d0d6' },
+      { name: 'Red (brand)', token: CSS_VARS.accent.red, value: THEME_PALETTES.dark[CSS_VARS.accent.red] },
+      { name: 'Red hover', token: CSS_VARS.accent.redHover, value: THEME_PALETTES.dark[CSS_VARS.accent.redHover] },
+      { name: 'Violet', token: CSS_VARS.accent.purple, value: THEME_PALETTES.dark[CSS_VARS.accent.purple] },
+      { name: 'Blue', token: CSS_VARS.accent.blue, value: THEME_PALETTES.dark[CSS_VARS.accent.blue] },
+      { name: 'Sounds Like', token: CSS_VARS.accent.soundsLike, value: THEME_PALETTES.dark[CSS_VARS.accent.soundsLike] },
+      { name: 'Toggle on', token: CSS_VARS.accent.toggleOn, value: THEME_PALETTES.dark[CSS_VARS.accent.toggleOn] },
     ],
   },
   {
     group: 'CTAs',
     swatches: [
-      { name: 'Primary', token: '--cta-primary-bg', value: '#CC1E3C' },
-      { name: 'Primary hover', token: '--cta-primary-bg-hover', value: '#b01a33' },
-      { name: 'Secondary', token: '--cta-secondary-bg', value: '#565656' },
-      { name: 'Secondary hover', token: '--cta-secondary-bg-hover', value: '#666666' },
+      { name: 'Primary', token: CSS_VARS.cta.primaryBg, value: THEME_PALETTES.dark[CSS_VARS.cta.primaryBg] },
+      { name: 'Primary hover', token: CSS_VARS.cta.primaryBgHover, value: THEME_PALETTES.dark[CSS_VARS.cta.primaryBgHover] },
+      { name: 'Secondary', token: CSS_VARS.cta.secondaryBg, value: THEME_PALETTES.dark[CSS_VARS.cta.secondaryBg] },
+      { name: 'Secondary hover', token: CSS_VARS.cta.secondaryBgHover, value: THEME_PALETTES.dark[CSS_VARS.cta.secondaryBgHover] },
     ],
   },
   {
@@ -75,9 +89,10 @@ export const DESIGN_SYSTEM_COLORS = [
   {
     group: 'Borders & chrome',
     swatches: [
-      { name: 'Border', token: '--border', value: '#2a2a2a' },
-      { name: 'Sidebar', token: null, value: '#000000' },
-      { name: 'Close button', token: null, value: '#565656' },
+      { name: 'Border', token: CSS_VARS.border.default, value: THEME_PALETTES.dark[CSS_VARS.border.default] },
+      { name: 'Border strong', token: CSS_VARS.border.strong, value: THEME_PALETTES.dark[CSS_VARS.border.strong] },
+      { name: 'Divider', token: CSS_VARS.border.divider, value: THEME_PALETTES.dark[CSS_VARS.border.divider] },
+      { name: 'Close button', token: CSS_VARS.control.closeButton, value: THEME_PALETTES.dark[CSS_VARS.control.closeButton] },
     ],
   },
 ];

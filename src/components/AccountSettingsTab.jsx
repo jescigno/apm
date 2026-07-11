@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { applyTheme, getStoredTheme } from '../utils/theme';
 import {
   DOWNLOAD_DEFAULT_FILE_TYPES,
   DOWNLOAD_FILE_TYPE_OPTIONS,
@@ -83,8 +84,7 @@ function AccountSettingsRadio({ name, value, checked, label, onChange }) {
 }
 
 function readStoredTheme() {
-  const stored = localStorage.getItem('apm-theme');
-  return stored === 'light' ? 'light' : 'dark';
+  return getStoredTheme();
 }
 
 export default function AccountSettingsTab() {
@@ -100,8 +100,7 @@ export default function AccountSettingsTab() {
   const [searchRestriction, setSearchRestriction] = useState('apm-music');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', displayMode);
-    localStorage.setItem('apm-theme', displayMode);
+    applyTheme(displayMode);
   }, [displayMode]);
 
   const toggleDownloadFileType = (id, checked) => {

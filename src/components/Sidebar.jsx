@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { ROUTE_DESIGN_SYSTEM, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from '../constants/routes';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 const LEFT_NAV_SEARCH_ICONS = {
   active: '/icons/LeftNav-Search-Active.svg?v=5',
@@ -7,18 +8,30 @@ const LEFT_NAV_SEARCH_ICONS = {
 };
 
 const NAV_ITEMS = [
-  { icon: '/nav-icons/Home.svg', title: 'Home', to: ROUTE_PROJECT_DETAILS },
+  {
+    icon: '/nav-icons/Home.svg',
+    activeIconLight: '/nav-icons/Home-active-lightmode.svg',
+    title: 'Home',
+    to: ROUTE_PROJECT_DETAILS,
+  },
   { title: 'Search', to: ROUTE_SEARCH, isSearch: true },
   { icon: '/nav-icons/Calendar.svg', title: 'Calendar' },
   { icon: '/nav-icons/Playlists.svg', title: 'Playlists' },
   { icon: '/nav-icons/SoundEffects.svg', title: 'Sound Effects' },
 ];
 
-function NavSearchIcon() {
+function navItemIconSrc(item, theme, isActive) {
+  if (isActive && theme === 'light' && item.activeIconLight) {
+    return item.activeIconLight;
+  }
+  return resolveThemedAsset(item.icon, theme);
+}
+
+function NavSearchIcon({ theme }) {
   return (
     <>
       <img
-        src={LEFT_NAV_SEARCH_ICONS.inactive}
+        src={resolveThemedAsset(LEFT_NAV_SEARCH_ICONS.inactive, theme)}
         alt=""
         className="nav-item-search-icon nav-item-search-icon--inactive"
       />
@@ -32,6 +45,8 @@ function NavSearchIcon() {
 }
 
 function Sidebar() {
+  const theme = useThemeName();
+
   return (
     <aside className="sidebar">
       <nav className="nav-icons" aria-label="Primary">
@@ -46,7 +61,13 @@ function Sidebar() {
               }
               title={item.title}
             >
-              {item.isSearch ? <NavSearchIcon /> : <img src={item.icon} alt="" />}
+              {({ isActive }) =>
+                item.isSearch ? (
+                  <NavSearchIcon theme={theme} />
+                ) : (
+                  <img src={navItemIconSrc(item, theme, isActive)} alt="" />
+                )
+              }
             </NavLink>
           ) : (
             <a
@@ -56,7 +77,7 @@ function Sidebar() {
               title={item.title}
               onClick={(e) => e.preventDefault()}
             >
-              <img src={item.icon} alt="" />
+              <img src={resolveThemedAsset(item.icon, theme)} alt="" />
             </a>
           )
         )}

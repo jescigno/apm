@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 const DRAG_THRESHOLD = 4;
@@ -26,6 +27,7 @@ function clampPct(p) {
 }
 
 function AudioPlayer({ onSoundsLikeClick }) {
+  const theme = useThemeName();
   const {
     currentTrack,
     isPlaying,
@@ -427,7 +429,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
                               setOptionsMenuOpen(false);
                             }}
                           >
-                            <img src="/player-actions/SoundsLike.svg" alt="" />
+                            <img src={resolveThemedAsset('/player-actions/SoundsLike.svg', theme)} alt="" />
                             Sounds Like
                           </button>
                           <button type="button" className="audio-player-selection-menu-item" onClick={() => setSelectionFavorited((f) => !f)}>
@@ -522,7 +524,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
               onClick={action.onClick === 'soundsLike' ? onSoundsLikeClick : undefined}
               aria-label={action.label}
             >
-              <img src={action.icon} alt="" />
+              <img src={resolveThemedAsset(action.icon, theme)} alt="" />
             </button>
           ))}
         </div>

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
 import { ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
+import { applyTheme, getStoredTheme } from '../utils/theme';
 
 const HEADER_MENU_OPTIONS = [
   { label: 'Discover', href: '#' },
@@ -94,20 +95,24 @@ function ModeToggle({ isDark, setIsDark, className = '' }) {
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       <span className="header-menu-mode-switch-track">
-        <svg className="header-menu-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-        <svg className="header-menu-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
+        <span className="header-menu-mode-icon-slot">
+          <svg className="header-menu-mode-icon header-menu-mode-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+        </span>
+        <span className="header-menu-mode-icon-slot">
+          <svg className="header-menu-mode-icon header-menu-mode-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </span>
       </span>
     </button>
   );
@@ -124,15 +129,10 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, he
   const menuRef = useRef(null);
   const menuOpenRef = useRef(false);
   const menuOpenListenersRef = useRef(new Set());
-  const [isDark, setIsDark] = useState(() => {
-    const stored = localStorage.getItem('apm-theme');
-    if (stored === 'light' || stored === 'dark') return stored === 'dark';
-    return true;
-  });
+  const [isDark, setIsDark] = useState(() => getStoredTheme() === 'dark');
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    localStorage.setItem('apm-theme', isDark ? 'dark' : 'light');
+    applyTheme(isDark ? 'dark' : 'light');
   }, [isDark]);
 
   menuOpenRef.current = menuOpen;
@@ -203,7 +203,11 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, he
     <div className={`header-wrapper${menuOpen ? ' header-wrapper--menu-open' : ''}`} ref={menuRef}>
       <header className={`header ${menuOpen ? 'header--menu-open' : ''}`}>
         <a href="#" className="logo">
-          <img src="/APMLogo.svg" alt="apm music" className="logo-img" />
+          <img
+            src={isDark ? '/APMLogo.svg' : '/APMLogo-lightmode.svg'}
+            alt="apm music"
+            className="logo-img"
+          />
         </a>
         <div className={`search-bar${hasSearchQuery ? ' search-bar--has-query' : ''}`}>
           <img
