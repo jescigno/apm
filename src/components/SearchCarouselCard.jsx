@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ICON_TRACK_DETAILS } from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 const RECENT_SEARCH_MENU_ITEMS = [
   { id: 'search', label: 'Search', icon: '/icons/search.svg' },
@@ -21,6 +22,7 @@ const RECENTLY_PLAYED_MENU_ITEMS = [
 function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFromHistory, onMenuAction, showOnHover }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const overflowRef = useRef(null);
+  const theme = useThemeName();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -80,7 +82,7 @@ function SearchCarouselOverflowMenu({ itemLabel, itemId, menuItems, onRemoveFrom
               className="search-carousel-card-overflow-dropdown-item"
               onClick={() => handleMenuAction(action.id)}
             >
-              <img src={action.icon} alt="" aria-hidden />
+              <img src={resolveThemedAsset(action.icon, theme)} alt="" aria-hidden />
               {action.label}
             </button>
           ))}

@@ -104,6 +104,8 @@ export default function FavoritesPage({
     typeof window !== 'undefined' &&
     window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches
   );
+  const [hasTrackSelection, setHasTrackSelection] = useState(false);
+  const selectionHostRef = useRef(null);
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -115,7 +117,10 @@ export default function FavoritesPage({
 
   return (
     <>
-      <div className="breadcrumb-row breadcrumb-row--favorites">
+      <div
+        className={`breadcrumb-row breadcrumb-row--favorites${!isCompactLayout ? ' breadcrumb-row--with-selection-host' : ''}`}
+      >
+        {!isCompactLayout && <div ref={selectionHostRef} className="breadcrumb-selection-host" />}
         <div className="breadcrumb-wrapper">
           <span className="breadcrumb">
             <span className="breadcrumb-highlight">
@@ -124,13 +129,17 @@ export default function FavoritesPage({
               </BreadcrumbText>
             </span>
           </span>
-          <TrackListTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            className="breadcrumb-tabs"
-            showSearchesTab
-          />
-          <TrackListTrackCount activeTab={activeTab} tracks={tracks} />
+          {!hasTrackSelection && (
+            <>
+              <TrackListTabs
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                className="breadcrumb-tabs"
+                showSearchesTab
+              />
+              <TrackListTrackCount activeTab={activeTab} tracks={tracks} />
+            </>
+          )}
         </div>
         <div className="breadcrumb-actions">
           <button type="button" className="btn-secondary"><img src={ICON_CUSTOMIZE} alt="" /> CUSTOMIZE</button>
@@ -145,12 +154,14 @@ export default function FavoritesPage({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         tabsInBreadcrumb={!isCompactLayout}
+        selectionBarHostRef={!isCompactLayout ? selectionHostRef : undefined}
         showSearchesTab
         tracks={tracks}
         enableTrackDetailsOverlay
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         showVersionsStems
+        onSelectionActiveChange={setHasTrackSelection}
       />
     </>
   );

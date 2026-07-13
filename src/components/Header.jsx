@@ -65,7 +65,7 @@ export function HeaderMenuButton({ open, onClick, className = '' }) {
     <button
       type="button"
       className={`icon-btn header-menu-btn ${open ? 'header-menu-btn--active' : ''} ${className}`.trim()}
-      title={open ? 'Close menu' : 'Menu'}
+      aria-label={open ? 'Close menu' : 'Menu'}
       onClick={onClick}
       aria-expanded={open}
       aria-haspopup="true"
@@ -232,7 +232,22 @@ function Header({ onOpenProjectsPanel, searchQuery = '', onSearchQueryChange, he
               aria-label="Clear search"
               onClick={() => onSearchQueryChange?.('')}
             >
-              <img src="/icons/close.svg" alt="" aria-hidden />
+              <svg
+                className="search-bar-clear-icon"
+                viewBox="0 0 18 18"
+                width={18}
+                height={18}
+                fill="none"
+                aria-hidden
+              >
+                <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1" />
+                <path
+                  d="M6.75 6.75L11.25 11.25M11.25 6.75L6.75 11.25"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
           )}
         </div>

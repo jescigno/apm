@@ -251,12 +251,14 @@ function SoundsLikePanel({
                   </button>
                 )}
                 {isSingleSourceTrack ? (
-                  <img
-                    src={getSourceThumbSrc(track)}
-                    alt=""
-                    className="sounds-like-panel-source-thumb"
-                    aria-hidden
-                  />
+                  <span className="sounds-like-panel-source-thumb-slot">
+                    <img
+                      src={getSourceThumbSrc(track)}
+                      alt=""
+                      className="sounds-like-panel-source-thumb"
+                      aria-hidden
+                    />
+                  </span>
                 ) : (
                   <button
                     type="button"
@@ -273,9 +275,9 @@ function SoundsLikePanel({
                   </button>
                 )}
                 <div className="sounds-like-panel-source-text">
-                  <span className="sounds-like-panel-source-title">{track.title}</span>
-                  {track.id && (
-                    <span className="sounds-like-panel-source-id">{track.id}</span>
+                  <span className="sounds-like-panel-source-title">{track.title ?? track.name}</span>
+                  {(track.id ?? track.subtitle) && (
+                    <span className="sounds-like-panel-source-id">{track.id ?? track.subtitle}</span>
                   )}
                 </div>
               </div>

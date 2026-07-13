@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
-import TrackRow from './TrackRow';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
+import TrackRow, { getStemItems } from './TrackRow';
 import ProjectFolderRow from './ProjectFolderRow';
 import CustomizeViewMenu from './CustomizeViewMenu';
 import { usePlayer } from '../context/PlayerContext';
 import { getFolderTrackCount } from '../constants/projectsPanelTree';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
-import { ICON_SORT, ICON_SOUNDS_LIKE, ICON_CUSTOMIZE, ICON_REORDER } from '../constants/designSystem';
+import { ICON_SORT, ICON_SOUNDS_LIKE, ICON_CUSTOMIZE, ICON_REORDER, ICON_FAVORITE_OUTLINE } from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 export const PROJECTS_CUSTOMIZE_VIEW_OPTIONS = [
   { id: 'condensed', label: 'Condensed' },
@@ -113,6 +115,13 @@ const TRACKS_BASE = [
 const FAVORITES_TRACKS = TRACKS_BASE.map((t) => {
   if (t.num === 1) return { ...t, commentCount: 0 };
   if (t.num === 3) return { ...t, commentCount: 1 };
+  if (t.num === 4) {
+    return {
+      ...t,
+      title: 'Stem - Game Day Energy Drums',
+      favoritesStemDisplay: { dimStemIndexes: [1, 2, 3], favoriteStemIndex: 0 },
+    };
+  }
   if (t.num === 5) return { ...t, title: '#5 Touchdown Change - Underscore' };
   return t;
 });
@@ -215,18 +224,93 @@ export function TrackListTrackCount({ activeTab, tracks }) {
   return <span className="track-count">{text}</span>;
 }
 
-function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, showRemove, onRemove, showSoundsLike = true }) {
-  const label = selectedCount === 1 ? '1 TRACK SELECTED' : `${selectedCount} TRACKS SELECTED`;
+function SelectionBarPortal({ hostRef, active, children }) {
+  const [mountNode, setMountNode] = useState(null);
+
+  useLayoutEffect(() => {
+    if (!active) {
+      setMountNode(null);
+      return undefined;
+    }
+
+    const syncMountNode = () => {
+      setMountNode(hostRef.current ?? null);
+    };
+
+    syncMountNode();
+    if (!hostRef.current) {
+      const frame = requestAnimationFrame(syncMountNode);
+      return () => cancelAnimationFrame(frame);
+    }
+    return undefined;
+  }, [active, hostRef]);
+
+  if (!active || !mountNode) return null;
+  return createPortal(children, mountNode);
+}
+
+function TracksSelectionBar({
+  selectedCount,
+  selectedTrackCount = 0,
+  totalCount = 0,
+  onPlay,
+  onSoundsLike,
+  onDeselect,
+  onSelectAll,
+  showRemove,
+  onRemove,
+  showSoundsLike = true,
+  withSelectAll = false,
+}) {
+  const theme = useThemeName();
+  const selectAllRef = useRef(null);
+  const label = selectedCount === 1 ? '1 SELECTED' : `${selectedCount} SELECTED`;
+  const allSelected = totalCount > 0 && selectedTrackCount === totalCount;
+  const isIndeterminate = selectedCount > 0 && !allSelected;
+
+  useEffect(() => {
+    const el = selectAllRef.current;
+    if (!el) return;
+    el.indeterminate = isIndeterminate;
+    el.checked = allSelected;
+  }, [allSelected, isIndeterminate]);
+
+  const handleSelectAllToggle = () => {
+    if (allSelected) onDeselect();
+    else onSelectAll?.();
+  };
 
   return (
-    <div className="tracks-selection-bar">
-      <div className="tracks-selection-meta">
-        <span className="tracks-selection-count">{label}</span>
-        <span className="tracks-selection-divider" aria-hidden="true" />
-        <button type="button" className="tracks-selection-deselect" onClick={onDeselect}>
-          DESELECT
-        </button>
-      </div>
+    <div className={`tracks-selection-bar${withSelectAll ? ' tracks-selection-bar--with-select-all' : ''}`}>
+      {withSelectAll ? (
+        <div className="tracks-selection-lead">
+          <div className="tracks-selection-checkbox-col">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              className="track-checkbox tracks-selection-select-all"
+              checked={allSelected}
+              onChange={handleSelectAllToggle}
+              aria-label={allSelected ? 'Deselect all tracks' : 'Select all tracks'}
+            />
+          </div>
+          <div className="tracks-selection-meta">
+            <span className="tracks-selection-count">{label}</span>
+            <span className="tracks-selection-divider" aria-hidden="true" />
+            <button type="button" className="tracks-selection-deselect" onClick={onDeselect}>
+              DESELECT
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="tracks-selection-meta">
+          <span className="tracks-selection-count">{label}</span>
+          <span className="tracks-selection-divider" aria-hidden="true" />
+          <button type="button" className="tracks-selection-deselect" onClick={onDeselect}>
+            DESELECT
+          </button>
+        </div>
+      )}
       <div className="tracks-selection-actions">
         <button type="button" className="tracks-selection-action tracks-selection-action--play" onClick={onPlay} aria-label="Play">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -235,7 +319,7 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, s
           <span className="tracks-selection-action-label">Play</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Favorite">
-          <img src="/icons/favorite.svg" alt="" />
+          <img src={resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
           <span className="tracks-selection-action-label">Favorite</span>
         </button>
         <button type="button" className="tracks-selection-action" aria-label="Share">
@@ -267,7 +351,7 @@ function TracksSelectionBar({ selectedCount, onPlay, onSoundsLike, onDeselect, s
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, compactTrackRows, trackViewMode, onTrackViewModeChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const compact = compactTrackRows ?? tabsInBreadcrumb;
   const condensedViewActions = trackViewMode === 'condensed';
@@ -343,15 +427,45 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
   };
 
   const selectedCount = selectedIds.size;
+  const selectedTrackCount = currentTracks.filter((item) => selectedIds.has(item.id)).length;
   const hasSelection = selectedCount > 0;
+  const selectionBarWithSelectAll =
+    headerActionsVariant === 'search' || tabsInBreadcrumb || headerActionsVariant === 'default';
+  const hideHeaderTabsOnSelection =
+    hasSelection && selectionBarWithSelectAll && (headerActionsVariant === 'search' || !tabsInBreadcrumb);
+
+  useLayoutEffect(() => {
+    onSelectionActiveChange?.(hasSelection);
+  }, [hasSelection, onSelectionActiveChange]);
 
   const handlePlaySelected = () => {
-    const selected = currentTracks.filter((item) => selectedIds.has(item.id));
-    if (selected.length > 0) playQueue(selected, 0);
+    const queue = [];
+    for (const item of currentTracks) {
+      if (selectedIds.has(item.id)) queue.push(item);
+    }
+    for (const track of tracks) {
+      for (const stem of getStemItems(track)) {
+        if (selectedIds.has(stem.id)) {
+          queue.push({ ...stem, id: stem.id, num: stem.waveformIndex });
+        }
+      }
+    }
+    if (queue.length > 0) playQueue(queue, 0);
   };
 
   const handleDeselectAll = () => {
     setSelectedIds(new Set());
+  };
+
+  const handleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      currentTracks.forEach((item) => next.add(item.id));
+      if (showChildFolders && !foldersCollapsed) {
+        childFolders.forEach((folder) => next.add(folder.id));
+      }
+      return next;
+    });
   };
 
   const handleRemoveSelected = () => {
@@ -369,12 +483,16 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
   const selectionBar = (
     <TracksSelectionBar
       selectedCount={selectedCount}
+      selectedTrackCount={selectedTrackCount}
+      totalCount={currentTracks.length}
       onPlay={handlePlaySelected}
       onSoundsLike={handleSoundsLikeSelected}
       onDeselect={handleDeselectAll}
+      onSelectAll={handleSelectAll}
       showRemove={showSelectionRemove}
       onRemove={handleRemoveSelected}
       showSoundsLike={headerActionsVariant !== 'search'}
+      withSelectAll={selectionBarWithSelectAll}
     />
   );
 
@@ -418,11 +536,23 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     )
   );
 
+  const selectionBarActive =
+    hasSelection && selectionBarWithSelectAll && activeTab !== 'searches';
+  const portalSelectionBar =
+    Boolean(selectionBarHostRef) && tabsInBreadcrumb && selectionBarActive;
+
   return (
     <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}${condensedViewActions ? ' tracks-section--condensed-view' : ''}${simplifiedViewActions ? ' tracks-section--simplified-view' : ''}${showEmptyProjectState ? ' tracks-section--empty-project' : ''}`}>
+      {selectionBarHostRef ? (
+        <SelectionBarPortal hostRef={selectionBarHostRef} active={portalSelectionBar}>
+          {selectionBar}
+        </SelectionBarPortal>
+      ) : null}
       {hasHeaderContent && (
         <div className="tracks-header">
-          <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
+          {!hideHeaderTabsOnSelection && (
+            <TrackListTabs activeTab={activeTab} onTabChange={setActiveTab} showSearchesTab={showSearchesTab} />
+          )}
           <div className="tracks-header-meta">
             <div
               className={`tracks-header-meta-default${hasSelection ? ' tracks-header-toolbar-slot--hidden' : ''}`}
@@ -446,7 +576,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
           </div>
         </div>
       )}
-      {tabsInBreadcrumb && !hideTracksHeader && hasSelection && activeTab !== 'searches' && (
+      {tabsInBreadcrumb && !hideTracksHeader && selectionBarActive && !selectionBarHostRef && (
         <div className="tracks-selection-bar-row">
           {selectionBar}
         </div>
@@ -514,6 +644,8 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               onSelect={onFolderSelect}
               onIconClick={canCollapseFolders ? () => setFoldersCollapsed(true) : undefined}
               mobileLayout={mobileTrackLayout}
+              isSelected={selectedIds.has(folder.id)}
+              onSelectChange={handleSelectChange}
             />
           ))
         )}
@@ -546,6 +678,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               hideCloseAction={hideCloseAction}
               disableWaveformHighlights={disableWaveformHighlights}
               isSelected={selectedIds.has(track.id)}
+              selectedIds={selectedIds}
               onSelectChange={handleSelectChange}
             />
           ))}
@@ -588,6 +721,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               hideCloseAction={hideCloseAction}
               disableWaveformHighlights={disableWaveformHighlights}
               isSelected={selectedIds.has(album.id)}
+              selectedIds={selectedIds}
               onSelectChange={handleSelectChange}
             />
           ))}

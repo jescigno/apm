@@ -5,6 +5,7 @@ import { usePlayer } from '../context/PlayerContext';
 import {
   ICON_PLAY_IN_CIRCLE_ON,
   ICON_PLAY_IN_CIRCLE_OFF,
+  ICON_PAUSE_IN_CIRCLE,
   ICON_FAVORITE,
   ICON_FAVORITE_OUTLINE,
   ICON_COMMENTS,
@@ -44,7 +45,7 @@ const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
 
 const STEM_LABELS = ['Drums', 'Bass', 'Guitars', 'Keys', 'Synth', 'Strings', 'Percussion', 'Vocals'];
 
-function getStemItems(parentTrack) {
+export function getStemItems(parentTrack) {
   const count = parentTrack.stems ?? 4;
   return Array.from({ length: count }, (_, index) => ({
     id: `${parentTrack.id}-stem-${index + 1}`,
@@ -62,6 +63,8 @@ const SOUNDS_LIKE_ICON = (
 );
 
 function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false, isAlbum = false }) {
+  const theme = useThemeName();
+
   return (
     <>
       <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
@@ -76,7 +79,7 @@ function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showR
           onClose();
         }}
       >
-        <img src="/player-actions/SoundsLike.svg" alt="" />
+        <img src={resolveThemedAsset('/player-actions/SoundsLike.svg', theme)} alt="" />
         Sounds Like
       </button>
       <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
@@ -107,6 +110,7 @@ function TrackRowActions({
   simplifiedViewActions = false,
   showRemoveFromProject = false,
   hideTrackComments,
+  hideCompactCommentAction,
   hideCloseAction,
   hideSoundsLike = false,
   isAlbum = false,
@@ -132,8 +136,11 @@ function TrackRowActions({
   } = useOverflowDropdownMenu({ getStyle: getMenuStyle, deps: [compact, showRemoveFromProject] });
 
   const showInlineCondensedIcons = condensedViewActions;
-  const showCompactFavoritesActions =
-    simplifiedViewActions || (compact && !condensedViewActions && !hideTrackComments);
+  const showCompactInlineActions =
+    simplifiedViewActions || (compact && !condensedViewActions);
+  const hideCompactComment = hideCompactCommentAction ?? hideTrackComments;
+  const showCompactCommentAction = showCompactInlineActions && !hideCompactComment;
+  const showCompactFavoriteAction = showCompactInlineActions && !hideTrackComments;
   const hasComments =
     item?.commentCount > 0 && (isAlbum || ![2, 4, 8].includes(item?.num));
 
@@ -163,33 +170,33 @@ function TrackRowActions({
         )}
       </div>
       <div className={`track-actions-overflow track-actions-collapsed${compact ? ' track-actions-overflow--compact' : ''}`} ref={overflowRef}>
-        {showCompactFavoritesActions && (
-          <>
-            <span className="track-comment-with-count">
-              <button
-                ref={commentBtnRef}
-                type="button"
-                className="icon-btn"
-                aria-label="Comment"
-                onClick={onCommentClick}
-              >
-                <img
-                  src={
-                    hasComments
-                      ? resolveThemedAsset(ICON_COMMENTS_ACTIVE, theme)
-                      : ICON_COMMENTS
-                  }
-                  alt=""
-                />
-              </button>
-              <span className={`track-comment-count${!hasComments ? ' track-comment-count--hidden' : ''}`}>
-                {item?.commentCount ?? 0}
-              </span>
-            </span>
-            <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
-              <img src={liked ? resolveThemedAsset(ICON_FAVORITE, theme) : resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
+        {showCompactCommentAction && (
+          <span className="track-comment-with-count">
+            <button
+              ref={commentBtnRef}
+              type="button"
+              className="icon-btn"
+              aria-label="Comment"
+              onClick={onCommentClick}
+            >
+              <img
+                src={
+                  hasComments
+                    ? resolveThemedAsset(ICON_COMMENTS_ACTIVE, theme)
+                    : ICON_COMMENTS
+                }
+                alt=""
+              />
             </button>
-          </>
+            <span className={`track-comment-count${!hasComments ? ' track-comment-count--hidden' : ''}`}>
+              {item?.commentCount ?? 0}
+            </span>
+          </span>
+        )}
+        {showCompactFavoriteAction && (
+          <button type="button" className={`icon-btn heart ${liked ? 'heart-filled' : 'heart-outline'}`} onClick={onToggleLike} aria-label={liked ? 'Unlike' : 'Like'}>
+            <img src={liked ? resolveThemedAsset(ICON_FAVORITE, theme) : resolveThemedAsset(ICON_FAVORITE_OUTLINE, theme)} alt="" />
+          </button>
         )}
         <button
           ref={menuBtnRef}
@@ -256,6 +263,8 @@ function TrackRowActions({
 
 function TrackStemRow({
   stem,
+  stemIndex = 0,
+  favoritesStemDisplay,
   compact,
   condensedViewActions = false,
   simplifiedViewActions = false,
@@ -272,7 +281,8 @@ function TrackStemRow({
 }) {
   const theme = useThemeName();
   const [playHovered, setPlayHovered] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const isDimmed = favoritesStemDisplay?.dimStemIndexes?.includes(stemIndex) ?? false;
+  const [liked, setLiked] = useState(favoritesStemDisplay?.favoriteStemIndex === stemIndex);
   const canPlay = Boolean(stem.audioUrl && onPlay);
   const showPlayingIcon = isCurrentTrack && isPlaying;
 
@@ -288,7 +298,7 @@ function TrackStemRow({
 
   return (
     <div
-      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${isSelected ? ' track-stem-row--selected' : ''}${isCurrentTrack ? ' track-stem-row--playing' : ''}`}
+      className={`track-stem-row${compact ? ' track-stem-row--compact' : ''}${isSelected ? ' track-stem-row--selected' : ''}${isCurrentTrack ? ' track-stem-row--playing' : ''}${isDimmed ? ' track-stem-row--dimmed' : ''}`}
     >
       <span className="track-stem-row__col-spacer" aria-hidden="true" />
       <div className="track-stem-row__meta">
@@ -303,45 +313,41 @@ function TrackStemRow({
               aria-label={`Select ${stem.name} stem`}
               onClick={(event) => event.stopPropagation()}
             />
-            {showPlayingIcon ? (
-              <span
-                className="track-stem-play-slot"
-                onMouseEnter={() => setPlayHovered(true)}
-                onMouseLeave={() => setPlayHovered(false)}
-              >
-                {playHovered ? (
+            <span
+              className="track-stem-play-slot"
+              onMouseEnter={() => setPlayHovered(true)}
+              onMouseLeave={() => setPlayHovered(false)}
+            >
+              {showPlayingIcon ? (
+                playHovered ? (
                   <button
                     type="button"
-                    className="track-play-btn track-pause-btn track-stem-play-btn"
+                    className="track-stem-play-btn"
                     onClick={handlePause}
                     aria-label={`Pause ${stem.name}`}
                   >
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                    </svg>
+                    <img src={resolveThemedAsset(ICON_PAUSE_IN_CIRCLE, theme)} alt="" />
                   </button>
                 ) : (
                   <span className="track-stem-play-btn track-stem-play-btn--playing" aria-hidden="true">
                     <PlayingAudioIcon />
                   </span>
-                )}
-              </span>
-            ) : (
-              <button
-                type="button"
-                className="track-stem-play-btn"
-                onMouseEnter={() => setPlayHovered(true)}
-                onMouseLeave={() => setPlayHovered(false)}
-                onClick={handlePlay}
-                disabled={!canPlay}
-                aria-label={`Play ${stem.name}`}
-              >
-                <img
-                  src={playHovered ? resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme) : resolveThemedAsset(ICON_PLAY_IN_CIRCLE_OFF, theme)}
-                  alt=""
-                />
-              </button>
-            )}
+                )
+              ) : (
+                <button
+                  type="button"
+                  className="track-stem-play-btn"
+                  onClick={handlePlay}
+                  disabled={!canPlay}
+                  aria-label={`Play ${stem.name}`}
+                >
+                  <img
+                    src={playHovered ? resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme) : resolveThemedAsset(ICON_PLAY_IN_CIRCLE_OFF, theme)}
+                    alt=""
+                  />
+                </button>
+              )}
+            </span>
           </div>
           <span className="track-stem-row__name">{stem.name}</span>
         </div>
@@ -356,6 +362,7 @@ function TrackStemRow({
         simplifiedViewActions={simplifiedViewActions}
         showRemoveFromProject={showRemoveFromProject}
         hideTrackComments={hideTrackComments}
+        hideCompactCommentAction={isDimmed && Boolean(favoritesStemDisplay)}
         hideCloseAction
         hideSoundsLike
         item={parentItem}
@@ -566,7 +573,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, onSelectChange }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange }) {
   const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -580,11 +587,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const [popoverSavedComment, setPopoverSavedComment] = useState('');
   const [popoverCommentFocused, setPopoverCommentFocused] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
-  const [selectedStemIds, setSelectedStemIds] = useState(() => new Set());
   const commentInputRef = useRef(null);
   const popoverCommentInputRef = useRef(null);
   const commentBtnRef = useRef(null);
-  const selectAllStemsRef = useRef(null);
+  const trackCheckboxRef = useRef(null);
   const getMobileMenuStyle = useCallback(
     (triggerEl) => getMenuDropdownStyle(triggerEl, { compact: true, showRemoveFromProject }),
     [showRemoveFromProject]
@@ -737,84 +743,35 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     setPopoverCommentFocused(false);
   };
 
-  const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected);
-
   const stemItems = track && !isAlbum ? getStemItems(track) : [];
+  const isStemSelected = (stemId) => selectedIds?.has(stemId) ?? false;
+  const selectedStemCount = stemItems.filter((stem) => isStemSelected(stem.id)).length;
+  const hasStemSelection = selectedStemCount > 0;
+  const isTrackCheckboxIndeterminate = hasStemSelection && !isSelected;
 
   useEffect(() => {
-    if (!stemsOpen) setSelectedStemIds(new Set());
-  }, [stemsOpen]);
+    const checkbox = trackCheckboxRef.current;
+    if (!checkbox) return;
+    checkbox.indeterminate = isTrackCheckboxIndeterminate;
+  }, [isTrackCheckboxIndeterminate]);
 
-  useEffect(() => {
-    setSelectedStemIds(new Set());
-  }, [track?.id]);
+  const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected || hasStemSelection);
 
-  const handleStemSelectChange = (stemId, checked) => {
-    setSelectedStemIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(stemId);
-      else next.delete(stemId);
-      return next;
-    });
-  };
-
-  const handleSelectAllStemsToggle = (event) => {
-    event.stopPropagation();
-    const allSelected =
-      stemItems.length > 0 && stemItems.every((stem) => selectedStemIds.has(stem.id));
-    setSelectedStemIds(
-      allSelected ? new Set() : new Set(stemItems.map((stem) => stem.id))
-    );
-  };
-
-  const handleDeselectAllStems = (event) => {
-    event.stopPropagation();
-    setSelectedStemIds(new Set());
-  };
-
-  const handlePlaySelectedStems = (event) => {
-    event.stopPropagation();
-    if (!onPlay) return;
-    const selected = stemItems
-      .filter((stem) => selectedStemIds.has(stem.id))
-      .map((stem) => ({ ...stem, id: stem.id, num: stem.waveformIndex }));
-    if (selected.length === 0) return;
-    onPlay(selected[0], selected);
-  };
-
-  const allStemsSelected =
-    stemItems.length > 0 && stemItems.every((stem) => selectedStemIds.has(stem.id));
-  const someStemsSelected =
-    selectedStemIds.size > 0 && !allStemsSelected;
-  const hasStemSelection = selectedStemIds.size > 0;
-  const stemSelectionLabel =
-    selectedStemIds.size === 1 ? '1 STEM SELECTED' : `${selectedStemIds.size} STEMS SELECTED`;
-
-  useEffect(() => {
-    const el = selectAllStemsRef.current;
-    if (!el) return;
-    el.indeterminate = someStemsSelected;
-  }, [someStemsSelected, stemsOpen, stemItems.length]);
-
-  const renderSelectCheckbox = () => {
-    if (!showSelectCheckbox) {
-      if (showPauseIcon) {
-        return <span className="track-num-spacer-checkbox" aria-hidden="true" />;
-      }
-      return <span className="track-num-spacer" aria-hidden="true" />;
-    }
-
-    return (
-      <input
-        type="checkbox"
-        className="track-checkbox"
-        checked={isSelected}
-        onChange={(event) => onSelectChange?.(item.id, event.target.checked)}
-        aria-label={`Select ${item.title}`}
-        onClick={(event) => event.stopPropagation()}
-      />
-    );
-  };
+  const renderSelectCheckbox = () => (
+    <span className="track-num-checkbox-slot">
+      {showSelectCheckbox ? (
+        <input
+          ref={trackCheckboxRef}
+          type="checkbox"
+          className="track-checkbox"
+          checked={isSelected}
+          onChange={(event) => onSelectChange?.(item.id, event.target.checked)}
+          aria-label={`Select ${item.title}`}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ) : null}
+    </span>
+  );
 
   if (mobileTrackLayout) {
     return (
@@ -941,27 +898,22 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     >
       {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
       <span className="track-num">
-        {showPlayingIcon ? (
-          <>
-            {renderSelectCheckbox()}
-            {isHovered ? (
+        {renderSelectCheckbox()}
+        <span className="track-num-play-slot">
+          {showPlayingIcon ? (
+            isHovered ? (
               <button
                 type="button"
-                className="track-play-btn track-pause-btn"
+                className="track-play-btn track-play-btn--play-in-circle"
                 onClick={handlePause}
                 aria-label={`Pause ${item.title}`}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
+                <img src={resolveThemedAsset(ICON_PAUSE_IN_CIRCLE, theme)} alt="" />
               </button>
             ) : (
               <PlayingAudioIcon />
-            )}
-          </>
-        ) : showPauseIcon ? (
-          <>
-            {renderSelectCheckbox()}
+            )
+          ) : showPauseIcon ? (
             <button
               type="button"
               className="track-play-btn track-play-btn--play-in-circle"
@@ -970,10 +922,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             >
               <img src={resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme)} alt="" />
             </button>
-          </>
-        ) : canPlay && isHovered ? (
-          <>
-            {renderSelectCheckbox()}
+          ) : canPlay && isHovered ? (
             <button
               type="button"
               className="track-play-btn track-play-btn--play-in-circle"
@@ -982,13 +931,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             >
               <img src={resolveThemedAsset(ICON_PLAY_IN_CIRCLE_ON, theme)} alt="" />
             </button>
-          </>
-        ) : (
-          <>
-            {renderSelectCheckbox()}
+          ) : (
             <span className="track-num-value">{item.num}</span>
-          </>
-        )}
+          )}
+        </span>
       </span>
       <div className="track-thumb-col">
         {renderTrackThumb()}
@@ -1133,83 +1079,12 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         role="group"
         aria-label={`Stems for ${item.title}`}
       >
-        <div className={`track-stems-select-all${hasStemSelection ? ' track-stems-select-all--has-selection' : ''}`}>
-          <span className="track-stem-row__col-spacer" aria-hidden="true" />
-          <div className="track-stem-row__meta">
-            <span className="track-stem-row__align-spacer" aria-hidden="true" />
-            <div className="track-stem-row__title-group">
-              <div className="track-stem-row__lead">
-                <input
-                  ref={selectAllStemsRef}
-                  type="checkbox"
-                  className="track-checkbox"
-                  checked={allStemsSelected}
-                  onChange={handleSelectAllStemsToggle}
-                  aria-label="Select all stems"
-                  onClick={(event) => event.stopPropagation()}
-                />
-              </div>
-              {hasStemSelection ? (
-                <div className="tracks-selection-meta">
-                  <span className="tracks-selection-count">{stemSelectionLabel}</span>
-                  <span className="tracks-selection-divider" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="tracks-selection-deselect"
-                    onClick={handleDeselectAllStems}
-                  >
-                    DESELECT
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="tracks-selection-deselect"
-                  onClick={handleSelectAllStemsToggle}
-                >
-                  SELECT ALL
-                </button>
-              )}
-            </div>
-          </div>
-          <div
-            className={`track-stems-select-all__actions tracks-selection-actions${hasStemSelection ? '' : ' track-stems-select-all__actions--hidden'}`}
-            aria-hidden={!hasStemSelection}
-          >
-            <button
-              type="button"
-              className="tracks-selection-action tracks-selection-action--play"
-              onClick={handlePlaySelectedStems}
-              aria-label="Play"
-              tabIndex={hasStemSelection ? 0 : -1}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              <span className="tracks-selection-action-label">Play</span>
-            </button>
-            <button type="button" className="tracks-selection-action" aria-label="Favorite" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src={resolveThemedAsset(ICON_FAVORITE, theme)} alt="" />
-              <span className="tracks-selection-action-label">Favorite</span>
-            </button>
-            <button type="button" className="tracks-selection-action" aria-label="Share" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/Upload.svg" alt="" />
-              <span className="tracks-selection-action-label">Share</span>
-            </button>
-            <button type="button" className="tracks-selection-action" aria-label="Add" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/add.svg" alt="" />
-              <span className="tracks-selection-action-label">Add</span>
-            </button>
-            <button type="button" className="tracks-selection-action" aria-label="Download" tabIndex={hasStemSelection ? 0 : -1}>
-              <img src="/icons/download.svg" alt="" />
-              <span className="tracks-selection-action-label">Download</span>
-            </button>
-          </div>
-        </div>
-        {stemItems.map((stem) => (
+        {stemItems.map((stem, stemIndex) => (
           <TrackStemRow
             key={stem.id}
             stem={stem}
+            stemIndex={stemIndex}
+            favoritesStemDisplay={track?.favoritesStemDisplay}
             compact={compact}
             condensedViewActions={condensedViewActions}
             simplifiedViewActions={simplifiedViewActions}
@@ -1221,8 +1096,8 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             onTogglePause={onTogglePause}
             isCurrentTrack={currentTrack?.id === stem.id}
             isPlaying={isPlaying}
-            isSelected={selectedStemIds.has(stem.id)}
-            onSelectChange={handleStemSelectChange}
+            isSelected={isStemSelected(stem.id)}
+            onSelectChange={onSelectChange}
           />
         ))}
       </div>

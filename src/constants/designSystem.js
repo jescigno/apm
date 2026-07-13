@@ -1,5 +1,87 @@
 import { PROFILE_COLORS } from './profileColors';
-import { CSS_VARS, THEME_PALETTES } from './theme';
+import { CSS_VARS } from './theme';
+import { VIEWPORT_BREAKPOINTS } from './layout';
+
+function formatBreakpointMinWidth(minWidth) {
+  return minWidth === 0 ? '0px' : `${minWidth}px`;
+}
+
+const VIEWPORT_BREAKPOINT_USAGE = {
+  xsmall:
+    'Smallest phones. Tighter mobile hero copy, narrow notification layouts, and extra-compact spacing below 390px.',
+  small:
+    'Primary mobile layout (390–768px). Hamburger header, project mobile hero, compact track rows, stacked panels, and mobile account/notifications patterns.',
+  medium:
+    'Tablet and small desktop (768–1024px). Transitional layouts: project card stacking, filters column behavior, and condensed track/toolbar patterns.',
+  large:
+    'Standard desktop (1024–1440px). Default sidebar + main content, full track rows, projects panel column layout, and desktop account tabs.',
+  'x-large':
+    'Wide desktop (1440–1920px). Roomier project cards, wider multiselect toolbars, and layouts that use additional horizontal space before the wide header tier.',
+  xxlarge:
+    'Large screens (1920–2560px). Inline header navigation (no hamburger), wide projects panel inline nav, and layouts tuned for large displays.',
+  '2560+':
+    'Ultra-wide displays (2560px and above). Maximum content width and spacing for very large monitors.',
+};
+
+/** Viewport tiers + component-specific container queries for the design system page. */
+export const DESIGN_SYSTEM_BREAKPOINTS = [
+  {
+    group: 'Viewport breakpoints',
+    items: VIEWPORT_BREAKPOINTS.map((bp) => ({
+      name: bp.name,
+      token: bp.token,
+      minWidth: formatBreakpointMinWidth(bp.minWidth),
+      usage: VIEWPORT_BREAKPOINT_USAGE[bp.name],
+    })),
+  },
+  {
+    group: 'Container & component queries',
+    items: [
+      {
+        name: 'Track actions — expanded icons',
+        token: 'TRACK_ACTIONS_EXPAND_MIN_CONTAINER',
+        minWidth: '1101px',
+        note: '@container app-content',
+        usage: 'Track rows show all inline action icons; below this, actions collapse to the … menu.',
+      },
+      {
+        name: 'Track actions — tight toolbar',
+        token: null,
+        minWidth: '≤1100px',
+        note: '@container app-content',
+        usage: 'Stem row action layout compresses.',
+      },
+      {
+        name: 'Selection bar — icon-only actions',
+        token: null,
+        minWidth: '≤1076px',
+        note: '@container app-content',
+        usage: 'Multiselect toolbar action buttons show icons only (labels on hover).',
+      },
+      {
+        name: 'Search home — 3-column carousels',
+        token: null,
+        minWidth: '≤1200px',
+        note: '@container search-home',
+        usage: 'Search home carousel grid columns reduce.',
+      },
+      {
+        name: 'Search home — 2-column carousels',
+        token: null,
+        minWidth: '≤900px',
+        note: '@container search-home',
+        usage: 'Search home carousel grid to two columns.',
+      },
+      {
+        name: 'Search home — single column',
+        token: null,
+        minWidth: '≤640px',
+        note: '@container search-home',
+        usage: 'Search home carousel cards stack in one column.',
+      },
+    ],
+  },
+];
 
 export const DESIGN_SYSTEM_FONTS = [
   {
@@ -26,56 +108,325 @@ export const DESIGN_SYSTEM_FONTS = [
 
 export const DESIGN_SYSTEM_COLORS = [
   {
-    group: 'Backgrounds',
+    group: 'Brand',
     swatches: [
-      { name: 'Chrome (header/sidebar)', token: CSS_VARS.bg.chrome, value: THEME_PALETTES.dark[CSS_VARS.bg.chrome] },
-      { name: 'Page', token: CSS_VARS.bg.page, value: THEME_PALETTES.dark[CSS_VARS.bg.page] },
-      { name: 'Page dark (body)', token: CSS_VARS.bg.dark, value: THEME_PALETTES.dark[CSS_VARS.bg.dark] },
-      { name: 'Card', token: CSS_VARS.bg.card, value: THEME_PALETTES.dark[CSS_VARS.bg.card] },
-      { name: 'Elevated', token: CSS_VARS.bg.elevated, value: THEME_PALETTES.dark[CSS_VARS.bg.elevated] },
-      { name: 'Panel / overlay', token: CSS_VARS.bg.panel, value: THEME_PALETTES.dark[CSS_VARS.bg.panel] },
-      { name: 'Nested panel', token: CSS_VARS.bg.nested, value: THEME_PALETTES.dark[CSS_VARS.bg.nested] },
-    ],
-  },
-  {
-    group: 'Surfaces',
-    swatches: [
-      { name: 'Default surface', token: CSS_VARS.surface.default, value: THEME_PALETTES.dark[CSS_VARS.surface.default] },
-      { name: 'Raised surface', token: CSS_VARS.surface.raised, value: THEME_PALETTES.dark[CSS_VARS.surface.raised] },
-      { name: 'Muted surface', token: CSS_VARS.surface.muted, value: THEME_PALETTES.dark[CSS_VARS.surface.muted] },
-      { name: 'Hover surface', token: CSS_VARS.surface.hover, value: THEME_PALETTES.dark[CSS_VARS.surface.hover] },
-      { name: 'Selected surface', token: CSS_VARS.surface.selected, value: THEME_PALETTES.dark[CSS_VARS.surface.selected] },
-    ],
-  },
-  {
-    group: 'Text',
-    swatches: [
-      { name: 'Primary', token: CSS_VARS.text.primary, value: THEME_PALETTES.dark[CSS_VARS.text.primary] },
-      { name: 'Secondary', token: CSS_VARS.text.secondary, value: THEME_PALETTES.dark[CSS_VARS.text.secondary] },
-      { name: 'Muted', token: CSS_VARS.text.muted, value: THEME_PALETTES.dark[CSS_VARS.text.muted] },
-      { name: 'On chrome', token: CSS_VARS.text.onChrome, value: THEME_PALETTES.dark[CSS_VARS.text.onChrome] },
-      { name: 'Section label', token: CSS_VARS.text.section, value: THEME_PALETTES.dark[CSS_VARS.text.section] },
-      { name: 'Link / highlight', token: CSS_VARS.text.link, value: THEME_PALETTES.dark[CSS_VARS.text.link] },
+      {
+        name: 'Red (brand)',
+        token: CSS_VARS.accent.red,
+      },
+      {
+        name: 'Red hover',
+        token: CSS_VARS.accent.redHover,
+      },
     ],
   },
   {
     group: 'Accents',
     swatches: [
-      { name: 'Red (brand)', token: CSS_VARS.accent.red, value: THEME_PALETTES.dark[CSS_VARS.accent.red] },
-      { name: 'Red hover', token: CSS_VARS.accent.redHover, value: THEME_PALETTES.dark[CSS_VARS.accent.redHover] },
-      { name: 'Violet', token: CSS_VARS.accent.purple, value: THEME_PALETTES.dark[CSS_VARS.accent.purple] },
-      { name: 'Blue', token: CSS_VARS.accent.blue, value: THEME_PALETTES.dark[CSS_VARS.accent.blue] },
-      { name: 'Sounds Like', token: CSS_VARS.accent.soundsLike, value: THEME_PALETTES.dark[CSS_VARS.accent.soundsLike] },
-      { name: 'Toggle on', token: CSS_VARS.accent.toggleOn, value: THEME_PALETTES.dark[CSS_VARS.accent.toggleOn] },
+      {
+        name: 'Blue',
+        token: CSS_VARS.accent.blue,
+        usage: {
+          dark: ['Reserved token — not currently used in UI'],
+          light: ['Reserved token — not currently used in UI'],
+        },
+      },
+      {
+        name: 'Links (dark)',
+        token: CSS_VARS.text.link,
+        themeValue: 'dark',
+        usage: {
+          dark: [
+            'Inline links and highlighted text',
+            'Sounds Like button label color (.btn-sounds-like)',
+            'Track dropdown open label background',
+          ],
+          light: [],
+        },
+      },
+      {
+        name: 'Select state (dark)',
+        token: CSS_VARS.surface.selected,
+        themeValue: 'dark',
+        usage: {
+          dark: ['Selected track rows, folders, and notifications'],
+          light: [],
+        },
+      },
+      {
+        name: 'Select state (light)',
+        token: CSS_VARS.surface.selected,
+        themeValue: 'light',
+        usage: {
+          dark: [],
+          light: ['Selected track rows, folders, and notifications'],
+        },
+      },
     ],
   },
   {
-    group: 'CTAs',
+    group: 'Sounds Like',
     swatches: [
-      { name: 'Primary', token: CSS_VARS.cta.primaryBg, value: THEME_PALETTES.dark[CSS_VARS.cta.primaryBg] },
-      { name: 'Primary hover', token: CSS_VARS.cta.primaryBgHover, value: THEME_PALETTES.dark[CSS_VARS.cta.primaryBgHover] },
-      { name: 'Secondary', token: CSS_VARS.cta.secondaryBg, value: THEME_PALETTES.dark[CSS_VARS.cta.secondaryBg] },
-      { name: 'Secondary hover', token: CSS_VARS.cta.secondaryBgHover, value: THEME_PALETTES.dark[CSS_VARS.cta.secondaryBgHover] },
+      {
+        name: 'Sounds Like (light / dark)',
+        token: CSS_VARS.accent.soundsLike,
+        usage: {
+          dark: [
+            'Primary Sounds Like purple — promo buttons, add buttons, SOUNDS LIKE tag badge',
+            'Player waveform selection borders, handles, and option chip',
+            'Track row waveform outline and highlight accent',
+          ],
+          light: [
+            'Primary Sounds Like purple — promo buttons, add buttons, SOUNDS LIKE tag badge',
+            'Player waveform selection borders, handles, and option chip',
+            'Track row waveform outline and highlight accent',
+          ],
+        },
+      },
+      {
+        name: 'Sounds Like hover (light / dark)',
+        value: '#6F1AAD',
+        usage: {
+          dark: [
+            'Hover state for Sounds Like promo buttons (.sounds-like-box .btn-sounds-like)',
+            'Hover state for Sounds Like panel add buttons (.sounds-like-track-add)',
+          ],
+          light: [
+            'Hover state for Sounds Like promo buttons (.sounds-like-box .btn-sounds-like)',
+            'Hover state for Sounds Like panel add buttons (.sounds-like-track-add)',
+          ],
+        },
+      },
+      {
+        name: 'Sounds Like surface (dark)',
+        value: '#312739',
+        themeValue: 'dark',
+        usage: {
+          dark: [
+            'Sounds Like panel track row backgrounds',
+            'Project page Sounds Like promo box fill',
+            'Mobile project hero Sounds Like promo fill',
+          ],
+          light: [],
+        },
+      },
+      {
+        name: 'Sounds Like surface (light)',
+        value: '#F7EBFF',
+        themeValue: 'light',
+        usage: {
+          dark: [],
+          light: [
+            'Sounds Like panel track row backgrounds',
+            'Project page Sounds Like promo box fill',
+            'Mobile project hero Sounds Like promo fill',
+          ],
+        },
+      },
+      {
+        name: 'Enter highlight flash (light / dark)',
+        value: 'rgba(132, 31, 204, 0.55)',
+        usage: {
+          dark: [
+            'Brief flash overlay when a track is added to the list from Sounds Like (.track-row-enter-highlight-flash)',
+          ],
+          light: [
+            'Brief flash overlay when a track is added to the list from Sounds Like (.track-row-enter-highlight-flash)',
+          ],
+        },
+      },
+      {
+        name: 'Waveform selection tint (light / dark)',
+        value: 'rgba(132, 31, 204, 0.3)',
+        usage: {
+          dark: [
+            'Sounds Like waveform selection fill in the audio player',
+            'Track waveform Sounds Like overlay fill',
+          ],
+          light: [
+            'Sounds Like waveform selection fill in the audio player',
+            'Track waveform Sounds Like overlay fill',
+          ],
+        },
+      },
+    ],
+  },
+  {
+    group: 'Neutrals',
+    sections: [
+      {
+        title: 'Dark mode',
+        swatches: [
+          {
+            name: 'Black',
+            token: CSS_VARS.bg.chrome,
+            themeValue: 'dark',
+            usage: {
+              dark: [
+                'Header, sidebar, dropdown surfaces',
+                'Body/html background',
+                'Strong borders and dividers',
+              ],
+              light: [],
+            },
+          },
+          {
+            name: 'Gray 900',
+            token: CSS_VARS.bg.card,
+            themeValue: 'dark',
+            usage: { dark: ['Card backgrounds'], light: [] },
+          },
+          {
+            name: 'Gray 850',
+            token: CSS_VARS.bg.elevated,
+            themeValue: 'dark',
+            usage: { dark: ['Elevated surfaces and overlays'], light: [] },
+          },
+          {
+            name: 'Gray 800',
+            token: CSS_VARS.bg.page,
+            themeValue: 'dark',
+            usage: { dark: ['Main page background'], light: [] },
+          },
+          {
+            name: 'Gray 750',
+            token: CSS_VARS.bg.nested,
+            themeValue: 'dark',
+            usage: { dark: ['Nested panels, design system muted surfaces'], light: [] },
+          },
+          {
+            name: 'Gray 700',
+            token: CSS_VARS.border.default,
+            themeValue: 'dark',
+            usage: { dark: ['Default borders, table dividers, panel outlines'], light: [] },
+          },
+          {
+            name: 'Gray 650',
+            token: CSS_VARS.surface.default,
+            themeValue: 'dark',
+            chipBorderToken: CSS_VARS.bg.elevated,
+            usage: {
+              dark: [
+                'Account cards and default UI surfaces (--account-surface, --surface-default)',
+                'Raised surfaces (--surface-raised): expanded parent track when stems are open, nested stem rows, stems select-all bar',
+                'Side panel token (--bg-panel)',
+                'Muted inset surfaces (--surface-muted)',
+                'Comments panel input fields',
+                'Track comment compose backgrounds',
+                'Sounds Like source stack hover labels',
+              ],
+              light: [],
+            },
+          },
+          {
+            name: 'Gray 600',
+            token: CSS_VARS.surface.playing,
+            themeValue: 'dark',
+            chipBorderToken: CSS_VARS.bg.elevated,
+            usage: {
+              dark: [
+                'Playing track and stem row backgrounds (--surface-playing)',
+              ],
+              light: [],
+            },
+          },
+          {
+            name: 'Gray 550',
+            token: CSS_VARS.surface.hover,
+            themeValue: 'dark',
+            usage: { dark: ['Row hover states, icon button hover backgrounds'], light: [] },
+          },
+          {
+            name: 'Gray 480',
+            token: '--scrollbar-thumb',
+            themeValue: 'dark',
+            usage: { dark: ['Scrollbar thumbs'], light: [] },
+          },
+          {
+            name: 'Gray 450',
+            token: CSS_VARS.cta.secondaryBg,
+            themeValue: 'dark',
+            usage: { dark: ['Secondary CTA buttons, panel close buttons'], light: [] },
+          },
+          {
+            name: 'Gray 400',
+            token: CSS_VARS.text.muted,
+            themeValue: 'dark',
+            usage: { dark: ['Muted labels, timestamps, de-emphasized copy'], light: [] },
+          },
+          {
+            name: 'Gray 380',
+            token: CSS_VARS.account.surfaceBorder,
+            value: '#808080',
+            usage: {
+              dark: ['Account dropdown strokes, form borders'],
+              light: ['Account dropdown strokes, form borders'],
+            },
+          },
+          {
+            name: 'Gray 360',
+            token: CSS_VARS.text.section,
+            themeValue: 'dark',
+            usage: { dark: ['Section labels, tab inactive text, column headers'], light: [] },
+          },
+          {
+            name: 'Gray 320',
+            token: CSS_VARS.text.secondary,
+            themeValue: 'dark',
+            usage: { dark: ['Secondary body text'], light: [] },
+          },
+        ],
+      },
+      {
+        title: 'Light mode',
+        swatches: [
+          {
+            name: 'Gray 250',
+            token: CSS_VARS.bg.chrome,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Header, sidebar, search field background'] },
+          },
+          {
+            name: 'Gray 220',
+            token: CSS_VARS.border.default,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Borders and dividers'] },
+          },
+          {
+            name: 'Gray 180',
+            token: CSS_VARS.surface.playing,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Playing track and stem row backgrounds (--surface-playing)'] },
+          },
+          {
+            name: 'Gray 180 (account)',
+            token: CSS_VARS.account.surface,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Account card surfaces'] },
+          },
+          {
+            name: 'Gray 160',
+            token: CSS_VARS.surface.hover,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Row hover states'] },
+          },
+          {
+            name: 'Gray 140',
+            token: CSS_VARS.bg.nested,
+            themeValue: 'light',
+            usage: { dark: [], light: ['Nested backgrounds, muted surfaces'] },
+          },
+          {
+            name: 'White',
+            token: CSS_VARS.bg.page,
+            themeValue: 'light',
+            usage: {
+              dark: ['Primary text color'],
+              light: ['Page background', 'Checkbox checked fill', 'Dropdown surfaces'],
+            },
+          },
+        ],
+      },
     ],
   },
   {
@@ -84,22 +435,24 @@ export const DESIGN_SYSTEM_COLORS = [
       name: name.charAt(0).toUpperCase() + name.slice(1),
       token: `--profile-${name}`,
       value,
+      usage: {
+        dark: [
+          `Notification avatar circles for ${name} profile color`,
+          'Assigned by initials in getProfileColorVar()',
+        ],
+        light: [
+          `Notification avatar circles for ${name} profile color`,
+          'Assigned by initials in getProfileColorVar()',
+        ],
+      },
     })),
-  },
-  {
-    group: 'Borders & chrome',
-    swatches: [
-      { name: 'Border', token: CSS_VARS.border.default, value: THEME_PALETTES.dark[CSS_VARS.border.default] },
-      { name: 'Border strong', token: CSS_VARS.border.strong, value: THEME_PALETTES.dark[CSS_VARS.border.strong] },
-      { name: 'Divider', token: CSS_VARS.border.divider, value: THEME_PALETTES.dark[CSS_VARS.border.divider] },
-      { name: 'Close button', token: CSS_VARS.control.closeButton, value: THEME_PALETTES.dark[CSS_VARS.control.closeButton] },
-    ],
   },
 ];
 
 /** Track row / stem play control — red circle (on) and triangle-only (off). */
 export const ICON_PLAY_IN_CIRCLE_ON = '/icons/PlayinCircle.svg';
 export const ICON_PLAY_IN_CIRCLE_OFF = '/icons/PlayinCircle-Off.svg';
+export const ICON_PAUSE_IN_CIRCLE = '/icons/PauseinCircle.svg';
 
 export const ICON_SHARE = '/icons/Upload.svg';
 export const ICON_COPY = '/icons/copy.svg';
@@ -107,7 +460,7 @@ export const ICON_ADD = '/icons/add.svg';
 export const ICON_MOVE_TO = '/icons/moveTo.svg';
 export const ICON_DOWNLOAD = '/icons/download.svg';
 export const ICON_FAVORITE = '/icons/favorite.svg';
-export const ICON_FAVORITE_OUTLINE = '/icons/favoriteOutline.svg';
+export const ICON_FAVORITE_OUTLINE = '/player-actions/Favorite.svg';
 export const ICON_ARCHIVE = '/icons/archive.svg';
 export const ICON_DELETE = '/icons/Trash.svg';
 export const ICON_SOUNDS_LIKE = '/icons/soundsLike.svg';
@@ -122,6 +475,7 @@ export const ICON_REFRESH = '/icons/refresh.svg';
 export const ICON_SEARCH = '/icons/search.svg';
 export const ICON_MORE_MENU = '/icons/moreMenu.svg';
 export const ICON_FOLDER = '/icons/folder.svg';
+export const ICON_FOLDER_FILLED = '/icons/folder-filled.svg';
 export const ICON_FOLDER_NEW = '/icons/folderNew.svg';
 export const ICON_HISTORY = '/icons/history.svg';
 export const ICON_COLLABS = '/icons/collabs.svg';
@@ -146,14 +500,15 @@ export const PROJECT_DETAIL_ACTIONS = [
   { id: 'delete', label: 'Delete', src: ICON_DELETE },
 ];
 
-/** Main sections — used for in-page jump navigation. */
-export const DESIGN_SYSTEM_SECTIONS = [
+/** Design system page tabs — one panel per tab. */
+export const DESIGN_SYSTEM_TABS = [
   { id: 'typography', label: 'Typography' },
   { id: 'colors', label: 'Colors' },
   { id: 'icons', label: 'Icons' },
   { id: 'buttons', label: 'Buttons' },
-  { id: 'form-controls', label: 'Form controls' },
+  { id: 'elements', label: 'Elements' },
   { id: 'layout', label: 'Layout & spacing' },
+  { id: 'breakpoints', label: 'Breakpoints' },
 ];
 
 export const DESIGN_SYSTEM_LAYOUT = [
@@ -202,6 +557,7 @@ export const DESIGN_SYSTEM_ICONS = [
       { name: 'Track info', src: '/icons/TrackInfo.svg' },
       { name: 'Track lyrics', src: '/icons/TrackLyrics.svg' },
       { name: 'Folder', src: ICON_FOLDER },
+      { name: 'Folder (filled)', src: ICON_FOLDER_FILLED },
       { name: 'New folder', src: ICON_FOLDER_NEW },
       { name: 'Settings', src: '/icons/Settings.svg' },
       { name: 'Mark as read', src: '/icons/mark-as-read.svg' },
@@ -236,12 +592,6 @@ export const DESIGN_SYSTEM_ICONS = [
       { name: 'Comments (active)', src: ICON_COMMENTS_ACTIVE },
       { name: 'Collabs', src: ICON_COLLABS, wide: true },
       { name: 'Collabs (active)', src: ICON_COLLABS_ACTIVE, wide: true },
-    ],
-  },
-  {
-    group: 'Projects & panels',
-    icons: [
-      { name: 'Search (panel)', src: '/nav-icons/Search.svg' },
     ],
   },
   {

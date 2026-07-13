@@ -11,7 +11,8 @@ import {
   getFolderAncestorIds,
   getFolderUpdatedAtLabel,
 } from '../constants/projectsPanelTree';
-import { ICON_SORT, ICON_ARCHIVE, ICON_DELETE } from '../constants/designSystem';
+import { ICON_ARCHIVE, ICON_DELETE, ICON_FOLDER_FILLED, ICON_FOLDER_NEW, ICON_SEARCH, ICON_SORT } from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 const FOLDER_MORE_MENU_WIDTH = 220;
 
@@ -63,71 +64,70 @@ function getExtraColumnFlags(panelWidth) {
   };
 }
 
-/** Filled icons (no stroke) for source dropdown options */
+function SourceMenuIconImg({ src }) {
+  return (
+    <img
+      className="projects-panel-source-menu-icon-img"
+      src={src}
+      alt=""
+      width={18}
+      height={18}
+      aria-hidden={true}
+    />
+  );
+}
+
+/** Source dropdown option icons */
 function ProjectsPanelSourceIcon({ sourceId }) {
-  const common = {
+  const svgCommon = {
     className: 'projects-panel-source-menu-icon',
     width: 18,
     height: 18,
     viewBox: '0 0 24 24',
-    fill: 'currentColor',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.5,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
     'aria-hidden': true,
   };
+
   switch (sourceId) {
     case 'myProjects':
       return (
-        <svg {...common}>
-          <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+        <svg {...svgCommon}>
+          <path d="M3 7.5V6a2 2 0 0 1 2-2h3.2L10 6h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6.5z" />
         </svg>
       );
     case 'sent':
-      return (
-        <img
-          className="projects-panel-source-menu-icon-img"
-          src="/icons/Upload.svg"
-          alt=""
-          width={18}
-          height={18}
-          aria-hidden={true}
-        />
-      );
+      return <SourceMenuIconImg src="/icons/Upload.svg" />;
     case 'inbox':
       return (
-        <svg {...common}>
-          <path d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z" />
+        <svg {...svgCommon}>
+          <path d="M22 12H16l-2 3H10l-2-3H2" />
+          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
         </svg>
       );
     case 'archive':
-      return (
-        <img
-          className="projects-panel-source-menu-icon-img"
-          src={ICON_ARCHIVE}
-          alt=""
-          width={18}
-          height={18}
-          aria-hidden={true}
-        />
-      );
+      return <SourceMenuIconImg src={ICON_ARCHIVE} />;
     case 'deleted':
-      return (
-        <img
-          className="projects-panel-source-menu-icon-img"
-          src={ICON_DELETE}
-          alt=""
-          width={18}
-          height={18}
-          aria-hidden={true}
-        />
-      );
+      return <SourceMenuIconImg src={ICON_DELETE} />;
     default:
       return null;
   }
 }
 
 function FolderGlyph() {
+  const theme = useThemeName();
   return (
     <span className="projects-panel-folder-glyph" aria-hidden>
-      <img src="/icons/folder.svg" alt="" className="projects-panel-folder-glyph-img" width="18" height="18" />
+      <img
+        src={resolveThemedAsset(ICON_FOLDER_FILLED, theme)}
+        alt=""
+        className="projects-panel-folder-glyph-img"
+        width="18"
+        height="18"
+      />
     </span>
   );
 }
@@ -663,11 +663,11 @@ function ProjectsPanel({
           <div className="projects-panel-toolbar-icons" role="toolbar" aria-label="Panel actions">
             <div className="projects-panel-toolbar-cluster">
               <button type="button" className="projects-panel-toolbar-btn" aria-label="Search My Projects">
-                <img src="/nav-icons/Search.svg" alt="" aria-hidden />
+                <img src={ICON_SEARCH} alt="" aria-hidden />
                 <span className="projects-panel-toolbar-btn-label">Search My Projects</span>
               </button>
               <button type="button" className="projects-panel-toolbar-btn" aria-label="New Project">
-                <img src="/icons/folderNew.svg" alt="" aria-hidden />
+                <img src={ICON_FOLDER_NEW} alt="" aria-hidden />
                 <span className="projects-panel-toolbar-btn-label">New Project</span>
               </button>
               <button type="button" className="projects-panel-toolbar-btn" aria-label="SORT: DATE MODIFIED">

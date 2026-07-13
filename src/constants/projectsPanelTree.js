@@ -450,7 +450,7 @@ export const PROJECTS_PANEL_SOURCES = [
   { id: 'myProjects', label: 'My Projects' },
   { id: 'sent', label: 'Sent' },
   { id: 'inbox', label: 'Inbox' },
-  { id: 'archive', label: 'Archives' },
+  { id: 'archive', label: 'Archive' },
   { id: 'deleted', label: 'Deleted' },
 ];
 

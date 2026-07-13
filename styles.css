@@ -337,8 +337,7 @@ body {
 
 .sounds-like-box {
   margin-left: auto;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
-  border: 1px solid rgba(124, 58, 237, 0.3);
+  background: #312739;
   border-radius: 10px;
   padding: 20px 24px;
   max-width: 280px;

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { getFolderUpdatedAtLabel } from '../constants/projectsPanelTree';
+import { ICON_FOLDER_FILLED } from '../constants/designSystem';
 import { closeOverflowMenusInGroup, registerOverflowMenuOpen, unregisterOverflowMenu } from '../hooks/useOverflowDropdownMenu';
 
 const FOLDER_MENU_GROUP = 'project-folder-row-menu';
@@ -75,6 +76,9 @@ function ProjectFolderRow({
   onIconClick,
   collapsedSummary = false,
   folderCount = 0,
+  isSelected = false,
+  onSelectChange,
+  showCheckbox = true,
 }) {
   const instanceId = useId();
   const iconRef = useRef(null);
@@ -85,6 +89,9 @@ function ProjectFolderRow({
   const trackCountLabel = `${trackCount} ${trackCount === 1 ? 'Track' : 'Tracks'}`;
   const expandHint = collapsedSummary ? 'Expand' : onIconClick ? 'Collapse' : null;
   const { isHovered, tooltipRect, bindHover } = useFolderExpandHint(iconRef, Boolean(expandHint));
+  const [isRowHovered, setIsRowHovered] = useState(false);
+  const showSelectCheckbox =
+    showCheckbox && !collapsedSummary && !mobileLayout && (isRowHovered || isSelected);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -144,31 +151,70 @@ function ProjectFolderRow({
 
   const handleOpen = () => onSelect?.(folder.id);
 
+  const renderSelectCheckbox = () => (
+    <span className="track-num-checkbox-slot">
+      {showSelectCheckbox ? (
+        <input
+          type="checkbox"
+          className="track-checkbox"
+          checked={isSelected}
+          onChange={(event) => onSelectChange?.(folder.id, event.target.checked)}
+          aria-label={`Select ${folder.name}`}
+          onClick={(event) => event.stopPropagation()}
+        />
+      ) : null}
+    </span>
+  );
+
+  const renderFolderIcon = (interactiveProps = {}) => {
+    if (onIconClick) {
+      return (
+        <button
+          ref={iconRef}
+          type="button"
+          className="project-folder-row__icon project-folder-row__icon--interactive"
+          {...interactiveProps}
+        >
+          <img src={ICON_FOLDER_FILLED} alt="" width="18" height="18" />
+        </button>
+      );
+    }
+
+    return (
+      <span ref={iconRef} className="project-folder-row__icon" aria-hidden="true">
+        <img src={ICON_FOLDER_FILLED} alt="" width="18" height="18" />
+      </span>
+    );
+  };
+
+  const renderLeadColumn = (iconProps = {}) => (
+    <span className="track-num">
+      {renderSelectCheckbox()}
+      <span className="track-num-play-slot">{renderFolderIcon(iconProps)}</span>
+    </span>
+  );
+
   if (collapsedSummary) {
     const label = `${folderCount} ${folderCount === 1 ? 'Folder' : 'Folders'}`;
     return (
       <div
         className={`project-folder-row project-folder-row--collapsed-summary${mobileLayout ? ' project-folder-row--mobile' : ''}`}
+        onMouseEnter={() => setIsRowHovered(true)}
+        onMouseLeave={() => setIsRowHovered(false)}
       >
-        <button
-          ref={iconRef}
-          type="button"
-          className="project-folder-row__icon project-folder-row__icon--interactive"
-          onClick={(event) => {
+        {renderLeadColumn({
+          onClick: (event) => {
             event.stopPropagation();
             onIconClick?.();
-          }}
-          aria-label={`${label}. Click to expand.`}
-          {...bindHover}
-        >
-          <img src="/icons/folder.svg" alt="" width="18" height="18" />
-        </button>
+          },
+          'aria-label': `${label}. Click to expand.`,
+          ...bindHover,
+        })}
         <div className="project-folder-row__title-col">
           <button
             type="button"
             className="project-folder-row__title-btn"
             onClick={() => onIconClick?.()}
-            title={label}
           >
             <span className="project-folder-row__name">{label}</span>
           </button>
@@ -215,29 +261,24 @@ function ProjectFolderRow({
 
   return (
     <div
-      className={`project-folder-row${mobileLayout ? ' project-folder-row--mobile' : ''}`}
+      className={`project-folder-row${isSelected ? ' project-folder-row--selected' : ''}${mobileLayout ? ' project-folder-row--mobile' : ''}`}
+      onMouseEnter={() => setIsRowHovered(true)}
+      onMouseLeave={() => setIsRowHovered(false)}
     >
-      {onIconClick ? (
-        <button
-          ref={iconRef}
-          type="button"
-          className="project-folder-row__icon project-folder-row__icon--interactive"
-          onClick={(event) => {
-            event.stopPropagation();
-            onIconClick();
-          }}
-          aria-label={`${folder.name} folder. Click to collapse folders.`}
-          {...bindHover}
-        >
-          <img src="/icons/folder.svg" alt="" width="18" height="18" />
-        </button>
-      ) : (
-        <span ref={iconRef} className="project-folder-row__icon" aria-hidden="true">
-          <img src="/icons/folder.svg" alt="" width="18" height="18" />
-        </span>
+      {renderLeadColumn(
+        onIconClick
+          ? {
+              onClick: (event) => {
+                event.stopPropagation();
+                onIconClick();
+              },
+              'aria-label': `${folder.name} folder. Click to collapse folders.`,
+              ...bindHover,
+            }
+          : {}
       )}
       <div className="project-folder-row__title-col">
-        <button type="button" className="project-folder-row__title-btn" onClick={handleOpen} title={folder.name}>
+        <button type="button" className="project-folder-row__title-btn" onClick={handleOpen}>
           <span className="project-folder-row__name">{folder.name}</span>
           <span className="project-folder-row__track-count">{trackCountLabel}</span>
         </button>
