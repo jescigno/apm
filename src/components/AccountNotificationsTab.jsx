@@ -269,13 +269,6 @@ export default function AccountNotificationsTab({
                 onChange={handleSelectAllToggle}
                 aria-label="Select all notifications"
               />
-              <button
-                type="button"
-                className="tracks-selection-deselect account-notifications-select-all__btn"
-                onClick={handleSelectAllToggle}
-              >
-                SELECT ALL
-              </button>
             </div>
             <div
               className={`notifications-page-mobile-selection-bar__bulk account-notifications-batch-actions tracks-selection-actions account-notifications-batch-actions--mobile-inline${hasSelection ? '' : ' notifications-page-mobile-selection-bar__bulk--hidden'}`}

@@ -6480,6 +6480,10 @@ html:has(.app-content-wrapper--projects) {
   line-height: 1.3;
 }
 
+.projects-panel-folder-more-menu .account-notification-settings-toggle--on {
+  background: var(--accent-red);
+}
+
 .projects-panel-content {
   padding: 0 28px 12px 8px;
   margin-top: 0;
@@ -10935,13 +10939,11 @@ html:has(.app-content-wrapper--projects) {
 }
 
 [data-theme="light"] .audio-player-waveform-bg {
-  filter: brightness(0);
-  opacity: 0.22;
+  filter: invert(1);
 }
 
 [data-theme="light"] .audio-player-waveform-played {
-  filter: brightness(0);
-  opacity: 0.5;
+  filter: invert(1) brightness(0.45);
 }
 
 [data-theme="light"] .audio-player-waveform-unplayed {
@@ -10949,8 +10951,8 @@ html:has(.app-content-wrapper--projects) {
     to right,
     transparent 0,
     transparent var(--progress, 0%),
-    color-mix(in srgb, var(--text-secondary) 70%, transparent) var(--progress, 0%),
-    color-mix(in srgb, var(--text-secondary) 70%, transparent) 100%
+    rgba(255, 255, 255, 0.55) var(--progress, 0%),
+    rgba(255, 255, 255, 0.55) 100%
   );
 }
 
@@ -12007,33 +12009,25 @@ body:has(.account-page) {
 .notifications-page-mobile-selection-bar__start {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   min-width: 0;
   flex: 1;
 }
 
 .notifications-page-mobile-selection-bar__select-all {
-  display: grid;
-  grid-template-columns: 26px auto;
-  column-gap: 12px;
+  display: flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 26px;
 }
 
 .notifications-page-mobile-selection-bar .account-notifications-toolbar__checkbox {
-  grid-column: 1;
-  grid-row: 1;
-  justify-self: center;
   margin: 0;
 }
 
-.notifications-page-mobile-selection-bar__select-all .account-notifications-select-all__btn {
-  grid-column: 2;
-  grid-row: 1;
-}
-
 .notifications-page-mobile-selection-bar__bulk {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
@@ -12046,9 +12040,13 @@ body:has(.account-page) {
   overflow: hidden;
 }
 
+.notifications-page-mobile-selection-bar .account-notifications-batch-actions,
 .notifications-page-mobile-selection-bar .account-notifications-batch-actions--mobile-inline {
   margin-left: 0;
-  width: 100%;
+  margin-right: auto;
+  justify-content: flex-start;
+  width: auto;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -12062,6 +12060,10 @@ body:has(.account-page) {
   position: static;
   gap: 6px;
   padding: 8px 10px;
+}
+
+.notifications-page-mobile-selection-bar .account-notifications-batch-actions .tracks-selection-action:first-child {
+  padding-left: 0;
 }
 
 .notifications-page-mobile-selection-bar
@@ -12082,10 +12084,6 @@ body:has(.account-page) {
 
 .notifications-page-mobile-selection-bar .account-notifications-batch-actions .tracks-selection-action img {
   filter: var(--icon-filter);
-}
-
-.notifications-page-mobile-selection-bar .account-notifications-select-all__btn {
-  white-space: nowrap;
 }
 
 .notifications-page-mobile-selection-bar .account-page-tabs-select {
