@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ICON_DELETE } from '../constants/designSystem';
 import { ACCOUNT_NOTIFICATIONS } from '../constants/accountNotifications';
 import { getProfileColorVar } from '../constants/profileColors';
@@ -27,33 +28,10 @@ function AccountNotificationRow({
 }) {
   const { initials, parts, timestamp } = notification;
   const showCheckbox = !mobileLayout || selectionMode;
-  const useRowTapSelect = mobileLayout && !selectionMode;
-
-  const handleRowSelect = () => {
-    onSelectChange(notification.id, !selected);
-  };
-
-  const handleRowKeyDown = (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    handleRowSelect();
-  };
-
-  const rowProps = useRowTapSelect
-    ? {
-        onClick: handleRowSelect,
-        onKeyDown: handleRowKeyDown,
-        role: 'button',
-        tabIndex: 0,
-        'aria-pressed': selected,
-        'aria-label': `Select notification from ${parts[0]?.[0]?.split(' ')[0] || 'user'}`,
-      }
-    : {};
 
   return (
     <li
-      className={`account-notification${notification.unread ? ' account-notification--unread' : ''}${selected ? ' account-notification--selected' : ''}${useRowTapSelect ? ' account-notification--mobile-select' : ''}${selectionMode ? ' account-notification--selection-mode' : ''}`}
-      {...rowProps}
+      className={`account-notification${notification.unread ? ' account-notification--unread' : ''}${selected ? ' account-notification--selected' : ''}${selectionMode ? ' account-notification--selection-mode' : ''}`}
     >
       {showCheckbox && (
         <input
@@ -90,9 +68,11 @@ export default function AccountNotificationsTab({
 }) {
   const [notifications, setNotifications] = useState(() => [...ACCOUNT_NOTIFICATIONS]);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
-  const [selectionMode, setSelectionMode] = useState(false);
   const [internalSettingsOpen, setInternalSettingsOpen] = useState(false);
+  const [mobileActionsMenuOpen, setMobileActionsMenuOpen] = useState(false);
   const selectAllRef = useRef(null);
+  const mobileActionsMenuBtnRef = useRef(null);
+  const [mobileActionsMenuRect, setMobileActionsMenuRect] = useState(null);
 
   const settingsOpen = controlledSettingsOpen ?? internalSettingsOpen;
   const setSettingsOpen = onSettingsOpenChange ?? setInternalSettingsOpen;
@@ -105,21 +85,10 @@ export default function AccountNotificationsTab({
     selectedIds.size === 1 ? '1 SELECTED' : `${selectedIds.size} SELECTED`;
 
   useEffect(() => {
-    if (hideToolbarSettings && !selectionMode) return;
     const el = selectAllRef.current;
     if (!el) return;
     el.indeterminate = someSelected;
-  }, [hideToolbarSettings, selectionMode, someSelected]);
-
-  const toggleSelectionMode = useCallback(() => {
-    setSelectionMode((prev) => {
-      if (prev) {
-        setSelectedIds(new Set());
-        return false;
-      }
-      return true;
-    });
-  }, []);
+  }, [someSelected]);
 
   const handleSelectAllToggle = useCallback(() => {
     setSelectedIds((prev) => {
@@ -140,6 +109,63 @@ export default function AccountNotificationsTab({
       else next.delete(id);
       return next;
     });
+  };
+
+  const closeMobileActionsMenu = useCallback(() => {
+    setMobileActionsMenuOpen(false);
+  }, []);
+
+  const updateMobileActionsMenuRect = useCallback(() => {
+    const el = mobileActionsMenuBtnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setMobileActionsMenuRect({ right: rect.right, top: rect.top });
+  }, []);
+
+  const toggleMobileActionsMenu = useCallback(
+    (event) => {
+      event.stopPropagation();
+      if (mobileActionsMenuOpen) {
+        closeMobileActionsMenu();
+        return;
+      }
+      updateMobileActionsMenuRect();
+      setMobileActionsMenuOpen(true);
+    },
+    [mobileActionsMenuOpen, closeMobileActionsMenu, updateMobileActionsMenuRect]
+  );
+
+  useLayoutEffect(() => {
+    if (!mobileActionsMenuOpen) return;
+    updateMobileActionsMenuRect();
+    const onUpdate = () => updateMobileActionsMenuRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [mobileActionsMenuOpen, updateMobileActionsMenuRect]);
+
+  useEffect(() => {
+    if (!mobileActionsMenuOpen) return;
+    const onPointerDown = (event) => {
+      const target = event.target;
+      if (mobileActionsMenuBtnRef.current?.contains(target)) return;
+      if (target.closest?.('[data-notifications-mobile-actions-menu]')) return;
+      closeMobileActionsMenu();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [mobileActionsMenuOpen, closeMobileActionsMenu]);
+
+  useEffect(() => {
+    if (!hasSelection) closeMobileActionsMenu();
+  }, [hasSelection, closeMobileActionsMenu]);
+
+  const runMobileBatchAction = (action) => {
+    action();
+    closeMobileActionsMenu();
   };
 
   const handleMarkAsRead = () => {
@@ -250,17 +276,64 @@ export default function AccountNotificationsTab({
     </div>
   );
 
+  const mobileActionsMenu =
+    hideToolbarSettings &&
+    hasSelection &&
+    mobileActionsMenuOpen &&
+    createPortal(
+      <div
+        data-notifications-mobile-actions-menu
+        className="track-actions-overflow-dropdown track-actions-overflow-dropdown--portal track-actions-overflow-dropdown--segment-style notifications-page-mobile-selection-bar__menu"
+        style={{
+          position: 'fixed',
+          right: mobileActionsMenuRect ? window.innerWidth - mobileActionsMenuRect.right : 0,
+          top: mobileActionsMenuRect ? mobileActionsMenuRect.top + 4 : 0,
+          visibility: mobileActionsMenuRect ? 'visible' : 'hidden',
+        }}
+        role="menu"
+        aria-label="Notification actions"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          className="track-actions-overflow-dropdown-item"
+          onClick={() => runMobileBatchAction(handleMarkAsRead)}
+        >
+          <img src="/icons/mark-as-read.svg" alt="" />
+          Mark as Read
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className="track-actions-overflow-dropdown-item"
+          onClick={() => runMobileBatchAction(handleMarkAsUnread)}
+        >
+          <img src="/icons/mark-as-unread.svg" alt="" />
+          Mark as Unread
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className="track-actions-overflow-dropdown-item"
+          onClick={() => runMobileBatchAction(handleDeleteSelected)}
+        >
+          <img src={ICON_DELETE} alt="" />
+          Delete
+        </button>
+      </div>,
+      document.body
+    );
+
   return (
     <div
-      className={`account-notifications${hideToolbarSettings ? ' account-notifications--mobile-header-actions' : ''}${selectionMode ? ' account-notifications--selection-mode' : ''}`}
+      className={`account-notifications${hideToolbarSettings ? ' account-notifications--mobile-header-actions account-notifications--selection-mode' : ''}`}
     >
       {hideToolbarSettings && (
         <div className="notifications-page-mobile-selection-bar">
-          <div
-            className={`notifications-page-mobile-selection-bar__start${selectionMode ? '' : ' notifications-page-mobile-selection-bar__start--hidden'}`}
-            aria-hidden={!selectionMode}
-          >
-            <div className="notifications-page-mobile-selection-bar__select-all">
+          <div className="notifications-page-mobile-selection-bar__start">
+            <div
+              className={`notifications-page-mobile-selection-bar__select-all${hasSelection ? ' notifications-page-mobile-selection-bar__select-all--compact' : ''}`}
+            >
               <input
                 ref={selectAllRef}
                 type="checkbox"
@@ -269,51 +342,54 @@ export default function AccountNotificationsTab({
                 onChange={handleSelectAllToggle}
                 aria-label="Select all notifications"
               />
+              {!hasSelection && (
+                <button
+                  type="button"
+                  className="tracks-selection-deselect account-notifications-select-all__btn"
+                  onClick={handleSelectAllToggle}
+                >
+                  SELECT ALL
+                </button>
+              )}
             </div>
-            <div
-              className={`notifications-page-mobile-selection-bar__bulk account-notifications-batch-actions tracks-selection-actions account-notifications-batch-actions--mobile-inline${hasSelection ? '' : ' notifications-page-mobile-selection-bar__bulk--hidden'}`}
-              aria-hidden={!hasSelection}
-            >
-              <button
-                type="button"
-                className="tracks-selection-action"
-                onClick={handleMarkAsRead}
-                tabIndex={hasSelection ? 0 : -1}
-                aria-label="Mark Read"
-              >
-                <img src="/icons/mark-as-read.svg" alt="" />
-                <span className="tracks-selection-action-label">Mark Read</span>
-              </button>
-              <button
-                type="button"
-                className="tracks-selection-action"
-                onClick={handleMarkAsUnread}
-                tabIndex={hasSelection ? 0 : -1}
-                aria-label="Mark Unread"
-              >
-                <img src="/icons/mark-as-unread.svg" alt="" />
-                <span className="tracks-selection-action-label">Mark Unread</span>
-              </button>
-              <button
-                type="button"
-                className="tracks-selection-action"
-                onClick={handleDeleteSelected}
-                tabIndex={hasSelection ? 0 : -1}
-                aria-label="Delete"
-              >
-                <img src={ICON_DELETE} alt="" />
-                <span className="tracks-selection-action-label">Delete</span>
-              </button>
-            </div>
+            {hasSelection && (
+              <>
+                <div className="tracks-selection-meta notifications-page-mobile-selection-bar__meta">
+                  <span className="tracks-selection-count">{selectionLabel}</span>
+                  <span className="tracks-selection-divider" aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="tracks-selection-deselect"
+                    onClick={handleDeselectAll}
+                  >
+                    DESELECT
+                  </button>
+                </div>
+                <button
+                  ref={mobileActionsMenuBtnRef}
+                  type="button"
+                  className="notifications-page-mobile-selection-bar__mark-as-btn"
+                  onClick={toggleMobileActionsMenu}
+                  aria-label="Mark as"
+                  aria-haspopup="menu"
+                  aria-expanded={mobileActionsMenuOpen}
+                >
+                  Mark as
+                  <svg
+                    className={`notifications-page-mobile-selection-bar__mark-as-chevron${mobileActionsMenuOpen ? ' notifications-page-mobile-selection-bar__mark-as-chevron--open' : ''}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
-          <button
-            type="button"
-            className={`account-page-tabs-select${selectionMode ? ' account-page-tabs-select--done' : ''}`}
-            aria-pressed={selectionMode}
-            onClick={toggleSelectionMode}
-          >
-            {selectionMode ? 'Done' : 'Select'}
-          </button>
+          {mobileActionsMenu}
         </div>
       )}
       <div
@@ -347,7 +423,7 @@ export default function AccountNotificationsTab({
             selected={selectedIds.has(notification.id)}
             onSelectChange={handleSelectChange}
             mobileLayout={hideToolbarSettings}
-            selectionMode={selectionMode}
+            selectionMode={hideToolbarSettings}
           />
         ))}
       </ul>
