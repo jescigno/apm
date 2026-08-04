@@ -14,9 +14,27 @@ import SoundsLikePanel from './components/SoundsLikePanel';
 import ProjectsPanel from './components/ProjectsPanel';
 import CommentsPanel from './components/CommentsPanel';
 import ClockPanel from './components/ClockPanel';
+import TeamMemberActivityPanel from './components/TeamMemberActivityPanel';
 import AudioPlayer from './components/AudioPlayer';
-import { ROUTE_FAVORITES, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS, ROUTE_ACCOUNT_NOTIFICATIONS, ROUTE_DESIGN_SYSTEM } from './constants/routes';
-import { CURRENT_PROJECT_FOLDER_ID, folderHasProjectTracks } from './constants/projectsPanelTree';
+import {
+  ROUTE_FAVORITES,
+  ROUTE_PROJECT_DETAILS,
+  ROUTE_SEARCH,
+  ROUTE_ACCOUNT,
+  ROUTE_NOTIFICATIONS,
+  ROUTE_ACCOUNT_NOTIFICATIONS,
+  ROUTE_ADMIN,
+  ROUTE_ADMIN_TEAM,
+  ROUTE_ADMIN_SETTINGS,
+  ROUTE_ADMIN_NOTIFICATIONS,
+  ROUTE_DESIGN_SYSTEM,
+} from './constants/routes';
+import AdminPage from './pages/AdminPage';
+import {
+  CURRENT_PROJECT_FOLDER_ID,
+  folderHasProjectTracks,
+  PROJECTS_PANEL_FOLDER_TREE,
+} from './constants/projectsPanelTree';
 import { getFreshFifteenTracksForFolder } from './constants/freshFifteenTracks';
 import { getMoreLikeTracksForFolder } from './constants/moreLikeTracks';
 import { getMilanUpdatesTracksForFolder } from './constants/milanUpdatesTracks';
@@ -34,6 +52,7 @@ import { COMMENTS_PANEL_INITIAL_ITEMS } from './constants/commentsPanel';
 import { CLOCK_PANEL_INITIAL_ITEMS } from './constants/clockPanel';
 
 const PANEL_MIN_WIDTH = 263;
+const TEAM_MEMBER_ACTIVITY_PANEL_MIN_WIDTH = 360;
 /** Max width for Sounds Like panel (fixed cap). */
 const PANEL_MAX_WIDTH = 600;
 /** Matches `--sidebar-width`; Projects panel can expand to the sidebar’s right edge. */
@@ -72,6 +91,11 @@ function AppContent() {
   const [commentsPanelWidth, setCommentsPanelWidth] = useState(PANEL_MIN_WIDTH);
   const [clockPanelOpen, setClockPanelOpen] = useState(false);
   const [clockPanelWidth, setClockPanelWidth] = useState(PANEL_MIN_WIDTH);
+  const [teamMemberActivityPanelOpen, setTeamMemberActivityPanelOpen] = useState(false);
+  const [teamMemberActivityPanelWidth, setTeamMemberActivityPanelWidth] = useState(
+    TEAM_MEMBER_ACTIVITY_PANEL_MIN_WIDTH
+  );
+  const [activeTeamMemberForActivity, setActiveTeamMemberForActivity] = useState(null);
   const [projectsPanelWidth, setProjectsPanelWidth] = useState(PANEL_MIN_WIDTH);
   const [projectsPanelMaxWidth, setProjectsPanelMaxWidth] = useState(() =>
     getProjectsPanelMaxWidth()
@@ -83,6 +107,7 @@ function AppContent() {
   const [enterHighlightTrackNum, setEnterHighlightTrackNum] = useState(null);
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
   const [activeProjectFolderId, setActiveProjectFolderId] = useState(CURRENT_PROJECT_FOLDER_ID);
+  const [folderTree, setFolderTree] = useState(() => PROJECTS_PANEL_FOLDER_TREE);
   const [searchQuery, setSearchQuery] = useState('');
   const headerMenuRef = useRef(null);
   const { currentTrack, isPlayerClosing } = usePlayer();
@@ -220,6 +245,20 @@ function AppContent() {
     setClockPanelOpen((open) => !open);
   }, [location.pathname]);
 
+  const openTeamMemberActivityPanel = useCallback((member) => {
+    setSoundsLikePanelOpen(false);
+    setProjectsPanelOpen(false);
+    setCommentsPanelOpen(false);
+    setClockPanelOpen(false);
+    setActiveTeamMemberForActivity(member);
+    setTeamMemberActivityPanelOpen(true);
+  }, []);
+
+  const closeTeamMemberActivityPanel = useCallback(() => {
+    setTeamMemberActivityPanelOpen(false);
+    setActiveTeamMemberForActivity(null);
+  }, []);
+
   useEffect(() => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS) {
       setCommentsPanelOpen(false);
@@ -260,6 +299,25 @@ function AppContent() {
   }, [clockPanelOpen]);
 
   useEffect(() => {
+    const adminRoutes = [
+      ROUTE_ADMIN,
+      ROUTE_ADMIN_TEAM,
+      ROUTE_ADMIN_SETTINGS,
+      ROUTE_ADMIN_NOTIFICATIONS,
+    ];
+    if (!adminRoutes.includes(location.pathname)) {
+      setTeamMemberActivityPanelOpen(false);
+      setActiveTeamMemberForActivity(null);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!teamMemberActivityPanelOpen) {
+      setTeamMemberActivityPanelWidth(TEAM_MEMBER_ACTIVITY_PANEL_MIN_WIDTH);
+    }
+  }, [teamMemberActivityPanelOpen]);
+
+  useEffect(() => {
     const onResize = () => {
       const next = getProjectsPanelMaxWidth();
       setProjectsPanelMaxWidth(next);
@@ -270,7 +328,12 @@ function AppContent() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const rightPanelOpen = soundsLikePanelOpen || projectsPanelOpen || commentsPanelOpen || clockPanelOpen;
+  const rightPanelOpen =
+    soundsLikePanelOpen ||
+    projectsPanelOpen ||
+    commentsPanelOpen ||
+    clockPanelOpen ||
+    teamMemberActivityPanelOpen;
 
   const rightPanelWidth = projectsPanelOpen
     ? projectsPanelWidth
@@ -278,18 +341,32 @@ function AppContent() {
       ? commentsPanelWidth
       : clockPanelOpen
         ? clockPanelWidth
-        : soundsLikePanelOpen
-          ? soundsLikePanelWidth
-          : 0;
+        : teamMemberActivityPanelOpen
+          ? teamMemberActivityPanelWidth
+          : soundsLikePanelOpen
+            ? soundsLikePanelWidth
+            : 0;
   /** Reserve min panel width so main layout stays fixed; wider panel draws on top without reflow. */
-  const mainPaddingRight = rightPanelOpen ? Math.min(rightPanelWidth, PANEL_MIN_WIDTH) : 0;
+  const mainPaddingRight = rightPanelOpen
+    ? Math.min(
+        rightPanelWidth,
+        teamMemberActivityPanelOpen ? TEAM_MEMBER_ACTIVITY_PANEL_MIN_WIDTH : PANEL_MIN_WIDTH
+      )
+    : 0;
   const isSearchRoute = location.pathname === ROUTE_SEARCH;
   const isProjectsRoute = location.pathname === ROUTE_PROJECT_DETAILS;
   const isAccountRoute =
     location.pathname === ROUTE_ACCOUNT || location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS;
+  const isAdminRoute = [
+    ROUTE_ADMIN,
+    ROUTE_ADMIN_TEAM,
+    ROUTE_ADMIN_SETTINGS,
+    ROUTE_ADMIN_NOTIFICATIONS,
+  ].includes(location.pathname);
   const isNotificationsRoute = location.pathname === ROUTE_NOTIFICATIONS;
   const isDesignSystemRoute = location.pathname === ROUTE_DESIGN_SYSTEM;
-  const isFullBleedRoute = isAccountRoute || isNotificationsRoute || isDesignSystemRoute;
+  const isFullBleedRoute =
+    isAccountRoute || isAdminRoute || isNotificationsRoute || isDesignSystemRoute;
 
   const handleRecentSearchSelect = useCallback((item) => {
     setSearchQuery(item.label);
@@ -319,6 +396,7 @@ function AppContent() {
               element={
                 <ProjectsPage
                   activeFolderId={activeProjectFolderId}
+                  folderTree={folderTree}
                   onFolderSelect={handleProjectFolderSelect}
                   soundsLikePanelOpen={soundsLikePanelOpen}
                   commentsPanelOpen={commentsPanelOpen}
@@ -366,6 +444,10 @@ function AppContent() {
             <Route path={ROUTE_NOTIFICATIONS} element={<NotificationsPage />} />
             <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route path={ROUTE_ACCOUNT} element={<AccountPage headerMenuRef={headerMenuRef} />} />
+            <Route path={ROUTE_ADMIN_NOTIFICATIONS} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_SETTINGS} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_TEAM} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
             <Route path={ROUTE_DESIGN_SYSTEM} element={<DesignSystemPage />} />
           </Routes>
         </main>
@@ -394,6 +476,8 @@ function AppContent() {
         maxWidth={projectsPanelMaxWidth}
         selectedFolderId={location.pathname === ROUTE_PROJECT_DETAILS ? activeProjectFolderId : null}
         onFolderSelect={handleProjectFolderSelect}
+        folderTree={folderTree}
+        onFolderTreeChange={setFolderTree}
       />
       <CommentsPanel
         isOpen={commentsPanelOpen}
@@ -412,6 +496,15 @@ function AppContent() {
         minWidth={PANEL_MIN_WIDTH}
         maxWidth={PANEL_MAX_WIDTH}
         items={CLOCK_PANEL_INITIAL_ITEMS}
+      />
+      <TeamMemberActivityPanel
+        isOpen={teamMemberActivityPanelOpen}
+        onClose={closeTeamMemberActivityPanel}
+        member={activeTeamMemberForActivity}
+        width={teamMemberActivityPanelWidth}
+        onWidthChange={setTeamMemberActivityPanelWidth}
+        minWidth={TEAM_MEMBER_ACTIVITY_PANEL_MIN_WIDTH}
+        maxWidth={PANEL_MAX_WIDTH}
       />
       <AudioPlayer onSoundsLikeClick={openSoundsLikePanel} />
     </div>

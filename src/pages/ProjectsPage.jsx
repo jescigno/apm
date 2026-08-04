@@ -107,6 +107,7 @@ const DEFAULT_DOC_TITLE = 'apm music';
 
 export default function ProjectsPage({
   activeFolderId,
+  folderTree = PROJECTS_PANEL_FOLDER_TREE,
   onFolderSelect,
   soundsLikePanelOpen,
   commentsPanelOpen,
@@ -129,13 +130,13 @@ export default function ProjectsPage({
   }, []);
 
   const folderPath = useMemo(
-    () => getFolderPath(PROJECTS_PANEL_FOLDER_TREE, activeFolderId),
-    [activeFolderId]
+    () => getFolderPath(folderTree, activeFolderId),
+    [folderTree, activeFolderId]
   );
   const activeFolder = folderPath[folderPath.length - 1] ?? null;
   const childFolders = useMemo(
-    () => getFolderChildren(PROJECTS_PANEL_FOLDER_TREE, activeFolderId),
-    [activeFolderId]
+    () => getFolderChildren(folderTree, activeFolderId),
+    [folderTree, activeFolderId]
   );
   const projectTitle =
     activeFolderId === CURRENT_PROJECT_FOLDER_ID

@@ -1,17 +1,45 @@
 /**
  * Right panel for projects folder tree. Uses only `projects-panel-*` classes in index.css.
  */
-import { useRef, useEffect, useLayoutEffect, useState, useCallback, Fragment } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback, Fragment, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   PROJECTS_PANEL_FOLDER_MORE_ACTIONS,
   PROJECTS_PANEL_FOLDER_TREE,
   PROJECTS_PANEL_INLINE_NAV,
   PROJECTS_PANEL_SOURCES,
+  findFolderById,
   getFolderAncestorIds,
+  getFolderPath,
   getFolderUpdatedAtLabel,
+  getSiblingFolders,
+  reorderSiblingFolders,
 } from '../constants/projectsPanelTree';
-import { ICON_ARCHIVE, ICON_DELETE, ICON_FOLDER_FILLED, ICON_FOLDER_NEW, ICON_SEARCH, ICON_SORT } from '../constants/designSystem';
+import {
+  ICON_ARCHIVE,
+  ICON_DELETE,
+  ICON_FOLDER_FILLED,
+  ICON_FOLDER_NEW,
+  ICON_SEARCH,
+  ICON_SORT,
+} from '../constants/designSystem';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
 const FOLDER_MORE_MENU_WIDTH = 220;
@@ -36,6 +64,12 @@ const HEADER_INLINE_NAV_AT = 480;
 const HEADER_WIDE_LAYOUT_AT = 520;
 /** At this width (px): toolbar actions show icon + text (Search / New Project / Sort). */
 const TOOLBAR_LABELED_AT = 720;
+
+/** Hold duration (ms) before a folder drag begins. */
+const FOLDER_DRAG_HOLD_MS = 220;
+
+/** Pointer movement allowed while holding before the drag is cancelled. */
+const FOLDER_DRAG_HOLD_TOLERANCE_PX = 8;
 
 /** Min horizontal gap (px) between source links when using Tracks-matched 22px style (align with CSS). */
 const INLINE_NAV_TRACKS_TYPO_GAP = 16;
@@ -153,6 +187,11 @@ function FolderRow({
   folderMoreOpenId,
   selectedFolderId,
   onFolderSelect,
+  sortableListeners = null,
+  suppressFolderClickRef = null,
+  isDragging = false,
+  isDragOverlay = false,
+  renderChildFolders = null,
   /** false only for 2nd+ top-level roots; nested rows omit this (default true) */
   isFirstInRootList = true,
   /** false except for the last top-level root; nested rows omit (default true) */
@@ -176,15 +215,17 @@ function FolderRow({
     depth === 0 && isFirstInRootList ? ' projects-panel-folder-block--root-group-first' : '';
 
   return (
-    <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}`}>
+    <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}${isDragging ? ' projects-panel-folder-block--dragging' : ''}${isDragOverlay ? ' projects-panel-folder-block--overlay' : ''}`}>
       <div
-        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}${showDescription ? ' projects-panel-folder-row--col-description' : ''}${showLastUpdated ? ' projects-panel-folder-row--col-last-updated' : ''}${isSelected ? ' projects-panel-folder-row--selected' : ''}`}
+        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}${showDescription ? ' projects-panel-folder-row--col-description' : ''}${showLastUpdated ? ' projects-panel-folder-row--col-last-updated' : ''}${isSelected ? ' projects-panel-folder-row--selected' : ''}${sortableListeners ? ' projects-panel-folder-row--draggable' : ''}`}
         style={
           showDescription || showLastUpdated
             ? { '--folder-indent': `${primaryIndentPx}px` }
             : undefined
         }
         aria-current={isSelected ? 'page' : undefined}
+        {...(sortableListeners?.attributes ?? {})}
+        {...(sortableListeners?.listeners ?? {})}
       >
         <div
           className="projects-panel-folder-primary projects-panel-folder-primary--selectable"
@@ -195,7 +236,13 @@ function FolderRow({
           }
           role="button"
           tabIndex={0}
-          onClick={() => onFolderSelect?.(folder.id)}
+          onClick={() => {
+            if (suppressFolderClickRef?.current) {
+              suppressFolderClickRef.current = false;
+              return;
+            }
+            onFolderSelect?.(folder.id);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
@@ -211,6 +258,7 @@ function FolderRow({
                 aria-expanded={expanded}
                 aria-label={expanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
                 onClick={() => onToggleExpand(folder.id)}
+                onPointerDown={(event) => event.stopPropagation()}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -233,30 +281,98 @@ function FolderRow({
             e.stopPropagation();
             onFolderMoreClick?.(folder, e.currentTarget);
           }}
+          onPointerDown={(event) => event.stopPropagation()}
         >
           <img src="/icons/moreMenu.svg" alt="" />
         </button>
       </div>
-      {hasChildren && expanded && canShowNested && (
+      {!isDragOverlay && hasChildren && expanded && canShowNested && (
         <div className="projects-panel-folder-children">
-          {folder.children.map((child) => (
-            <FolderRow
-              key={child.id}
-              folder={child}
-              depth={depth + 1}
-              expandedIds={expandedIds}
-              onToggleExpand={onToggleExpand}
-              extraCols={extraCols}
-              showMoreAlways={showMoreAlways}
-              onFolderMoreClick={onFolderMoreClick}
-              folderMoreOpenId={folderMoreOpenId}
-              selectedFolderId={selectedFolderId}
-              onFolderSelect={onFolderSelect}
-            />
-          ))}
+          {renderChildFolders
+            ? renderChildFolders(folder.children)
+            : folder.children.map((child) => (
+                <FolderRow
+                  key={child.id}
+                  folder={child}
+                  depth={depth + 1}
+                  expandedIds={expandedIds}
+                  onToggleExpand={onToggleExpand}
+                  extraCols={extraCols}
+                  showMoreAlways={showMoreAlways}
+                  onFolderMoreClick={onFolderMoreClick}
+                  folderMoreOpenId={folderMoreOpenId}
+                  selectedFolderId={selectedFolderId}
+                  onFolderSelect={onFolderSelect}
+                />
+              ))}
         </div>
       )}
     </div>
+  );
+}
+
+function SortableFolderBlock({
+  folder,
+  parentId,
+  depth,
+  index,
+  siblingCount,
+  folderRowProps,
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: folder.id,
+    data: { parentId, type: 'folder' },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`projects-panel-folder-sortable${isDragging ? ' projects-panel-folder-sortable--placeholder' : ''}`}
+    >
+      <FolderRow
+        folder={folder}
+        depth={depth}
+        sortableListeners={{ attributes, listeners }}
+        isDragging={isDragging}
+        isFirstInRootList={parentId === 'root' && index === 0}
+        isLastInRootList={parentId === 'root' && index === siblingCount - 1}
+        renderChildFolders={(children) => (
+          <SortableFolderList
+            folders={children}
+            parentId={folder.id}
+            depth={depth + 1}
+            folderRowProps={folderRowProps}
+          />
+        )}
+        {...folderRowProps}
+      />
+    </div>
+  );
+}
+
+function SortableFolderList({ folders, parentId, depth, folderRowProps }) {
+  const itemIds = useMemo(() => folders.map((folder) => folder.id), [folders]);
+
+  return (
+    <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+      {folders.map((folder, index) => (
+        <SortableFolderBlock
+          key={folder.id}
+          folder={folder}
+          parentId={parentId}
+          depth={depth}
+          index={index}
+          siblingCount={folders.length}
+          folderRowProps={folderRowProps}
+        />
+      ))}
+    </SortableContext>
   );
 }
 
@@ -269,6 +385,8 @@ function ProjectsPanel({
   maxWidth = 600,
   selectedFolderId = null,
   onFolderSelect,
+  folderTree = PROJECTS_PANEL_FOLDER_TREE,
+  onFolderTreeChange,
 }) {
   const resizeRef = useRef(null);
   const headerMainRef = useRef(null);
@@ -279,8 +397,10 @@ function ProjectsPanel({
   const [sourceId, setSourceId] = useState('myProjects');
   const [expandedIds, setExpandedIds] = useState(() => {
     if (!selectedFolderId) return new Set();
-    return new Set(getFolderAncestorIds(PROJECTS_PANEL_FOLDER_TREE, selectedFolderId));
+    return new Set(getFolderAncestorIds(folderTree, selectedFolderId));
   });
+  const [activeDragId, setActiveDragId] = useState(null);
+  const suppressFolderClickRef = useRef(false);
   const headlineBtnRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const folderMoreAnchorRef = useRef(null);
@@ -297,13 +417,82 @@ function ProjectsPanel({
 
   useEffect(() => {
     if (!selectedFolderId) return;
-    const ancestors = getFolderAncestorIds(PROJECTS_PANEL_FOLDER_TREE, selectedFolderId);
+    const ancestors = getFolderAncestorIds(folderTree, selectedFolderId);
     setExpandedIds((prev) => {
       const next = new Set(prev);
       ancestors.forEach((id) => next.add(id));
       return next;
     });
-  }, [selectedFolderId]);
+  }, [selectedFolderId, folderTree]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: FOLDER_DRAG_HOLD_MS,
+        tolerance: FOLDER_DRAG_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: FOLDER_DRAG_HOLD_MS,
+        tolerance: FOLDER_DRAG_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragStart = useCallback((event) => {
+    suppressFolderClickRef.current = true;
+    setActiveDragId(event.active.id);
+  }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+    suppressFolderClickRef.current = false;
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+      const didReorder = Boolean(over && active.id !== over.id);
+
+      if (didReorder && onFolderTreeChange) {
+        const activeParent = active.data.current?.parentId;
+        const overParent = over.data.current?.parentId;
+        if (activeParent === overParent) {
+          const siblings = getSiblingFolders(folderTree, activeParent);
+          const oldIndex = siblings.findIndex((folder) => folder.id === active.id);
+          const newIndex = siblings.findIndex((folder) => folder.id === over.id);
+          if (oldIndex >= 0 && newIndex >= 0) {
+            onFolderTreeChange(
+              reorderSiblingFolders(
+                folderTree,
+                activeParent === 'root' ? null : activeParent,
+                oldIndex,
+                newIndex
+              )
+            );
+          }
+        }
+      }
+
+      setActiveDragId(null);
+      if (!didReorder) {
+        suppressFolderClickRef.current = false;
+      }
+    },
+    [folderTree, onFolderTreeChange]
+  );
+
+  const activeDragFolder = useMemo(
+    () => (activeDragId ? findFolderById(folderTree, activeDragId) : null),
+    [activeDragId, folderTree]
+  );
+
+  const activeDragDepth = useMemo(() => {
+    if (!activeDragId) return 0;
+    return Math.max(0, getFolderPath(folderTree, activeDragId).length - 1);
+  }, [activeDragId, folderTree]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -465,6 +654,31 @@ function ProjectsPanel({
   const showWideLayout = width >= HEADER_WIDE_LAYOUT_AT;
   const showToolbarLabels = width >= TOOLBAR_LABELED_AT;
   const showColumnHeadersRow = showAnyMetaCol || showWideLayout;
+
+  const folderRowProps = useMemo(
+    () => ({
+      expandedIds,
+      onToggleExpand: toggleExpand,
+      extraCols,
+      showMoreAlways: showWideLayout,
+      onFolderMoreClick: openFolderMoreMenu,
+      folderMoreOpenId: folderMoreMenu?.folderId ?? null,
+      selectedFolderId,
+      onFolderSelect,
+      suppressFolderClickRef,
+    }),
+    [
+      expandedIds,
+      toggleExpand,
+      extraCols,
+      showWideLayout,
+      openFolderMoreMenu,
+      folderMoreMenu?.folderId,
+      selectedFolderId,
+      onFolderSelect,
+      suppressFolderClickRef,
+    ]
+  );
 
   useLayoutEffect(() => {
     if (!isOpen || !showInlineNav || !showAllFolderMeta) {
@@ -703,25 +917,34 @@ function ProjectsPanel({
             <div className="projects-panel-column-headers-spacer" aria-hidden="true" />
           </div>
         )}
-        <div className="projects-panel-folder-list">
-          {PROJECTS_PANEL_FOLDER_TREE.map((folder, index) => (
-            <FolderRow
-              key={folder.id}
-              folder={folder}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div className="projects-panel-folder-list">
+            <SortableFolderList
+              folders={folderTree}
+              parentId="root"
               depth={0}
-              expandedIds={expandedIds}
-              onToggleExpand={toggleExpand}
-              extraCols={extraCols}
-              showMoreAlways={showWideLayout}
-              onFolderMoreClick={openFolderMoreMenu}
-              folderMoreOpenId={folderMoreMenu?.folderId ?? null}
-              selectedFolderId={selectedFolderId}
-              onFolderSelect={onFolderSelect}
-              isFirstInRootList={index === 0}
-              isLastInRootList={index === PROJECTS_PANEL_FOLDER_TREE.length - 1}
+              folderRowProps={folderRowProps}
             />
-          ))}
-        </div>
+          </div>
+          <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
+            {activeDragFolder ? (
+              <div className="projects-panel-folder-sortable projects-panel-folder-sortable--overlay">
+                <FolderRow
+                  folder={activeDragFolder}
+                  depth={activeDragDepth}
+                  isDragOverlay
+                  {...folderRowProps}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
     </aside>
   );

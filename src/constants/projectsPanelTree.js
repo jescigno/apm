@@ -366,6 +366,38 @@ export function getFolderChildren(tree, folderId) {
   return Array.isArray(folder?.children) ? folder.children : [];
 }
 
+function reorderArray(items, fromIndex, toIndex) {
+  const next = [...items];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  return next;
+}
+
+/** Sibling folders for a parent (`null` or `'root'` for top-level). */
+export function getSiblingFolders(tree, parentId) {
+  if (parentId == null || parentId === 'root') return tree;
+  const parent = findFolderById(tree, parentId);
+  return Array.isArray(parent?.children) ? parent.children : [];
+}
+
+/** Reorder siblings under `parentId` (`null` / `'root'` for top-level roots). */
+export function reorderSiblingFolders(tree, parentId, fromIndex, toIndex) {
+  if (fromIndex === toIndex) return tree;
+  if (parentId == null || parentId === 'root') {
+    return reorderArray(tree, fromIndex, toIndex);
+  }
+
+  return tree.map((node) => {
+    if (node.id === parentId) {
+      return { ...node, children: reorderArray(node.children, fromIndex, toIndex) };
+    }
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      return { ...node, children: reorderSiblingFolders(node.children, parentId, fromIndex, toIndex) };
+    }
+    return node;
+  });
+}
+
 /** Path from root to `targetId` (inclusive), or [] if not found. */
 export function getFolderPath(tree, targetId) {
   const path = [];
