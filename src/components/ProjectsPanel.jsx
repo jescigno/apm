@@ -27,7 +27,6 @@ import {
   PROJECTS_PANEL_SOURCES,
   findFolderById,
   getFolderAncestorIds,
-  getFolderPath,
   getFolderUpdatedAtLabel,
   getSiblingFolders,
   reorderSiblingFolders,
@@ -163,6 +162,18 @@ function FolderGlyph() {
         height="18"
       />
     </span>
+  );
+}
+
+function FolderDragThumbnail({ folder, isSelected }) {
+  return (
+    <div
+      className={`projects-panel-folder-drag-thumb${isSelected ? ' projects-panel-folder-drag-thumb--selected' : ''}`}
+      aria-hidden
+    >
+      <FolderGlyph />
+      <span className="projects-panel-folder-drag-thumb-name">{folder.name}</span>
+    </div>
   );
 }
 
@@ -488,11 +499,6 @@ function ProjectsPanel({
     () => (activeDragId ? findFolderById(folderTree, activeDragId) : null),
     [activeDragId, folderTree]
   );
-
-  const activeDragDepth = useMemo(() => {
-    if (!activeDragId) return 0;
-    return Math.max(0, getFolderPath(folderTree, activeDragId).length - 1);
-  }, [activeDragId, folderTree]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -934,14 +940,10 @@ function ProjectsPanel({
           </div>
           <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
             {activeDragFolder ? (
-              <div className="projects-panel-folder-sortable projects-panel-folder-sortable--overlay">
-                <FolderRow
-                  folder={activeDragFolder}
-                  depth={activeDragDepth}
-                  isDragOverlay
-                  {...folderRowProps}
-                />
-              </div>
+              <FolderDragThumbnail
+                folder={activeDragFolder}
+                isSelected={selectedFolderId === activeDragFolder.id}
+              />
             ) : null}
           </DragOverlay>
         </DndContext>

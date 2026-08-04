@@ -6642,24 +6642,55 @@ html:has(.app-content-wrapper--projects) {
 
 .projects-panel-folder-sortable--placeholder {
   z-index: 1;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .projects-panel-folder-sortable--placeholder .projects-panel-folder-block {
-  opacity: 0.35;
+  opacity: 1;
 }
 
-.projects-panel-folder-sortable--overlay {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+.projects-panel-folder-drag-thumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: min(240px, calc(100vw - 48px));
+  min-height: 32px;
+  padding: 6px 10px;
   border-radius: 6px;
-  background: var(--bg-page);
+  background: var(--surface-hover);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+  color: var(--text-primary);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.projects-panel-folder-sortable--overlay .projects-panel-folder-block {
-  box-shadow: none;
+.projects-panel-folder-drag-thumb--selected {
+  background: var(--surface-selected);
+}
+
+.projects-panel-folder-drag-thumb-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.projects-panel-folder-drag-thumb .projects-panel-folder-glyph {
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .projects-panel-folder-drag-thumb {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
 }
 
 .projects-panel-folder-block--overlay {
-  background: var(--bg-page);
+  background: transparent;
 }
 
 .projects-panel-folder-row--draggable {
@@ -6678,8 +6709,20 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .projects-panel-folder-sortable--placeholder .projects-panel-folder-row {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--surface-hover) 35%, var(--bg-page));
   border-radius: 6px;
+}
+
+.projects-panel-folder-sortable--placeholder .projects-panel-folder-row--selected {
+  background: color-mix(in srgb, var(--surface-selected) 35%, var(--bg-page));
+}
+
+.projects-panel-folder-sortable--placeholder .projects-panel-folder-row > * {
+  opacity: 0.35;
+}
+
+.projects-panel-folder-sortable--placeholder .projects-panel-folder-children {
+  opacity: 0.35;
 }
 
 @media (prefers-reduced-motion: reduce) {
