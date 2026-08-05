@@ -5,12 +5,7 @@ export const TEAM_MEMBER_ACTIVITY_STATS = [
 
 export const TEAM_MEMBER_ACTIVITY_DOWNLOAD_COUNT = 125;
 
-const TRACK_THUMBNAILS = [
-  '/project-thumb-1.png',
-  '/project-thumb-2.png',
-  '/project-thumb-3.png',
-  '/project-thumb-4.png',
-];
+import { TRACK_THUMBNAILS } from '../components/trackThumb';
 
 export const TEAM_MEMBER_ACTIVITY_DOWNLOADS = Array.from({ length: 8 }, (_, index) => ({
   id: `team-member-download-${index + 1}`,

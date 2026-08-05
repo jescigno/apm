@@ -4,32 +4,20 @@
 import { useRef, useEffect, useLayoutEffect, useState, useCallback, Fragment, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import {
   PROJECTS_PANEL_FOLDER_MORE_ACTIONS,
   PROJECTS_PANEL_FOLDER_TREE,
   PROJECTS_PANEL_INLINE_NAV,
   PROJECTS_PANEL_SOURCES,
-  findFolderById,
   getFolderAncestorIds,
+  getFolderPath,
   getFolderUpdatedAtLabel,
-  getSiblingFolders,
-  reorderSiblingFolders,
 } from '../constants/projectsPanelTree';
 import {
   ICON_ARCHIVE,
@@ -39,7 +27,9 @@ import {
   ICON_SEARCH,
   ICON_SORT,
 } from '../constants/designSystem';
+import Toggle from './Toggle';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
+import { FOLDER_DROP_ID_PREFIX } from '../constants/projectsPanelDnD';
 
 const FOLDER_MORE_MENU_WIDTH = 220;
 
@@ -63,12 +53,6 @@ const HEADER_INLINE_NAV_AT = 480;
 const HEADER_WIDE_LAYOUT_AT = 520;
 /** At this width (px): toolbar actions show icon + text (Search / New Project / Sort). */
 const TOOLBAR_LABELED_AT = 720;
-
-/** Hold duration (ms) before a folder drag begins. */
-const FOLDER_DRAG_HOLD_MS = 220;
-
-/** Pointer movement allowed while holding before the drag is cancelled. */
-const FOLDER_DRAG_HOLD_TOLERANCE_PX = 8;
 
 /** Min horizontal gap (px) between source links when using Tracks-matched 22px style (align with CSS). */
 const INLINE_NAV_TRACKS_TYPO_GAP = 16;
@@ -165,7 +149,7 @@ function FolderGlyph() {
   );
 }
 
-function FolderDragThumbnail({ folder, isSelected }) {
+export function FolderDragThumbnail({ folder, isSelected }) {
   return (
     <div
       className={`projects-panel-folder-drag-thumb${isSelected ? ' projects-panel-folder-drag-thumb--selected' : ''}`}
@@ -173,6 +157,43 @@ function FolderDragThumbnail({ folder, isSelected }) {
     >
       <FolderGlyph />
       <span className="projects-panel-folder-drag-thumb-name">{folder.name}</span>
+    </div>
+  );
+}
+
+export function FolderReorderDragOverlay({
+  folder,
+  folderTree,
+  panelWidth,
+  selectedFolderId,
+  folderReorderLandAnimation = null,
+}) {
+  if (!folder) return null;
+
+  const depth = Math.max(0, getFolderPath(folderTree, folder.id).length - 1);
+  const extraCols = getExtraColumnFlags(panelWidth);
+  const showWideLayout = panelWidth >= HEADER_WIDE_LAYOUT_AT;
+  const isFolderReorderLanding =
+    folderReorderLandAnimation?.folderId === String(folder.id);
+
+  return (
+    <div
+      className="projects-panel-folder-sortable projects-panel-folder-sortable--overlay"
+      style={{ width: panelWidth }}
+      aria-hidden
+    >
+      <FolderRow
+        folder={folder}
+        depth={depth}
+        isDragOverlay
+        expandedIds={new Set()}
+        onToggleExpand={() => {}}
+        extraCols={extraCols}
+        showMoreAlways={showWideLayout}
+        selectedFolderId={selectedFolderId}
+        onFolderSelect={() => {}}
+        folderReorderLandAnimation={isFolderReorderLanding ? folderReorderLandAnimation : null}
+      />
     </div>
   );
 }
@@ -202,6 +223,10 @@ function FolderRow({
   suppressFolderClickRef = null,
   isDragging = false,
   isDragOverlay = false,
+  isTrackDropTarget = false,
+  trackLandAnimation = null,
+  folderReorderLandAnimation = null,
+  isTrackDropEnabled = false,
   renderChildFolders = null,
   /** false only for 2nd+ top-level roots; nested rows omit this (default true) */
   isFirstInRootList = true,
@@ -225,10 +250,20 @@ function FolderRow({
   const rootGroupFirst =
     depth === 0 && isFirstInRootList ? ' projects-panel-folder-block--root-group-first' : '';
 
+  const isTrackLanding = trackLandAnimation?.folderId === folder.id;
+  const isFolderReorderLanding =
+    folderReorderLandAnimation?.folderId === String(folder.id);
+  const { setNodeRef: setTrackDropRef } = useDroppable({
+    id: `${FOLDER_DROP_ID_PREFIX}${folder.id}`,
+    data: { type: 'folder', folderId: folder.id },
+    disabled: !isTrackDropEnabled,
+  });
+
   return (
     <div className={`projects-panel-folder-block${rootGroupFirst}${rootGroupDivider}${rootGroupEnd}${isDragging ? ' projects-panel-folder-block--dragging' : ''}${isDragOverlay ? ' projects-panel-folder-block--overlay' : ''}`}>
       <div
-        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}${showDescription ? ' projects-panel-folder-row--col-description' : ''}${showLastUpdated ? ' projects-panel-folder-row--col-last-updated' : ''}${isSelected ? ' projects-panel-folder-row--selected' : ''}${sortableListeners ? ' projects-panel-folder-row--draggable' : ''}`}
+        ref={isTrackDropEnabled ? setTrackDropRef : undefined}
+        className={`projects-panel-folder-row${showDescription || showLastUpdated ? ' projects-panel-folder-row--with-meta' : ''}${showDescription ? ' projects-panel-folder-row--col-description' : ''}${showLastUpdated ? ' projects-panel-folder-row--col-last-updated' : ''}${isSelected ? ' projects-panel-folder-row--selected' : ''}${sortableListeners ? ' projects-panel-folder-row--draggable' : ''}${isTrackDropTarget ? ' projects-panel-folder-row--track-drop-target' : ''}${isTrackLanding ? ' projects-panel-folder-row--track-landed' : ''}${isFolderReorderLanding ? ' projects-panel-folder-row--reorder-landed' : ''}`}
         style={
           showDescription || showLastUpdated
             ? { '--folder-indent': `${primaryIndentPx}px` }
@@ -296,6 +331,20 @@ function FolderRow({
         >
           <img src="/icons/moreMenu.svg" alt="" />
         </button>
+        {isTrackLanding ? (
+          <div className="projects-panel-folder-track-landed-sweep" aria-hidden>
+            <div className="projects-panel-folder-track-landed-fill" />
+          </div>
+        ) : null}
+        {isFolderReorderLanding ? (
+          <div
+            key={folderReorderLandAnimation.key}
+            className="projects-panel-folder-reorder-landed-sweep"
+            aria-hidden
+          >
+            <div className="projects-panel-folder-reorder-landed-fill" />
+          </div>
+        ) : null}
       </div>
       {!isDragOverlay && hasChildren && expanded && canShowNested && (
         <div className="projects-panel-folder-children">
@@ -329,6 +378,9 @@ function SortableFolderBlock({
   index,
   siblingCount,
   folderRowProps,
+  trackDropTargetFolderId,
+  trackLandAnimation,
+  folderReorderLandAnimation,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: folder.id,
@@ -351,6 +403,9 @@ function SortableFolderBlock({
         depth={depth}
         sortableListeners={{ attributes, listeners }}
         isDragging={isDragging}
+        isTrackDropTarget={trackDropTargetFolderId === folder.id}
+        trackLandAnimation={trackLandAnimation}
+        folderReorderLandAnimation={folderReorderLandAnimation}
         isFirstInRootList={parentId === 'root' && index === 0}
         isLastInRootList={parentId === 'root' && index === siblingCount - 1}
         renderChildFolders={(children) => (
@@ -359,6 +414,9 @@ function SortableFolderBlock({
             parentId={folder.id}
             depth={depth + 1}
             folderRowProps={folderRowProps}
+            trackDropTargetFolderId={trackDropTargetFolderId}
+            trackLandAnimation={trackLandAnimation}
+        folderReorderLandAnimation={folderReorderLandAnimation}
           />
         )}
         {...folderRowProps}
@@ -367,7 +425,15 @@ function SortableFolderBlock({
   );
 }
 
-function SortableFolderList({ folders, parentId, depth, folderRowProps }) {
+function SortableFolderList({
+  folders,
+  parentId,
+  depth,
+  folderRowProps,
+  trackDropTargetFolderId,
+  trackLandAnimation,
+  folderReorderLandAnimation,
+}) {
   const itemIds = useMemo(() => folders.map((folder) => folder.id), [folders]);
 
   return (
@@ -381,6 +447,9 @@ function SortableFolderList({ folders, parentId, depth, folderRowProps }) {
           index={index}
           siblingCount={folders.length}
           folderRowProps={folderRowProps}
+          trackDropTargetFolderId={trackDropTargetFolderId}
+          trackLandAnimation={trackLandAnimation}
+        folderReorderLandAnimation={folderReorderLandAnimation}
         />
       ))}
     </SortableContext>
@@ -398,11 +467,18 @@ function ProjectsPanel({
   onFolderSelect,
   folderTree = PROJECTS_PANEL_FOLDER_TREE,
   onFolderTreeChange,
+  trackDropTargetFolderId = null,
+  trackLandAnimation = null,
+  folderReorderLandAnimation = null,
+  trackDragActive = false,
+  suppressFolderClickRef: suppressFolderClickRefProp = null,
 }) {
   const resizeRef = useRef(null);
   const headerMainRef = useRef(null);
   const widthRef = useRef(width);
   widthRef.current = width;
+  const localSuppressFolderClickRef = useRef(false);
+  const suppressFolderClickRef = suppressFolderClickRefProp ?? localSuppressFolderClickRef;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [sourceId, setSourceId] = useState('myProjects');
@@ -410,8 +486,6 @@ function ProjectsPanel({
     if (!selectedFolderId) return new Set();
     return new Set(getFolderAncestorIds(folderTree, selectedFolderId));
   });
-  const [activeDragId, setActiveDragId] = useState(null);
-  const suppressFolderClickRef = useRef(false);
   const headlineBtnRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState(null);
   const folderMoreAnchorRef = useRef(null);
@@ -436,69 +510,16 @@ function ProjectsPanel({
     });
   }, [selectedFolderId, folderTree]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        delay: FOLDER_DRAG_HOLD_MS,
-        tolerance: FOLDER_DRAG_HOLD_TOLERANCE_PX,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: FOLDER_DRAG_HOLD_MS,
-        tolerance: FOLDER_DRAG_HOLD_TOLERANCE_PX,
-      },
-    }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragStart = useCallback((event) => {
-    suppressFolderClickRef.current = true;
-    setActiveDragId(event.active.id);
-  }, []);
-
-  const handleDragCancel = useCallback(() => {
-    setActiveDragId(null);
-    suppressFolderClickRef.current = false;
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (event) => {
-      const { active, over } = event;
-      const didReorder = Boolean(over && active.id !== over.id);
-
-      if (didReorder && onFolderTreeChange) {
-        const activeParent = active.data.current?.parentId;
-        const overParent = over.data.current?.parentId;
-        if (activeParent === overParent) {
-          const siblings = getSiblingFolders(folderTree, activeParent);
-          const oldIndex = siblings.findIndex((folder) => folder.id === active.id);
-          const newIndex = siblings.findIndex((folder) => folder.id === over.id);
-          if (oldIndex >= 0 && newIndex >= 0) {
-            onFolderTreeChange(
-              reorderSiblingFolders(
-                folderTree,
-                activeParent === 'root' ? null : activeParent,
-                oldIndex,
-                newIndex
-              )
-            );
-          }
-        }
-      }
-
-      setActiveDragId(null);
-      if (!didReorder) {
-        suppressFolderClickRef.current = false;
-      }
-    },
-    [folderTree, onFolderTreeChange]
-  );
-
-  const activeDragFolder = useMemo(
-    () => (activeDragId ? findFolderById(folderTree, activeDragId) : null),
-    [activeDragId, folderTree]
-  );
+  useEffect(() => {
+    if (!trackDropTargetFolderId) return;
+    const ancestors = getFolderAncestorIds(folderTree, trackDropTargetFolderId);
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.add(trackDropTargetFolderId);
+      ancestors.forEach((id) => next.add(id));
+      return next;
+    });
+  }, [trackDropTargetFolderId, folderTree]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -672,6 +693,7 @@ function ProjectsPanel({
       selectedFolderId,
       onFolderSelect,
       suppressFolderClickRef,
+      isTrackDropEnabled: trackDragActive,
     }),
     [
       expandedIds,
@@ -683,6 +705,7 @@ function ProjectsPanel({
       selectedFolderId,
       onFolderSelect,
       suppressFolderClickRef,
+      trackDragActive,
     ]
   );
 
@@ -785,20 +808,12 @@ function ProjectsPanel({
                 role="none"
               >
                 <span className="projects-panel-folder-more-menu-row__label">{action.label}</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={!folderNotificationsDisabled.has(folderMoreMenu.folderId)}
-                  aria-label={`${action.label} for ${folderMoreMenu.folderName}`}
-                  className={`account-notification-settings-toggle${!folderNotificationsDisabled.has(folderMoreMenu.folderId) ? ' account-notification-settings-toggle--on' : ''}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    const allowed = folderNotificationsDisabled.has(folderMoreMenu.folderId);
-                    toggleFolderNotifications(folderMoreMenu.folderId, allowed);
-                  }}
-                >
-                  <span className="account-notification-settings-toggle__slider" aria-hidden="true" />
-                </button>
+                <Toggle
+                  accent
+                  checked={!folderNotificationsDisabled.has(folderMoreMenu.folderId)}
+                  label={`${action.label} for ${folderMoreMenu.folderName}`}
+                  onChange={(enabled) => toggleFolderNotifications(folderMoreMenu.folderId, enabled)}
+                />
               </div>
             ) : (
               <button
@@ -923,30 +938,17 @@ function ProjectsPanel({
             <div className="projects-panel-column-headers-spacer" aria-hidden="true" />
           </div>
         )}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
-          <div className="projects-panel-folder-list">
-            <SortableFolderList
-              folders={folderTree}
-              parentId="root"
-              depth={0}
-              folderRowProps={folderRowProps}
-            />
-          </div>
-          <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}>
-            {activeDragFolder ? (
-              <FolderDragThumbnail
-                folder={activeDragFolder}
-                isSelected={selectedFolderId === activeDragFolder.id}
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+        <div className="projects-panel-folder-list">
+          <SortableFolderList
+            folders={folderTree}
+            parentId="root"
+            depth={0}
+            folderRowProps={folderRowProps}
+            trackDropTargetFolderId={trackDropTargetFolderId}
+            trackLandAnimation={trackLandAnimation}
+        folderReorderLandAnimation={folderReorderLandAnimation}
+          />
+        </div>
       </div>
     </aside>
   );

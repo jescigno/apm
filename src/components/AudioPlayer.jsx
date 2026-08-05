@@ -1,8 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { usePlayer } from '../context/PlayerContext';
+import { getTrackThumbSrc } from './trackThumb';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
-
-const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 const DRAG_THRESHOLD = 4;
 const MIN_SEGMENT_SECONDS = 10;
 const MIN_SEGMENT_PX = 100;
@@ -279,8 +278,7 @@ function AudioPlayer({ onSoundsLikeClick }) {
 
   if (!currentTrack) return null;
 
-  const thumbIndex = (currentTrack.num || 1) - 1;
-  const thumbSrc = TRACK_THUMBNAILS[thumbIndex % TRACK_THUMBNAILS.length];
+  const thumbSrc = currentTrack ? getTrackThumbSrc(currentTrack) : getTrackThumbSrc({ num: 1 });
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   let selectionStartPct = 0;

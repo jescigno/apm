@@ -121,6 +121,9 @@ export default function ProjectsPage({
   projectTrackCount = 0,
   enterHighlightTrackNum,
   scrollToBottomSignal,
+  enableTrackDragToFolder = false,
+  activeTrackDragId = null,
+  onTracksReorder,
 }) {
   useEffect(() => {
     document.title = 'Project-Details';
@@ -235,6 +238,10 @@ export default function ProjectsPage({
         ]}
         emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."
+        enableTrackDragToFolder={enableTrackDragToFolder}
+        sourceFolderId={activeFolderId}
+        activeTrackDragId={activeTrackDragId}
+        onTracksReorder={onTracksReorder}
       />
     </div>
   );

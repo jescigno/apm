@@ -1,13 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { PROJECT_DETAIL_ACTIONS } from '../constants/designSystem';
+import { TRACK_THUMBNAILS } from './trackThumb';
 
-const PROJECT_IMAGES = [
-  '/project-thumb-1.png',
-  '/project-thumb-2.png',
-  '/project-thumb-3.png',
-  '/project-thumb-4.png',
-];
+const PROJECT_IMAGES = TRACK_THUMBNAILS.slice(0, 4);
 
 const PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
 const PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';

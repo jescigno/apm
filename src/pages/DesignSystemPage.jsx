@@ -10,6 +10,7 @@ import {
 } from '../constants/designSystem';
 import { THEME_PALETTES } from '../constants/theme';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
+import Toggle from '../components/Toggle';
 
 function getUsageSections(usage, themeValue) {
   if (Array.isArray(usage)) {
@@ -293,6 +294,9 @@ function ButtonsPanel() {
 }
 
 function ElementsPanel() {
+  const [toggleOn, setToggleOn] = useState(true);
+  const [toggleOff, setToggleOff] = useState(false);
+
   return (
     <div className="ds-form-controls">
       <label className="ds-form-control">
@@ -320,6 +324,26 @@ function ElementsPanel() {
         </span>
         <span>Radio (unselected)</span>
       </label>
+      <div className="ds-form-control ds-form-control--row">
+        <span>Toggle (off)</span>
+        <Toggle
+          label="Toggle off"
+          checked={toggleOff}
+          accent
+          onChange={setToggleOff}
+        />
+        <code className="ds-form-control__class">.account-notification-settings-toggle</code>
+      </div>
+      <div className="ds-form-control ds-form-control--row">
+        <span>Toggle (on, accent)</span>
+        <Toggle
+          label="Toggle on"
+          checked={toggleOn}
+          accent
+          onChange={setToggleOn}
+        />
+        <code className="ds-form-control__class">.account-notification-settings-toggle.account-notification-settings-toggle--on.account-notification-settings-toggle--accent</code>
+      </div>
     </div>
   );
 }

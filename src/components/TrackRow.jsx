@@ -12,11 +12,15 @@ import {
   ICON_COMMENTS_ACTIVE,
   ICON_TRACK_DETAILS,
   ICON_DELETE,
+  ICON_REORDER_DOTS,
 } from '../constants/designSystem';
 import { CSS_VARS, themeVar } from '../constants/theme';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
 import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/overflowDropdownPosition';
 import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
+import { useDraggable } from '@dnd-kit/core';
+import { getTrackDragId } from '../constants/projectsPanelDnD';
+import { getTrackThumbStyle } from './trackThumb';
 
 function getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject = false } = {}) {
   if (!triggerEl) return null;
@@ -26,8 +30,6 @@ function getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject = fals
     zIndex: 1100,
   };
 }
-
-const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
 
 const PlayingAudioIcon = memo(function PlayingAudioIcon() {
   return (
@@ -41,8 +43,6 @@ const PlayingAudioIcon = memo(function PlayingAudioIcon() {
     </span>
   );
 });
-const ALBUM_THUMB_ORDER = [2, 3, 0, 1]; /* different cycle for albums */
-
 const STEM_LABELS = ['Drums', 'Bass', 'Guitars', 'Keys', 'Synth', 'Strings', 'Percussion', 'Vocals'];
 
 export function getStemItems(parentTrack) {
@@ -62,7 +62,7 @@ const SOUNDS_LIKE_ICON = (
   </svg>
 );
 
-function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false, isAlbum = false }) {
+export function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false, isAlbum = false }) {
   const theme = useThemeName();
 
   return (
@@ -573,7 +573,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
   const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -655,18 +655,23 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   const item = album || track;
   const isAlbum = variant === 'album';
-  const thumbIndex = isAlbum
-    ? ALBUM_THUMB_ORDER[(item.num - 1) % ALBUM_THUMB_ORDER.length]
-    : (item.num - 1) % TRACK_THUMBNAILS.length;
-  const thumbSrc = TRACK_THUMBNAILS[thumbIndex];
-  const thumbStyle = {
-    backgroundImage: `url('${thumbSrc}')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-  };
+  const thumbStyle = getTrackThumbStyle(item, isAlbum);
+  const canDragTrackToFolder = enableTrackDragToFolder && !reorderMode && !isAlbum && Boolean(track?.id);
+  const showSortablePlaceholder = isSortableDragging;
+  const { attributes: trackDragAttributes, listeners: trackDragListeners, setNodeRef: setTrackDragRef, isDragging: isTrackDragging } = useDraggable({
+    id: getTrackDragId(track?.id ?? item.id),
+    data: { type: 'track', track: track ?? item, sourceFolderId },
+    disabled: !canDragTrackToFolder,
+  });
+  const showTrackDragPlaceholder = isTrackDragSource || isTrackDragging;
 
   const renderTrackThumb = (className = 'track-thumb') => (
-    <div className={`track-thumb-wrap${className.includes('mobile') ? ' track-thumb-wrap--mobile' : ''}`}>
+    <div
+      ref={canDragTrackToFolder ? setTrackDragRef : undefined}
+      className={`track-thumb-wrap${className.includes('mobile') ? ' track-thumb-wrap--mobile' : ''}${canDragTrackToFolder ? ' track-thumb-wrap--draggable' : ''}${showTrackDragPlaceholder ? ' track-thumb-wrap--dragging' : ''}`}
+      {...(canDragTrackToFolder ? trackDragAttributes : {})}
+      {...(canDragTrackToFolder ? trackDragListeners : {})}
+    >
       <div className={className} style={thumbStyle} />
       {titleBadge && (
         <span className="track-version-badge track-version-badge--on-thumb">{titleBadge}</span>
@@ -755,7 +760,26 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     checkbox.indeterminate = isTrackCheckboxIndeterminate;
   }, [isTrackCheckboxIndeterminate]);
 
-  const showSelectCheckbox = !mobileTrackLayout && (isHovered || isSelected || hasStemSelection);
+  const showSelectCheckbox = !reorderMode && !mobileTrackLayout && (isHovered || isSelected || hasStemSelection);
+  const isReorderLanding = Boolean(trackReorderLandAnimation?.trackIds?.includes(item.id));
+
+  const handleReorderRowClick = (event) => {
+    if (!reorderMode || !onReorderRowClick) return;
+    if (event.target.closest('button, a, input, textarea, [data-track-dropdown-portal], [data-track-comment-overlay]')) {
+      return;
+    }
+    onReorderRowClick(item.id);
+  };
+
+  const renderReorderDots = () => (
+    <span className="track-reorder-dots" aria-hidden="true">
+      <img src={ICON_REORDER_DOTS} alt="" />
+    </span>
+  );
+
+  const renderReorderDotsCol = (className = 'track-actions track-reorder-dots-col') => (
+    <div className={className}>{renderReorderDots()}</div>
+  );
 
   const renderSelectCheckbox = () => (
     <span className="track-num-checkbox-slot">
@@ -773,13 +797,75 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     </span>
   );
 
+  const renderReorderCheckbox = () => (
+    <span className="track-num-checkbox-slot">
+      <input
+        type="checkbox"
+        className="track-checkbox"
+        checked={isSelected}
+        onChange={() => onReorderRowClick?.(item.id)}
+        aria-label={`Select ${item.title}`}
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+      />
+    </span>
+  );
+
+  const renderReorderTrackNum = () => (
+    <span className="track-num-play-slot">
+      <span className="track-num-value">{item.num}</span>
+    </span>
+  );
+
+  const renderReorderTrackInfo = () => (
+    <div className="track-reorder-content">
+      <span className="track-title">{item.title}</span>
+      <span className="track-id">{item.id}</span>
+    </div>
+  );
+
+  const renderReorderTrackMeta = (className = 'track-reorder-content') => (
+    <div className={className}>
+      <span className="track-title">{item.title}</span>
+      <span className="track-id">{item.id}</span>
+      <p className="track-desc">{item.desc}</p>
+    </div>
+  );
+
+  const renderReorderLandSweep = () =>
+    isReorderLanding ? (
+      <div key={trackReorderLandAnimation.key} className="track-reorder-landed-sweep" aria-hidden>
+        <div className="track-reorder-landed-fill" />
+      </div>
+    ) : null;
+
   if (mobileTrackLayout) {
+    if (reorderMode) {
+      return (
+        <div
+          className={`track-row track-row--mobile track-row--reorder-mode${isSelected ? ' track-row--selected' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
+          data-track-num={item.num}
+          onClick={handleReorderRowClick}
+        >
+          <div className="track-row-mobile-reorder-lead">
+            {renderReorderCheckbox()}
+            {renderReorderTrackNum()}
+          </div>
+          {renderTrackThumb('track-thumb track-thumb--mobile')}
+          {renderReorderTrackMeta('track-reorder-content track-reorder-content--mobile')}
+          {renderReorderDotsCol('track-reorder-dots-col track-reorder-dots-col--mobile')}
+          {renderReorderLandSweep()}
+        </div>
+      );
+    }
+
     return (
       <div
-        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}`}
+        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
         data-track-num={item.num}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={reorderMode ? handleReorderRowClick : undefined}
       >
         {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
         <div className="track-row-mobile-media">
@@ -820,6 +906,9 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           <p className="track-desc track-desc--mobile-below-title">{item.desc}</p>
           <p className="track-recorded track-recorded--mobile">Recorded {item.recorded}</p>
         </div>
+        {reorderMode ? (
+          renderReorderDotsCol('track-reorder-dots-col track-reorder-dots-col--mobile')
+        ) : (
         <div className="track-actions-overflow track-actions-overflow--mobile" ref={overflowRef}>
           <button
             ref={menuBtnRef}
@@ -852,6 +941,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             document.body
           )}
         </div>
+        )}
         {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
           <div className="track-details-overlay">
             <div
@@ -891,15 +981,34 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     <>
     <div className={`track-row-group${stemsOpen ? ' track-row-group--stems-open' : ''}`}>
     <div
-      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}`}
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
       data-track-num={item.num}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={reorderMode ? handleReorderRowClick : undefined}
     >
       {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
+      {reorderMode ? (
+        <>
+          <span className="track-num">
+            {renderReorderCheckbox()}
+            {renderReorderTrackNum()}
+          </span>
+          <div className="track-thumb-col">
+            {renderTrackThumb()}
+            <div className="track-info-dropdowns">
+              {renderReorderTrackInfo()}
+            </div>
+          </div>
+          <p className="track-desc">{item.desc}</p>
+          {renderReorderDotsCol()}
+          {renderReorderLandSweep()}
+        </>
+      ) : (
+        <>
       <span className="track-num">
-        {renderSelectCheckbox()}
-        <span className="track-num-play-slot">
+            {renderSelectCheckbox()}
+            <span className="track-num-play-slot">
           {showPlayingIcon ? (
             isHovered ? (
               <button
@@ -934,7 +1043,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           ) : (
             <span className="track-num-value">{item.num}</span>
           )}
-        </span>
+            </span>
       </span>
       <div className="track-thumb-col">
         {renderTrackThumb()}
@@ -1072,8 +1181,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           }
         }}
       />
+        </>
+      )}
     </div>
-    {stemsOpen && stemItems.length > 0 && (
+    {stemsOpen && !reorderMode && stemItems.length > 0 && (
       <div
         className={`track-stems-nested${compact ? ' track-stems-nested--compact' : ''}`}
         role="group"

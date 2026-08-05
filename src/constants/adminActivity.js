@@ -67,12 +67,7 @@ export const ADMIN_ACTIVITY_USERS = [
   },
 ];
 
-const TRACK_THUMBNAILS = [
-  '/project-thumb-1.png',
-  '/project-thumb-2.png',
-  '/project-thumb-3.png',
-  '/project-thumb-4.png',
-];
+import { TRACK_THUMBNAILS } from '../components/trackThumb';
 
 export const ADMIN_ACTIVITY_DOWNLOADS = Array.from({ length: 8 }, (_, index) => ({
   id: `download-${index + 1}`,

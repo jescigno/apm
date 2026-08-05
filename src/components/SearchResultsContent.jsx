@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import TrackList, { SEARCH_RESULTS_TRACKS } from './TrackList';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+import {
+  DEFAULT_SEARCH_CUSTOMIZE,
+  getTrackViewModeFromCustomize,
+  isCompactListLayout,
+} from '../constants/searchResultsCustomize';
+import { DEFAULT_SEARCH_SORT } from '../constants/searchResultsSort';
 
 export default function SearchResultsContent({
   soundsLikePanelOpen,
@@ -11,7 +17,9 @@ export default function SearchResultsContent({
   scrollToBottomSignal,
 }) {
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
-  const [trackViewMode, setTrackViewMode] = useState('expanded');
+  const [searchCustomize, setSearchCustomize] = useState(DEFAULT_SEARCH_CUSTOMIZE);
+  const [searchSortBy, setSearchSortBy] = useState(DEFAULT_SEARCH_SORT);
+  const trackViewMode = getTrackViewModeFromCustomize(searchCustomize);
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -36,9 +44,12 @@ export default function SearchResultsContent({
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
         disableWaveformHighlights
-        compactTrackRows={trackViewMode === 'condensed'}
+        compactTrackRows={isCompactListLayout(searchCustomize)}
         trackViewMode={trackViewMode}
-        onTrackViewModeChange={setTrackViewMode}
+        searchCustomize={searchCustomize}
+        onSearchCustomizeChange={setSearchCustomize}
+        searchSortBy={searchSortBy}
+        onSearchSortByChange={setSearchSortBy}
       />
     </div>
   );

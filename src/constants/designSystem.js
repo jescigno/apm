@@ -466,6 +466,7 @@ export const ICON_DELETE = '/icons/Trash.svg';
 export const ICON_SOUNDS_LIKE = '/icons/soundsLike.svg';
 export const ICON_CUSTOMIZE = '/icons/customize.svg';
 export const ICON_REORDER = '/icons/reorder.svg';
+export const ICON_REORDER_DOTS = '/icons/reorder-dots.svg';
 export const ICON_CLOSE = '/icons/close.svg';
 export const ICON_COMMENTS = '/icons/comments.svg';
 export const ICON_COMMENTS_ACTIVE = '/icons/comments-active.svg';

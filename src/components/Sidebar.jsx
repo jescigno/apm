@@ -44,7 +44,7 @@ function NavSearchIcon({ theme }) {
   );
 }
 
-function Sidebar() {
+function Sidebar({ onHomeClick }) {
   const theme = useThemeName();
 
   return (
@@ -60,6 +60,7 @@ function Sidebar() {
                 `nav-item${item.isSearch ? ' nav-item--search' : ''}${isActive ? ' nav-item--active' : ''}`
               }
               title={item.title}
+              onClick={item.to === ROUTE_PROJECT_DETAILS ? onHomeClick : undefined}
             >
               {({ isActive }) =>
                 item.isSearch ? (

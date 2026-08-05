@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { PlayerProvider, usePlayer } from './context/PlayerContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -11,7 +21,8 @@ import NotificationsPage from './pages/NotificationsPage';
 import DesignSystemPage from './pages/DesignSystemPage';
 import SearchFiltersPanel from './components/SearchFiltersPanel';
 import SoundsLikePanel from './components/SoundsLikePanel';
-import ProjectsPanel from './components/ProjectsPanel';
+import ProjectsPanel, { FolderReorderDragOverlay } from './components/ProjectsPanel';
+import TrackDragThumbnail from './components/TrackDragThumbnail';
 import CommentsPanel from './components/CommentsPanel';
 import ClockPanel from './components/ClockPanel';
 import TeamMemberActivityPanel from './components/TeamMemberActivityPanel';
@@ -34,10 +45,26 @@ import {
   CURRENT_PROJECT_FOLDER_ID,
   folderHasProjectTracks,
   PROJECTS_PANEL_FOLDER_TREE,
+  findFolderById,
+  getSiblingFolders,
+  reorderSiblingFolders,
 } from './constants/projectsPanelTree';
-import { getFreshFifteenTracksForFolder } from './constants/freshFifteenTracks';
-import { getMoreLikeTracksForFolder } from './constants/moreLikeTracks';
-import { getMilanUpdatesTracksForFolder } from './constants/milanUpdatesTracks';
+import {
+  PROJECTS_DND_HOLD_MS,
+  PROJECTS_DND_HOLD_TOLERANCE_PX,
+  PROJECTS_DROP_ANIMATION_MS,
+  PROJECTS_FOLDER_REORDER_LAND_MS,
+  projectsFolderReorderDropAnimation,
+  projectsPanelCollisionDetection,
+  getFolderDropTargetId,
+} from './constants/projectsPanelDnD';
+import {
+  resolveFolderTracks,
+  reorderFolderTracksSelection,
+  moveTrackBetweenFolders,
+  canDropTrackOnFolder,
+  adjustFolderTreeTrackCounts,
+} from './constants/projectTrackStorage';
 import {
   PROJECTS_TRACKS,
   FAVORITES_TRACKS,
@@ -81,6 +108,11 @@ function buildTrackFromSoundsLike(item, mergedTracks) {
   };
 }
 
+const PROJECTS_TRACK_DROP_ANIMATION = {
+  duration: PROJECTS_DROP_ANIMATION_MS,
+  easing: 'cubic-bezier(0.2, 0, 0, 1)',
+};
+
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -108,6 +140,14 @@ function AppContent() {
   const [scrollToBottomSignal, setScrollToBottomSignal] = useState(0);
   const [activeProjectFolderId, setActiveProjectFolderId] = useState(CURRENT_PROJECT_FOLDER_ID);
   const [folderTree, setFolderTree] = useState(() => PROJECTS_PANEL_FOLDER_TREE);
+  const [folderTrackOverrides, setFolderTrackOverrides] = useState({});
+  const [activeDrag, setActiveDrag] = useState(null);
+  const [trackDropTargetFolderId, setTrackDropTargetFolderId] = useState(null);
+  const [trackLandAnimation, setTrackLandAnimation] = useState(null);
+  const [folderReorderLandAnimation, setFolderReorderLandAnimation] = useState(null);
+  const suppressFolderClickRef = useRef(false);
+  const projectsDragOverlayClearTimerRef = useRef(null);
+  const folderReorderLandTimerRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const headerMenuRef = useRef(null);
   const { currentTrack, isPlayerClosing } = usePlayer();
@@ -115,14 +155,199 @@ function AppContent() {
   const mergedProjects = useMemo(() => [...PROJECTS_TRACKS, ...projectsExtraTracks], [projectsExtraTracks]);
   const projectPageTracks = useMemo(() => {
     if (!folderHasProjectTracks(activeProjectFolderId)) return [];
-    const milanUpdatesTracks = getMilanUpdatesTracksForFolder(activeProjectFolderId);
-    if (milanUpdatesTracks) return milanUpdatesTracks;
-    const freshFifteenTracks = getFreshFifteenTracksForFolder(activeProjectFolderId);
-    if (freshFifteenTracks) return freshFifteenTracks;
-    const moreLikeTracks = getMoreLikeTracksForFolder(activeProjectFolderId);
-    if (moreLikeTracks) return moreLikeTracks;
-    return mergedProjects;
-  }, [activeProjectFolderId, mergedProjects]);
+    return resolveFolderTracks(activeProjectFolderId, folderTrackOverrides, mergedProjects);
+  }, [activeProjectFolderId, folderTrackOverrides, mergedProjects]);
+
+  const enableProjectTrackDrag = location.pathname === ROUTE_PROJECT_DETAILS && projectsPanelOpen;
+  const activeTrackDragId =
+    activeDrag?.type === 'track' && typeof activeDrag.id === 'string' ? activeDrag.id : null;
+
+  const projectsDragSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: PROJECTS_DND_HOLD_MS,
+        tolerance: PROJECTS_DND_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: PROJECTS_DND_HOLD_MS,
+        tolerance: PROJECTS_DND_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const scheduleProjectsDragOverlayClear = useCallback((afterClear, duration = PROJECTS_DROP_ANIMATION_MS) => {
+    if (projectsDragOverlayClearTimerRef.current != null) {
+      window.clearTimeout(projectsDragOverlayClearTimerRef.current);
+    }
+    projectsDragOverlayClearTimerRef.current = window.setTimeout(() => {
+      projectsDragOverlayClearTimerRef.current = null;
+      setActiveDrag(null);
+      setTrackDropTargetFolderId(null);
+      afterClear?.();
+    }, duration);
+  }, []);
+
+  const handleProjectsDragStart = useCallback((event) => {
+    suppressFolderClickRef.current = true;
+    const dragType = event.active.data.current?.type;
+    if (dragType === 'track') {
+      setActiveDrag({
+        type: 'track',
+        id: event.active.id,
+        track: event.active.data.current.track,
+      });
+      setTrackDropTargetFolderId(null);
+      return;
+    }
+    if (dragType === 'folder') {
+      const folder = findFolderById(folderTree, event.active.id);
+      if (folder) {
+        setActiveDrag({ type: 'folder', id: event.active.id, folder });
+      }
+      setTrackDropTargetFolderId(null);
+    }
+  }, [folderTree]);
+
+  const handleProjectsDragOver = useCallback((event) => {
+    if (event.active.data.current?.type !== 'track') {
+      setTrackDropTargetFolderId(null);
+      return;
+    }
+    const targetFolderId = getFolderDropTargetId(event.over);
+    const sourceFolderId = event.active.data.current?.sourceFolderId;
+    if (targetFolderId && canDropTrackOnFolder(targetFolderId, sourceFolderId)) {
+      setTrackDropTargetFolderId(targetFolderId);
+      return;
+    }
+    setTrackDropTargetFolderId(null);
+  }, []);
+
+  const handleProjectsDragCancel = useCallback(() => {
+    if (projectsDragOverlayClearTimerRef.current != null) {
+      window.clearTimeout(projectsDragOverlayClearTimerRef.current);
+      projectsDragOverlayClearTimerRef.current = null;
+    }
+    if (folderReorderLandTimerRef.current != null) {
+      window.clearTimeout(folderReorderLandTimerRef.current);
+      folderReorderLandTimerRef.current = null;
+    }
+    setActiveDrag(null);
+    setTrackDropTargetFolderId(null);
+    setFolderReorderLandAnimation(null);
+    suppressFolderClickRef.current = false;
+  }, []);
+
+  const handleProjectsDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+      const dragType = active.data.current?.type;
+
+      if (dragType === 'track') {
+        const track = active.data.current?.track;
+        const sourceFolderId = active.data.current?.sourceFolderId;
+        const targetFolderId = getFolderDropTargetId(over);
+        if (
+          track &&
+          sourceFolderId &&
+          targetFolderId &&
+          canDropTrackOnFolder(targetFolderId, sourceFolderId)
+        ) {
+          setFolderTrackOverrides((prev) =>
+            moveTrackBetweenFolders({
+              track,
+              sourceFolderId,
+              targetFolderId,
+              folderTrackOverrides: prev,
+              mergedProjects,
+            })
+          );
+          setFolderTree((prev) => adjustFolderTreeTrackCounts(prev, sourceFolderId, targetFolderId));
+          setTrackLandAnimation({ folderId: targetFolderId, track, key: Date.now() });
+        }
+        scheduleProjectsDragOverlayClear(() => {
+          suppressFolderClickRef.current = false;
+        });
+        return;
+      }
+
+      if (dragType === 'folder') {
+        const didReorder = Boolean(over && active.id !== over.id);
+        if (didReorder) {
+          const activeParent = active.data.current?.parentId;
+          const overParent = over.data.current?.parentId;
+          if (activeParent === overParent) {
+            const siblings = getSiblingFolders(folderTree, activeParent);
+            const oldIndex = siblings.findIndex((folder) => folder.id === active.id);
+            const newIndex = siblings.findIndex((folder) => folder.id === over.id);
+            if (oldIndex >= 0 && newIndex >= 0) {
+              const movedFolderId = String(active.id);
+              setFolderTree(
+                reorderSiblingFolders(
+                  folderTree,
+                  activeParent === 'root' ? null : activeParent,
+                  oldIndex,
+                  newIndex
+                )
+              );
+              if (folderReorderLandTimerRef.current != null) {
+                window.clearTimeout(folderReorderLandTimerRef.current);
+              }
+              folderReorderLandTimerRef.current = window.setTimeout(() => {
+                folderReorderLandTimerRef.current = null;
+                setFolderReorderLandAnimation({ folderId: movedFolderId, key: Date.now() });
+              }, PROJECTS_DROP_ANIMATION_MS);
+              scheduleProjectsDragOverlayClear(
+                () => {
+                  suppressFolderClickRef.current = false;
+                },
+                PROJECTS_DROP_ANIMATION_MS + PROJECTS_FOLDER_REORDER_LAND_MS
+              );
+              return;
+            }
+          }
+        }
+        scheduleProjectsDragOverlayClear(() => {
+          if (!didReorder) {
+            suppressFolderClickRef.current = false;
+          }
+        });
+      }
+    },
+    [folderTree, mergedProjects, scheduleProjectsDragOverlayClear]
+  );
+
+  useEffect(() => {
+    if (!folderReorderLandAnimation) return;
+    const timer = window.setTimeout(() => setFolderReorderLandAnimation(null), PROJECTS_FOLDER_REORDER_LAND_MS);
+    return () => window.clearTimeout(timer);
+  }, [folderReorderLandAnimation]);
+
+  useEffect(() => {
+    return () => {
+      if (projectsDragOverlayClearTimerRef.current != null) {
+        window.clearTimeout(projectsDragOverlayClearTimerRef.current);
+      }
+      if (folderReorderLandTimerRef.current != null) {
+        window.clearTimeout(folderReorderLandTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!trackLandAnimation) return;
+    const timer = window.setTimeout(() => setTrackLandAnimation(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [trackLandAnimation]);
+
+  const activeDragFolder = useMemo(() => {
+    if (activeDrag?.type !== 'folder') return null;
+    return activeDrag.folder ?? findFolderById(folderTree, activeDrag.id);
+  }, [activeDrag, folderTree]);
+
+  const activeDragTrack = activeDrag?.type === 'track' ? activeDrag.track : null;
 
   const handleProjectFolderSelect = useCallback(
     (folderId) => {
@@ -131,6 +356,23 @@ function AppContent() {
     },
     [navigate]
   );
+
+  const handleTracksReorder = useCallback(
+    (activeId, overId, selectedIds) => {
+      setFolderTrackOverrides((prev) =>
+        reorderFolderTracksSelection({
+          folderId: activeProjectFolderId,
+          activeId,
+          overId,
+          selectedIds,
+          folderTrackOverrides: prev,
+          mergedProjects,
+        })
+      );
+    },
+    [activeProjectFolderId, mergedProjects]
+  );
+
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
   const refreshSoundsLikeResults = useCallback(() => {
@@ -228,6 +470,13 @@ function AppContent() {
     setClockPanelOpen(false);
     setProjectsPanelOpen(true);
   };
+
+  const handleHomeNavClick = useCallback(() => {
+    openProjectsPanel();
+    if (location.pathname !== ROUTE_PROJECT_DETAILS) {
+      navigate(ROUTE_PROJECT_DETAILS);
+    }
+  }, [location.pathname, navigate]);
 
   const openCommentsPanel = useCallback(() => {
     if (location.pathname !== ROUTE_PROJECT_DETAILS) return;
@@ -373,6 +622,14 @@ function AppContent() {
   }, []);
 
   return (
+    <DndContext
+      sensors={projectsDragSensors}
+      collisionDetection={projectsPanelCollisionDetection}
+      onDragStart={handleProjectsDragStart}
+      onDragOver={handleProjectsDragOver}
+      onDragEnd={handleProjectsDragEnd}
+      onDragCancel={handleProjectsDragCancel}
+    >
     <div className={currentTrack || isPlayerClosing ? 'app-root player-visible' : 'app-root'}>
       <Header
         onOpenProjectsPanel={openProjectsPanel}
@@ -380,7 +637,7 @@ function AppContent() {
         onSearchQueryChange={isSearchRoute ? setSearchQuery : undefined}
         headerMenuRef={headerMenuRef}
       />
-      <Sidebar />
+      <Sidebar onHomeClick={handleHomeNavClick} />
       <div
         className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isFullBleedRoute ? ' app-content-wrapper--account' : ''}`}
         style={rightPanelOpen ? { paddingRight: `${mainPaddingRight}px` } : undefined}
@@ -410,6 +667,9 @@ function AppContent() {
                   projectTrackCount={projectPageTracks.length}
                   enterHighlightTrackNum={enterHighlightTrackNum}
                   scrollToBottomSignal={scrollToBottomSignal}
+                  enableTrackDragToFolder={enableProjectTrackDrag}
+                  activeTrackDragId={activeTrackDragId}
+                  onTracksReorder={handleTracksReorder}
                 />
               }
             />
@@ -478,6 +738,11 @@ function AppContent() {
         onFolderSelect={handleProjectFolderSelect}
         folderTree={folderTree}
         onFolderTreeChange={setFolderTree}
+        trackDropTargetFolderId={trackDropTargetFolderId}
+        trackLandAnimation={trackLandAnimation}
+        folderReorderLandAnimation={folderReorderLandAnimation}
+        trackDragActive={Boolean(activeTrackDragId)}
+        suppressFolderClickRef={suppressFolderClickRef}
       />
       <CommentsPanel
         isOpen={commentsPanelOpen}
@@ -508,6 +773,26 @@ function AppContent() {
       />
       <AudioPlayer onSoundsLikeClick={openSoundsLikePanel} />
     </div>
+    <DragOverlay
+      dropAnimation={
+        activeDragFolder ? projectsFolderReorderDropAnimation : PROJECTS_TRACK_DROP_ANIMATION
+      }
+    >
+      {activeDragTrack ? (
+        <TrackDragThumbnail track={activeDragTrack} />
+      ) : activeDragFolder ? (
+        <FolderReorderDragOverlay
+          folder={activeDragFolder}
+          folderTree={folderTree}
+          panelWidth={projectsPanelWidth}
+          selectedFolderId={
+            location.pathname === ROUTE_PROJECT_DETAILS ? activeProjectFolderId : null
+          }
+          folderReorderLandAnimation={folderReorderLandAnimation}
+        />
+      ) : null}
+    </DragOverlay>
+    </DndContext>
   );
 }
 

@@ -26,6 +26,9 @@ function unregisterMenu(group, instanceId) {
   if (groupMenus.size === 0) openMenusByGroup.delete(group);
 }
 
+/** Shared group for search results toolbar menus (Customize, Sort, etc.). */
+export const SEARCH_RESULTS_TOOLBAR_MENU_GROUP = 'search-results-toolbar-menu';
+
 /**
  * Anchored overflow menu: positions on open (sync + layout), portals reliably,
  * ignores the opening pointer event for outside-close, and closes siblings in the same group.

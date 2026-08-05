@@ -4,8 +4,7 @@
  */
 import { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import { ICON_REFRESH, ICON_DELETE } from '../constants/designSystem';
-
-const TRACK_THUMBNAILS = ['/project-thumb-1.png', '/project-thumb-2.png', '/project-thumb-3.png', '/project-thumb-4.png'];
+import { TRACK_THUMBNAILS, getTrackThumbSrc } from './trackThumb';
 
 const WAVEFORMS = ['/waveform.png', '/waveform2.png', '/waveform3.png', '/waveform4.png'];
 
@@ -153,10 +152,7 @@ function SoundsLikePanel({
     : sourceTracks.slice(0, collapsedStackLayout.visible);
   const hiddenSourceTrackCount = showExpandedSourceTracks ? 0 : collapsedStackLayout.overflow;
 
-  const getSourceThumbSrc = (track) => {
-    const thumbIndex = ((track.num ?? 1) - 1) % TRACK_THUMBNAILS.length;
-    return TRACK_THUMBNAILS[thumbIndex];
-  };
+  const getSourceThumbSrc = (track) => getTrackThumbSrc(track);
 
   useEffect(() => {
     if (!resizeRef.current || !onWidthChange || !isOpen) return;

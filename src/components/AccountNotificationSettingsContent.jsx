@@ -6,20 +6,7 @@ import {
   MUTED_PROJECTS,
 } from '../constants/accountNotificationSettings';
 
-function NotificationSettingsToggle({ label, checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      className={`account-notification-settings-toggle${checked ? ' account-notification-settings-toggle--on' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="account-notification-settings-toggle__slider" aria-hidden="true" />
-    </button>
-  );
-}
+import Toggle from './Toggle';
 
 export default function AccountNotificationSettingsContent({ className = '' }) {
   const [allowNotifications, setAllowNotifications] = useState(() => ({
@@ -56,9 +43,10 @@ export default function AccountNotificationSettingsContent({ className = '' }) {
                   <span className="account-notification-settings-row__label">{label}</span>
                   <span className="account-notification-settings-row__description">{description}</span>
                 </div>
-                <NotificationSettingsToggle
+                <Toggle
                   label={label}
                   checked={allowNotifications[id]}
+                  accent
                   onChange={(enabled) => handleAllowChange(id, enabled)}
                 />
               </li>
@@ -79,9 +67,10 @@ export default function AccountNotificationSettingsContent({ className = '' }) {
               <li key={id} className="account-notification-settings-project-card">
                 <div className="account-notification-settings-row account-notification-settings-row--project">
                   <span className="account-notification-settings-row__label">{name}</span>
-                  <NotificationSettingsToggle
+                  <Toggle
                     label={`Allow notifications for ${name}`}
                     checked={allowed}
+                    accent
                     onChange={(enabled) => handleProjectAllowChange(id, enabled)}
                   />
                 </div>
