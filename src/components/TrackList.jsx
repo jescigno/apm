@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, Fragment } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import {
   DndContext,
   DragOverlay,
@@ -24,6 +24,8 @@ import ProjectFolderRow from './ProjectFolderRow';
 import CustomizeViewMenu from './CustomizeViewMenu';
 import SearchCustomizeViewMenu from './SearchCustomizeViewMenu';
 import SearchSortMenu from './SearchSortMenu';
+import ProjectCustomizeMenus from './ProjectCustomizeMenus';
+import ToolbarIconButton, { PlayAllIcon } from './ToolbarIconButton';
 import { usePlayer } from '../context/PlayerContext';
 import { getFolderTrackCount } from '../constants/projectsPanelTree';
 import { getTrackDragId } from '../constants/projectsPanelDnD';
@@ -32,8 +34,17 @@ import {
   trackReorderDropAnimation,
   TRACK_REORDER_DROP_ANIMATION_MS,
   TRACK_REORDER_LAND_MS,
+  TRACK_REORDER_INTERACTION_MODE,
+  TRACK_REORDER_INTERACTION_HOLD_DRAG,
+  PROJECTS_DND_HOLD_MS,
+  PROJECTS_DND_HOLD_TOLERANCE_PX,
+  TRACK_REORDER_FLIP_MS,
+  captureTrackRowRects,
+  computeTrackRowFlipOffsets,
+  getTrackRowElement,
 } from '../constants/trackReorderDnD';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
+import { DEFAULT_PROJECT_CUSTOMIZE } from '../constants/projectTrackCustomize';
 import { ICON_SOUNDS_LIKE, ICON_CUSTOMIZE, ICON_REORDER, ICON_FAVORITE_OUTLINE } from '../constants/designSystem';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
@@ -379,8 +390,16 @@ function TracksSelectionBar({
   );
 }
 
-function getReorderDropIndicator({ trackId, isMultiDragActive, activeDragId, activeOverId, selectedIds, tracks }) {
-  if (!isMultiDragActive || !activeDragId || !activeOverId || trackId !== activeOverId) {
+function getReorderDropIndicator({
+  trackId,
+  isMultiDragActive,
+  activeDragId,
+  activeOverId,
+  selectedIds,
+  tracks,
+  useLineDropIndicator = false,
+}) {
+  if (!activeDragId || !activeOverId || trackId !== activeOverId) {
     return null;
   }
   if (selectedIds.has(trackId)) {
@@ -390,6 +409,10 @@ function getReorderDropIndicator({ trackId, isMultiDragActive, activeDragId, act
   const activeIndex = tracks.findIndex((track) => track.id === activeDragId);
   const overIndex = tracks.findIndex((track) => track.id === activeOverId);
   if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) {
+    return null;
+  }
+
+  if (!useLineDropIndicator && !isMultiDragActive) {
     return null;
   }
 
@@ -408,6 +431,10 @@ function TrackReorderDropSlot({ compact, mobileTrackLayout }) {
   return <div className={className} aria-hidden="true" />;
 }
 
+function TrackReorderDropLine() {
+  return <div className="track-reorder-drop-line" aria-hidden="true" />;
+}
+
 function SortableTrackRow({
   track,
   isSelected,
@@ -415,10 +442,21 @@ function SortableTrackRow({
   isMultiDragActive = false,
   onReorderRowClick,
   trackReorderLandAnimation = null,
+  showReorderModeUi = false,
+  useLineDropIndicator = false,
+  flipOffset = null,
+  isFlipAnimating = false,
+  isHiddenDuringSettle = false,
   ...trackRowProps
 }) {
+  const [isPointerDown, setIsPointerDown] = useState(false);
+
   const isCompanionSlot =
-    isMultiDragActive && isSelected && activeDragId != null && track.id !== activeDragId;
+    !useLineDropIndicator &&
+    isMultiDragActive &&
+    isSelected &&
+    activeDragId != null &&
+    track.id !== activeDragId;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: track.id,
@@ -426,9 +464,52 @@ function SortableTrackRow({
     disabled: isCompanionSlot,
   });
 
+  useEffect(() => {
+    if (!isPointerDown) return undefined;
+    const clearPointerDown = () => setIsPointerDown(false);
+    window.addEventListener('pointerup', clearPointerDown, { capture: true });
+    window.addEventListener('pointercancel', clearPointerDown, { capture: true });
+    return () => {
+      window.removeEventListener('pointerup', clearPointerDown, { capture: true });
+      window.removeEventListener('pointercancel', clearPointerDown, { capture: true });
+    };
+  }, [isPointerDown]);
+
+  useEffect(() => {
+    if (!isDragging && activeDragId == null) {
+      setIsPointerDown(false);
+    }
+  }, [activeDragId, isDragging]);
+
+  const sortableListeners = useMemo(() => {
+    if (!useLineDropIndicator || !listeners) return listeners;
+    return {
+      ...listeners,
+      onPointerDown: (event) => {
+        listeners.onPointerDown?.(event);
+        setIsPointerDown(true);
+      },
+    };
+  }, [listeners, useLineDropIndicator]);
+
+  const isGrabbed =
+    useLineDropIndicator &&
+    (isPointerDown ||
+      isDragging ||
+      (isMultiDragActive && isSelected && activeDragId != null));
+
+  const freezeLayout = useLineDropIndicator && (activeDragId != null || isFlipAnimating);
+  const flipTransform =
+    flipOffset != null ? `translate3d(0, ${flipOffset}px, 0)` : null;
+  const sortableTransform = CSS.Transform.toString(transform);
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: flipTransform ?? (freezeLayout ? undefined : sortableTransform || undefined),
+    transition: isFlipAnimating
+      ? `transform ${TRACK_REORDER_FLIP_MS}ms cubic-bezier(0.2, 0, 0, 1)`
+      : freezeLayout
+        ? undefined
+        : transition,
+    zIndex: flipOffset != null && Math.abs(flipOffset) > 1 ? 2 : undefined,
   };
 
   if (isCompanionSlot) {
@@ -446,25 +527,73 @@ function SortableTrackRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`track-row-sortable${isDragging ? ' track-row-sortable--placeholder' : ''}${isDragging && isMultiDragActive ? ' track-row-sortable--multi-drag-active' : ''}${isSelected ? ' track-row-sortable--selected' : ''}`}
+      data-track-id={track.id}
+      className={`track-row-sortable${isDragging && !useLineDropIndicator ? ' track-row-sortable--placeholder' : ''}${isDragging && useLineDropIndicator ? ' track-row-sortable--drag-in-place' : ''}${isDragging && isMultiDragActive && !useLineDropIndicator ? ' track-row-sortable--multi-drag-active' : ''}${isFlipAnimating ? ' track-row-sortable--flip-animating' : ''}${isHiddenDuringSettle ? ' track-row-sortable--settle-hidden' : ''}${isSelected ? ' track-row-sortable--selected' : ''}`}
       {...attributes}
-      {...listeners}
+      {...sortableListeners}
     >
       <TrackRow
         track={track}
-        reorderMode
-        isSortableDragging={isDragging}
+        reorderMode={showReorderModeUi}
+        isSortableDragging={useLineDropIndicator ? false : isDragging}
+        isGrabbed={isGrabbed}
         isSelected={isSelected}
         onReorderRowClick={onReorderRowClick}
-        trackReorderLandAnimation={trackReorderLandAnimation}
+        trackReorderLandAnimation={useLineDropIndicator ? null : trackReorderLandAnimation}
         {...trackRowProps}
       />
     </div>
   );
 }
 
+function TrackReorderSettleGhost({ ghost, onComplete }) {
+  const nodeRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const node = nodeRef.current;
+    if (!node) return undefined;
+
+    node.style.transform = 'translate3d(0, 0, 0)';
+    node.style.transition = 'none';
+
+    let completeTimer = null;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        node.style.transition = `transform ${TRACK_REORDER_FLIP_MS}ms cubic-bezier(0.2, 0, 0, 1)`;
+        node.style.transform = `translate3d(${ghost.deltaX}px, ${ghost.deltaY}px, 0)`;
+      });
+    });
+
+    completeTimer = window.setTimeout(onComplete, TRACK_REORDER_FLIP_MS + 40);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (completeTimer != null) window.clearTimeout(completeTimer);
+    };
+  }, [ghost, onComplete]);
+
+  return createPortal(
+    <div
+      ref={nodeRef}
+      className="track-reorder-settle-ghost"
+      style={{
+        position: 'fixed',
+        top: ghost.fromRect.top,
+        left: ghost.fromRect.left,
+        width: ghost.fromRect.width,
+        zIndex: 1200,
+        pointerEvents: 'none',
+      }}
+    >
+      <TrackRow track={ghost.track} {...ghost.rowProps} />
+    </div>,
+    document.body
+  );
+}
+
 function TrackReorderDragOverlay({ track, selectedCount }) {
   if (!track) return null;
+
   const isMultiMove = selectedCount > 1;
   return (
     <div className="track-reorder-drag-overlay">
@@ -481,7 +610,7 @@ function TrackReorderDragOverlay({ track, selectedCount }) {
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null, trackReorderInteraction = TRACK_REORDER_INTERACTION_MODE }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const compact = compactTrackRows ?? tabsInBreadcrumb;
   const gridView = trackViewMode === 'grid';
@@ -524,6 +653,13 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
   const [activeReorderSelectedCount, setActiveReorderSelectedCount] = useState(1);
   const [activeReorderOverId, setActiveReorderOverId] = useState(null);
   const [trackReorderLandAnimation, setTrackReorderLandAnimation] = useState(null);
+  const [trackFlipOffsets, setTrackFlipOffsets] = useState(null);
+  const [isFlipAnimating, setIsFlipAnimating] = useState(false);
+  const [settleGhost, setSettleGhost] = useState(null);
+  const [hiddenSettleTrackIds, setHiddenSettleTrackIds] = useState(null);
+  const flipAnimatingTimerRef = useRef(null);
+  const settleAnimatingTimerRef = useRef(null);
+  const settleRowPropsRef = useRef(null);
   const reorderDragActiveRef = useRef(false);
   const reorderOverlayClearTimerRef = useRef(null);
   const trackReorderLandTimerRef = useRef(null);
@@ -532,13 +668,43 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     headerActionsVariant !== 'search' &&
     Boolean(onTracksReorder) &&
     tracks.length > 1;
+  const useHoldDragReorder =
+    trackReorderInteraction === TRACK_REORDER_INTERACTION_HOLD_DRAG && canReorderTracks;
+  const isReorderActive = reorderMode || useHoldDragReorder;
+  const showReorderModeToggle = canReorderTracks && !useHoldDragReorder;
   const trackSortableIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
 
-  const reorderSensors = useSensors(
+  const projectCustomizeMenu =
+    onSearchCustomizeChange && headerActionsVariant !== 'search' ? (
+      <ProjectCustomizeMenus
+        value={searchCustomize ?? DEFAULT_PROJECT_CUSTOMIZE}
+        onChange={onSearchCustomizeChange}
+      />
+    ) : null;
+
+  const holdDragReorderSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: PROJECTS_DND_HOLD_MS,
+        tolerance: PROJECTS_DND_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: PROJECTS_DND_HOLD_MS,
+        tolerance: PROJECTS_DND_HOLD_TOLERANCE_PX,
+      },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const reorderModeSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const reorderSensors = useHoldDragReorder ? holdDragReorderSensors : reorderModeSensors;
 
   useEffect(() => {
     setReorderMode(false);
@@ -586,7 +752,34 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       window.clearTimeout(trackReorderLandTimerRef.current);
       trackReorderLandTimerRef.current = null;
     }
+    if (flipAnimatingTimerRef.current != null) {
+      window.clearTimeout(flipAnimatingTimerRef.current);
+      flipAnimatingTimerRef.current = null;
+    }
+    if (settleAnimatingTimerRef.current != null) {
+      window.clearTimeout(settleAnimatingTimerRef.current);
+      settleAnimatingTimerRef.current = null;
+    }
   }, []);
+
+  const clearSettleGhost = useCallback(() => {
+    setSettleGhost(null);
+    setHiddenSettleTrackIds(null);
+    if (settleAnimatingTimerRef.current != null) {
+      window.clearTimeout(settleAnimatingTimerRef.current);
+      settleAnimatingTimerRef.current = null;
+    }
+  }, []);
+
+  const clearSettleAnimation = useCallback(() => {
+    clearSettleGhost();
+    setTrackFlipOffsets(null);
+    setIsFlipAnimating(false);
+    if (flipAnimatingTimerRef.current != null) {
+      window.clearTimeout(flipAnimatingTimerRef.current);
+      flipAnimatingTimerRef.current = null;
+    }
+  }, [clearSettleGhost]);
 
   const handleReorderRowClick = useCallback((trackId) => {
     if (reorderDragActiveRef.current) return;
@@ -640,9 +833,91 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       const activeId = String(active.id);
       const overId = String(over.id);
       const movingIds = selectedIds.has(activeId) ? [...selectedIds] : [activeId];
-      onTracksReorder?.(activeId, overId, movingIds);
 
       clearReorderOverlayTimers();
+
+      if (useHoldDragReorder) {
+        const draggedTrack = event.active.data.current?.track;
+        if (!draggedTrack) {
+          finishWithoutReorder();
+          return;
+        }
+
+        const movingIdSet = new Set(movingIds.map(String));
+        const beforeRects = captureTrackRowRects(trackSortableIds);
+        const fromRect = getTrackRowElement(activeId)?.getBoundingClientRect();
+
+        setActiveReorderTrack(null);
+        setActiveReorderSelectedCount(1);
+        setActiveReorderOverId(null);
+        reorderDragActiveRef.current = false;
+
+        flushSync(() => {
+          onTracksReorder?.(activeId, overId, movingIds);
+        });
+
+        const toRect = getTrackRowElement(activeId)?.getBoundingClientRect();
+        const rowProps = settleRowPropsRef.current?.(draggedTrack);
+
+        if (fromRect && toRect && rowProps) {
+          const deltaX = toRect.left - fromRect.left;
+          const deltaY = toRect.top - fromRect.top;
+
+          if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
+            flushSync(() => {
+              setHiddenSettleTrackIds(movingIdSet);
+              setSettleGhost({
+                track: draggedTrack,
+                rowProps,
+                fromRect: {
+                  top: fromRect.top,
+                  left: fromRect.left,
+                  width: fromRect.width,
+                },
+                deltaX,
+                deltaY,
+              });
+            });
+          }
+        }
+
+        const siblingIds = trackSortableIds.filter((id) => !movingIdSet.has(String(id)));
+        const siblingOffsets = computeTrackRowFlipOffsets(beforeRects, siblingIds);
+
+        if (Object.keys(siblingOffsets).length > 0) {
+          flushSync(() => {
+            setTrackFlipOffsets(siblingOffsets);
+            setIsFlipAnimating(true);
+          });
+
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+              setTrackFlipOffsets((prev) => {
+                if (!prev) return prev;
+                const settled = {};
+                for (const id of Object.keys(prev)) settled[id] = 0;
+                return settled;
+              });
+            });
+          });
+
+          flipAnimatingTimerRef.current = window.setTimeout(() => {
+            flipAnimatingTimerRef.current = null;
+            setTrackFlipOffsets(null);
+            setIsFlipAnimating(false);
+          }, TRACK_REORDER_FLIP_MS + 48);
+        }
+
+        settleAnimatingTimerRef.current = window.setTimeout(() => {
+          settleAnimatingTimerRef.current = null;
+          clearSettleGhost();
+        }, TRACK_REORDER_FLIP_MS + 64);
+
+        return;
+      }
+
+      onTracksReorder?.(activeId, overId, movingIds);
+
       trackReorderLandTimerRef.current = window.setTimeout(() => {
         trackReorderLandTimerRef.current = null;
         setActiveReorderTrack(null);
@@ -656,24 +931,26 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
         reorderDragActiveRef.current = false;
       }, TRACK_REORDER_DROP_ANIMATION_MS + TRACK_REORDER_LAND_MS);
     },
-    [clearReorderOverlayTimers, onTracksReorder, scheduleReorderOverlayClear, selectedIds]
+    [clearReorderOverlayTimers, clearSettleGhost, onTracksReorder, scheduleReorderOverlayClear, selectedIds, trackSortableIds, useHoldDragReorder]
   );
 
   const handleReorderDragCancel = useCallback(() => {
     clearReorderOverlayTimers();
+    clearSettleAnimation();
     setActiveReorderTrack(null);
     setActiveReorderSelectedCount(1);
     setActiveReorderOverId(null);
     setTrackReorderLandAnimation(null);
     reorderDragActiveRef.current = false;
-  }, [clearReorderOverlayTimers]);
+  }, [clearReorderOverlayTimers, clearSettleAnimation]);
 
   useEffect(() => {
-    if (!reorderMode) {
+    if (!isReorderActive) {
       clearReorderOverlayTimers();
+      clearSettleAnimation();
       setTrackReorderLandAnimation(null);
     }
-  }, [clearReorderOverlayTimers, reorderMode]);
+  }, [clearReorderOverlayTimers, clearSettleAnimation, isReorderActive]);
 
   useEffect(() => {
     return () => clearReorderOverlayTimers();
@@ -799,9 +1076,10 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     tracks.length === 0 &&
     !hasChildFolders;
 
-  const searchCustomizeMenu = onSearchCustomizeChange ? (
-    <SearchCustomizeViewMenu value={searchCustomize} onChange={onSearchCustomizeChange} />
-  ) : null;
+  const searchCustomizeMenu =
+    onSearchCustomizeChange && headerActionsVariant === 'search' ? (
+      <SearchCustomizeViewMenu value={searchCustomize} onChange={onSearchCustomizeChange} />
+    ) : null;
 
   const searchSortMenu = onSearchSortByChange ? (
     <SearchSortMenu value={searchSortBy} onChange={onSearchSortByChange} />
@@ -826,7 +1104,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
   ) : (
     !showEmptyProjectState && (
       <>
-        {canReorderTracks && (
+        {showReorderModeToggle && (
           <button
             type="button"
             className={reorderMode ? 'btn-invite btn-reorder-done' : 'btn-secondary'}
@@ -839,14 +1117,10 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
         )}
         {!reorderMode && (
           <>
-            <button type="button" className="btn-secondary btn-play-all" onClick={handlePlayAll}>
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY ALL
-            </button>
-            {onTrackViewModeChange ? (
-              <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
-            ) : (
-              <button type="button" className="btn-secondary"><img src={ICON_CUSTOMIZE} alt="" /> CUSTOMIZE</button>
-            )}
+            {projectCustomizeMenu}
+            <ToolbarIconButton label="Play All" onClick={handlePlayAll}>
+              <PlayAllIcon />
+            </ToolbarIconButton>
           </>
         )}
       </>
@@ -879,8 +1153,21 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     selectedIds,
     onSelectChange: handleSelectChange,
     enableTrackDragToFolder: enableTrackDragToFolder && !reorderMode,
+    enableHoldDragReorder: useHoldDragReorder,
     sourceFolderId,
   };
+
+  settleRowPropsRef.current = (track) => ({
+    ...trackRowProps,
+    track,
+    isCurrentTrack: isCurrentTrack(track),
+    titleBadge: trackTitleBadges?.[track.num],
+    enterHighlight:
+      enterHighlightTrackNum != null &&
+      Number(track.num) === Number(enterHighlightTrackNum),
+    isSelected: selectedIds.has(track.id),
+    isTrackDragSource: activeTrackDragId === getTrackDragId(track.id),
+  });
 
   const isMultiDragActive =
     Boolean(activeReorderTrack) && activeReorderSelectedCount > 1;
@@ -898,7 +1185,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
         isSelected: selectedIds.has(track.id),
         isTrackDragSource: activeTrackDragId === getTrackDragId(track.id),
       };
-      if (reorderMode) {
+      if (isReorderActive) {
         const dropIndicator = getReorderDropIndicator({
           trackId: track.id,
           isMultiDragActive,
@@ -906,12 +1193,16 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
           activeOverId: activeReorderOverId,
           selectedIds,
           tracks,
+          useLineDropIndicator: useHoldDragReorder,
         });
-
         return (
           <Fragment key={`track-${track.id}`}>
             {dropIndicator === 'before' ? (
-              <TrackReorderDropSlot compact={compact} mobileTrackLayout={mobileTrackLayout} />
+              useHoldDragReorder ? (
+                <TrackReorderDropLine />
+              ) : (
+                <TrackReorderDropSlot compact={compact} mobileTrackLayout={mobileTrackLayout} />
+              )
             ) : null}
             <SortableTrackRow
               track={track}
@@ -919,11 +1210,20 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               activeDragId={activeReorderTrack?.id ?? null}
               isMultiDragActive={isMultiDragActive}
               onReorderRowClick={handleReorderRowClick}
-              trackReorderLandAnimation={trackReorderLandAnimation}
+              trackReorderLandAnimation={useHoldDragReorder ? null : trackReorderLandAnimation}
+              showReorderModeUi={reorderMode}
+              useLineDropIndicator={useHoldDragReorder}
+              flipOffset={trackFlipOffsets?.[track.id] ?? null}
+              isFlipAnimating={isFlipAnimating}
+              isHiddenDuringSettle={hiddenSettleTrackIds?.has(String(track.id)) ?? false}
               {...sharedProps}
             />
             {dropIndicator === 'after' ? (
-              <TrackReorderDropSlot compact={compact} mobileTrackLayout={mobileTrackLayout} />
+              useHoldDragReorder ? (
+                <TrackReorderDropLine />
+              ) : (
+                <TrackReorderDropSlot compact={compact} mobileTrackLayout={mobileTrackLayout} />
+              )
             ) : null}
           </Fragment>
         );
@@ -933,7 +1233,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
 
   const trackRowsContent =
     activeTab === 'tracks' && !showGridView ? (
-      reorderMode ? (
+      isReorderActive ? (
         <DndContext
           sensors={reorderSensors}
           collisionDetection={closestCenter}
@@ -945,7 +1245,12 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
           <SortableContext items={trackSortableIds} strategy={verticalListSortingStrategy}>
             {renderTrackRows()}
           </SortableContext>
-          <DragOverlay dropAnimation={trackReorderDropAnimation} modifiers={[snapTrackReorderOverlayToCursor]}>
+          <DragOverlay
+            dropAnimation={useHoldDragReorder ? null : trackReorderDropAnimation}
+            modifiers={[snapTrackReorderOverlayToCursor]}
+            className="track-drag-overlay-shell"
+            style={{ width: 'auto', height: 'auto' }}
+          >
             {activeReorderTrack ? (
               <TrackReorderDragOverlay
                 track={activeReorderTrack}
@@ -960,7 +1265,10 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     ) : null;
 
   return (
-    <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}${condensedViewActions ? ' tracks-section--condensed-view' : ''}${defaultListView ? ' tracks-section--default-view' : ''}${simplifiedViewActions ? ' tracks-section--simplified-view' : ''}${showGridView ? ' tracks-section--grid-view' : ''}${showGridView && searchCustomize?.posterSize ? ` tracks-section--grid-poster-${searchCustomize.posterSize}` : ''}${showEmptyProjectState ? ' tracks-section--empty-project' : ''}${reorderMode ? ' tracks-section--reorder-mode' : ''}`}>
+    <div className={`tracks-section${sectionClassName ? ` ${sectionClassName}` : ''}${condensedViewActions ? ' tracks-section--condensed-view' : ''}${defaultListView ? ' tracks-section--default-view' : ''}${simplifiedViewActions ? ' tracks-section--simplified-view' : ''}${showGridView ? ' tracks-section--grid-view' : ''}${showGridView && searchCustomize?.posterSize ? ` tracks-section--grid-poster-${searchCustomize.posterSize}` : ''}${showEmptyProjectState ? ' tracks-section--empty-project' : ''}${reorderMode ? ' tracks-section--reorder-mode' : ''}${useHoldDragReorder ? ' tracks-section--hold-drag-reorder' : ''}`}>
+      {settleGhost ? (
+        <TrackReorderSettleGhost ghost={settleGhost} onComplete={clearSettleGhost} />
+      ) : null}
       {selectionBarHostRef ? (
         <SelectionBarPortal hostRef={selectionBarHostRef} active={portalSelectionBar}>
           {selectionBar}
@@ -1028,10 +1336,15 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                   </>
                 ) : !showEmptyProjectState ? (
                   <>
-                    {!reorderMode && onTrackViewModeChange ? (
-                      <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
+                    {!reorderMode && projectCustomizeMenu}
+                    {!reorderMode ? (
+                      <>
+                        <ToolbarIconButton label="Play All" onClick={handlePlayAll}>
+                          <PlayAllIcon />
+                        </ToolbarIconButton>
+                      </>
                     ) : null}
-                    {canReorderTracks ? (
+                    {showReorderModeToggle ? (
                       <button
                         type="button"
                         className={`${reorderMode ? 'btn-invite btn-reorder-done' : 'btn-secondary tracks-mobile-toolbar-reorder'}`.trim()}

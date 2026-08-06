@@ -573,7 +573,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, enableHoldDragReorder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, isGrabbed = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
   const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -669,6 +669,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     <div
       ref={canDragTrackToFolder ? setTrackDragRef : undefined}
       className={`track-thumb-wrap${className.includes('mobile') ? ' track-thumb-wrap--mobile' : ''}${canDragTrackToFolder ? ' track-thumb-wrap--draggable' : ''}${showTrackDragPlaceholder ? ' track-thumb-wrap--dragging' : ''}`}
+      onPointerDown={enableHoldDragReorder ? (event) => event.stopPropagation() : undefined}
       {...(canDragTrackToFolder ? trackDragAttributes : {})}
       {...(canDragTrackToFolder ? trackDragListeners : {})}
     >
@@ -861,7 +862,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
     return (
       <div
-        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
+        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
         data-track-num={item.num}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -973,6 +974,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           </div>,
           document.body
         )}
+        {renderReorderLandSweep()}
       </div>
     );
   }
@@ -981,7 +983,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     <>
     <div className={`track-row-group${stemsOpen ? ' track-row-group--stems-open' : ''}`}>
     <div
-      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
+      className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
       data-track-num={item.num}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -1002,7 +1004,6 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           </div>
           <p className="track-desc">{item.desc}</p>
           {renderReorderDotsCol()}
-          {renderReorderLandSweep()}
         </>
       ) : (
         <>
@@ -1183,6 +1184,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
       />
         </>
       )}
+      {renderReorderLandSweep()}
     </div>
     {stemsOpen && !reorderMode && stemItems.length > 0 && (
       <div

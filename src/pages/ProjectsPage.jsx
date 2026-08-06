@@ -3,6 +3,12 @@ import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
 import ProjectCollabBar from '../components/ProjectCollabBar';
 import TrackList from '../components/TrackList';
+import { TRACK_REORDER_INTERACTION_HOLD_DRAG } from '../constants/trackReorderDnD';
+import {
+  DEFAULT_PROJECT_CUSTOMIZE,
+  getProjectTrackViewMode,
+  isProjectCompactList,
+} from '../constants/projectTrackCustomize';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import {
   CURRENT_PROJECT_FOLDER_ID,
@@ -155,7 +161,8 @@ export default function ProjectsPage({
       : activeFolder?.description ?? '';
 
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
-  const [trackViewMode, setTrackViewMode] = useState('expanded');
+  const [projectCustomize, setProjectCustomize] = useState(DEFAULT_PROJECT_CUSTOMIZE);
+  const trackViewMode = getProjectTrackViewMode(projectCustomize);
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
     const sync = () => setHideTracksHeader(mq.matches);
@@ -228,20 +235,17 @@ export default function ProjectsPage({
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
-        compactTrackRows={trackViewMode === 'condensed' || trackViewMode === 'simplified'}
+        compactTrackRows={isProjectCompactList(projectCustomize)}
         trackViewMode={trackViewMode}
-        onTrackViewModeChange={setTrackViewMode}
-        customizeViewOptions={[
-          { id: 'condensed', label: 'Condensed' },
-          { id: 'simplified', label: 'Simplified' },
-          { id: 'expanded', label: 'Expanded' },
-        ]}
+        searchCustomize={projectCustomize}
+        onSearchCustomizeChange={setProjectCustomize}
         emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."
         enableTrackDragToFolder={enableTrackDragToFolder}
         sourceFolderId={activeFolderId}
         activeTrackDragId={activeTrackDragId}
         onTracksReorder={onTracksReorder}
+        trackReorderInteraction={TRACK_REORDER_INTERACTION_HOLD_DRAG}
       />
     </div>
   );

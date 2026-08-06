@@ -59,6 +59,10 @@ import {
   getFolderDropTargetId,
 } from './constants/projectsPanelDnD';
 import {
+  ensureLivePointerTracking,
+  snapTrackReorderOverlayToCursor,
+} from './constants/trackReorderDnD';
+import {
   resolveFolderTracks,
   reorderFolderTracksSelection,
   moveTrackBetweenFolders,
@@ -334,6 +338,10 @@ function AppContent() {
         window.clearTimeout(folderReorderLandTimerRef.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    ensureLivePointerTracking();
   }, []);
 
   useEffect(() => {
@@ -777,6 +785,9 @@ function AppContent() {
       dropAnimation={
         activeDragFolder ? projectsFolderReorderDropAnimation : PROJECTS_TRACK_DROP_ANIMATION
       }
+      modifiers={activeDragTrack ? [snapTrackReorderOverlayToCursor] : undefined}
+      className={activeDragTrack ? 'track-drag-overlay-shell' : undefined}
+      style={activeDragTrack ? { width: 'auto', height: 'auto' } : undefined}
     >
       {activeDragTrack ? (
         <TrackDragThumbnail track={activeDragTrack} />
