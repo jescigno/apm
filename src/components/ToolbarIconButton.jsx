@@ -1,12 +1,15 @@
+import { ICON_SHUFFLE } from '../constants/designSystem';
+
 export default function ToolbarIconButton({ label, onClick, className = '', children }) {
   return (
     <button
       type="button"
       className={`btn-secondary tracks-toolbar-action-btn${className ? ` ${className}` : ''}`}
       onClick={onClick}
+      aria-label={label}
     >
       {children}
-      {label}
+      <span className="tracks-toolbar-btn-label">{label}</span>
     </button>
   );
 }
@@ -28,5 +31,16 @@ export function PlayAllIcon() {
         d="M16.0274 10.1332L6.21875 4.48047V15.7859L16.0274 10.1332Z"
       />
     </svg>
+  );
+}
+
+export function ShuffleIcon() {
+  return (
+    <img
+      className="tracks-toolbar-shuffle-icon"
+      src={ICON_SHUFFLE}
+      alt=""
+      aria-hidden
+    />
   );
 }

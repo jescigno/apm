@@ -472,6 +472,7 @@ export const ICON_COMMENTS = '/icons/comments.svg';
 export const ICON_COMMENTS_ACTIVE = '/icons/comments-active.svg';
 export const ICON_TRACK_DETAILS = '/icons/TrackDetails.svg';
 export const ICON_SORT = '/icons/sort.svg';
+export const ICON_SHUFFLE = '/icons/shuffle.svg';
 export const ICON_REFRESH = '/icons/refresh.svg';
 export const ICON_SEARCH = '/icons/search.svg';
 export const ICON_MORE_MENU = '/icons/moreMenu.svg';

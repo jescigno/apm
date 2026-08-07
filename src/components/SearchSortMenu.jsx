@@ -6,6 +6,7 @@ import {
   SEARCH_SORT_DIRECTIONS,
   SEARCH_SORT_OPTIONS,
   getSearchSortDirectionLabel,
+  getSearchSortActiveLabel,
 } from '../constants/searchResultsSort';
 import {
   registerOverflowMenuOpen,
@@ -125,6 +126,8 @@ export default function SearchSortMenu({
     selectSort(field, nextDirection);
   };
 
+  const activeSortLabel = getSearchSortActiveLabel(value);
+
   const menu = open && createPortal(
     <div
       data-search-sort-menu-portal
@@ -197,9 +200,13 @@ export default function SearchSortMenu({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={toggleOpen}
+        aria-label={`Sort by ${activeSortLabel}`}
       >
         <img src={ICON_SORT} alt="" />
-        SORT
+        <span className="tracks-toolbar-btn-label">
+          SORT{' '}
+          <span className="search-sort-menu-trigger-value">{activeSortLabel}</span>
+        </span>
       </button>
       {menu}
     </div>

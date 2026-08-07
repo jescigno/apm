@@ -20,6 +20,7 @@ import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/o
 import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
 import { useDraggable } from '@dnd-kit/core';
 import { getTrackDragId } from '../constants/projectsPanelDnD';
+import { TRACK_REORDER_HINT_DELAY_MS } from '../constants/trackReorderDnD';
 import { getTrackThumbStyle } from './trackThumb';
 
 function getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject = false } = {}) {
@@ -423,17 +424,24 @@ function useHoverTooltip() {
   return { triggerRef, isHovered, tooltipRect, bindHover };
 }
 
-function HoverTooltipPortal({ text, tooltipRect, multiline = false }) {
+function HoverTooltipPortal({ text, tooltipRect, multiline = false, nearCursor = false }) {
   if (!text || !tooltipRect) return null;
 
   return createPortal(
     <span
-      className={`app-hover-tooltip app-hover-tooltip-portal${multiline ? ' app-hover-tooltip--multiline' : ''}`}
+      className={`app-hover-tooltip app-hover-tooltip-portal${multiline ? ' app-hover-tooltip--multiline' : ''}${nearCursor ? ' app-hover-tooltip-portal--cursor' : ''}`}
       role="tooltip"
-      style={{
-        left: tooltipRect.left,
-        bottom: window.innerHeight - tooltipRect.top + 6,
-      }}
+      style={
+        nearCursor
+          ? {
+              left: tooltipRect.left,
+              top: tooltipRect.top,
+            }
+          : {
+              left: tooltipRect.left,
+              bottom: window.innerHeight - tooltipRect.top + 6,
+            }
+      }
     >
       {text}
     </span>,
@@ -591,6 +599,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const popoverCommentInputRef = useRef(null);
   const commentBtnRef = useRef(null);
   const trackCheckboxRef = useRef(null);
+  const reorderHintTimerRef = useRef(null);
+  const reorderHintPointRef = useRef(null);
+  const [showReorderHint, setShowReorderHint] = useState(false);
+  const [reorderHintPoint, setReorderHintPoint] = useState(null);
   const getMobileMenuStyle = useCallback(
     (triggerEl) => getMenuDropdownStyle(triggerEl, { compact: true, showRemoveFromProject }),
     [showRemoveFromProject]
@@ -658,6 +670,65 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const thumbStyle = getTrackThumbStyle(item, isAlbum);
   const canDragTrackToFolder = enableTrackDragToFolder && !reorderMode && !isAlbum && Boolean(track?.id);
   const showSortablePlaceholder = isSortableDragging;
+  const canShowReorderHint =
+    enableHoldDragReorder &&
+    !reorderMode &&
+    !mobileTrackLayout &&
+    !isAlbum &&
+    !isGrabbed &&
+    !isSortableDragging &&
+    !showSortablePlaceholder;
+
+  const updateReorderHintPoint = useCallback((event) => {
+    const point = { left: event.clientX, top: event.clientY };
+    reorderHintPointRef.current = point;
+    if (showReorderHint) {
+      setReorderHintPoint(point);
+    }
+  }, [showReorderHint]);
+
+  const handleRowMouseEnter = useCallback((event) => {
+    setIsHovered(true);
+    updateReorderHintPoint(event);
+  }, [updateReorderHintPoint]);
+
+  const handleRowMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    reorderHintPointRef.current = null;
+    setReorderHintPoint(null);
+  }, []);
+
+  useEffect(() => {
+    if (!canShowReorderHint || !isHovered) {
+      if (reorderHintTimerRef.current != null) {
+        window.clearTimeout(reorderHintTimerRef.current);
+        reorderHintTimerRef.current = null;
+      }
+      setShowReorderHint(false);
+      return undefined;
+    }
+
+    reorderHintTimerRef.current = window.setTimeout(() => {
+      setShowReorderHint(true);
+      if (reorderHintPointRef.current) {
+        setReorderHintPoint(reorderHintPointRef.current);
+      }
+    }, TRACK_REORDER_HINT_DELAY_MS);
+
+    return () => {
+      if (reorderHintTimerRef.current != null) {
+        window.clearTimeout(reorderHintTimerRef.current);
+        reorderHintTimerRef.current = null;
+      }
+    };
+  }, [canShowReorderHint, isHovered]);
+
+  useEffect(() => {
+    if (!showReorderHint) {
+      setReorderHintPoint(null);
+    }
+  }, [showReorderHint]);
+
   const { attributes: trackDragAttributes, listeners: trackDragListeners, setNodeRef: setTrackDragRef, isDragging: isTrackDragging } = useDraggable({
     id: getTrackDragId(track?.id ?? item.id),
     data: { type: 'track', track: track ?? item, sourceFolderId },
@@ -985,8 +1056,9 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     <div
       className={`track-row${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${compact ? ' track-row-compact' : ''}${compact && showVersionsStems && !isAlbum ? ' track-row--compact-versions-stems' : ''}${compact && isAlbum && compactAlbumTallLayout ? ' track-row--compact-album' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${stemsOpen ? ' track-row--stems-open' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
       data-track-num={item.num}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleRowMouseEnter}
+      onMouseLeave={handleRowMouseLeave}
+      onMouseMove={canShowReorderHint ? updateReorderHintPoint : undefined}
       onClick={reorderMode ? handleReorderRowClick : undefined}
     >
       {enterHighlight && <span className="track-row-enter-highlight-flash" aria-hidden />}
@@ -1216,6 +1288,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
       </div>
     )}
     </div>
+      <HoverTooltipPortal
+        text={showReorderHint ? 'Drag to reorder' : null}
+        tooltipRect={reorderHintPoint}
+        nearCursor
+      />
       {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
         <div className="track-details-overlay">
           <div

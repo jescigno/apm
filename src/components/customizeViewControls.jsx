@@ -318,10 +318,11 @@ export function CustomizeToolbarDropdown({
         className={`btn-secondary project-customize-menu-trigger${open ? ' project-customize-menu-trigger--open' : ''}`}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label={ariaLabel}
         onClick={toggleOpen}
       >
         {icon}
-        {label}
+        <span className="tracks-toolbar-btn-label">{label}</span>
       </button>
       {menu}
     </div>

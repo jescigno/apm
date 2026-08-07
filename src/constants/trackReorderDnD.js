@@ -31,12 +31,38 @@ export const TRACK_REORDER_INTERACTION_MODE = 'reorder-mode';
 /** Hold anywhere on the row to drag; keeps the full track list UI. */
 export const TRACK_REORDER_INTERACTION_HOLD_DRAG = 'hold-drag';
 
+/** Delay before showing the drag-to-reorder hover hint. */
+export const TRACK_REORDER_HINT_DELAY_MS = 2000;
+
 export const trackReorderDropAnimation = {
   duration: TRACK_REORDER_DROP_ANIMATION_MS,
   easing: 'cubic-bezier(0.2, 0, 0, 1)',
 };
 
 export { PROJECTS_DND_HOLD_MS, PROJECTS_DND_HOLD_TOLERANCE_PX } from './projectsPanelDnD';
+
+export const FOLDER_REORDER_SORTABLE_PREFIX = 'folder-reorder:';
+
+export function toFolderSortableId(folderId) {
+  return `${FOLDER_REORDER_SORTABLE_PREFIX}${folderId}`;
+}
+
+export function parseFolderSortableId(sortableId) {
+  const id = String(sortableId);
+  return id.startsWith(FOLDER_REORDER_SORTABLE_PREFIX)
+    ? id.slice(FOLDER_REORDER_SORTABLE_PREFIX.length)
+    : null;
+}
+
+export function isFolderSortableId(sortableId) {
+  return String(sortableId).startsWith(FOLDER_REORDER_SORTABLE_PREFIX);
+}
+
+/** Find a sortable folder row element in the project track list. */
+export function getFolderRowElement(folderId) {
+  const id = String(folderId);
+  return document.querySelector(`[data-folder-id="${CSS.escape(id)}"]`);
+}
 
 /** Find a sortable track row element in the list. */
 export function getTrackRowElement(trackId) {

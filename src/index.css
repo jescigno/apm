@@ -3601,6 +3601,9 @@ html:has(.app-content-wrapper--projects) {
     background: var(--bg-page);
     min-height: 58px;
     box-sizing: border-box;
+    overflow: visible;
+    position: relative;
+    z-index: 51;
     /* Divider is the first track’s border-top only — avoid stacking with toolbar border-bottom. */
   }
 
@@ -3613,6 +3616,12 @@ html:has(.app-content-wrapper--projects) {
     min-width: 0;
     width: 100%;
     min-height: 36px;
+    overflow: visible;
+  }
+
+  .tracks-mobile-toolbar-default {
+    container-type: inline-size;
+    container-name: tracks-toolbar;
   }
 
   .tracks-mobile-toolbar-count {
@@ -3627,6 +3636,36 @@ html:has(.app-content-wrapper--projects) {
     align-items: center;
     gap: 0;
     margin-left: auto;
+    overflow: visible;
+  }
+
+  .tracks-mobile-toolbar-actions .tracks-toolbar-btn-label {
+    bottom: auto;
+    top: calc(100% + 6px);
+    z-index: 100;
+  }
+
+  .tracks-mobile-toolbar-actions :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):first-child .tracks-toolbar-btn-label {
+    left: 0;
+    transform: none;
+  }
+
+  .tracks-mobile-toolbar-actions :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):last-child .tracks-toolbar-btn-label {
+    left: auto;
+    right: 0;
+    transform: none;
   }
 
   .tracks-mobile-toolbar .btn-secondary.tracks-mobile-toolbar-reorder {
@@ -3769,12 +3808,7 @@ html:has(.app-content-wrapper--projects) {
   margin-right: 2px;
 }
 
-:is(.tracks-actions, .tracks-mobile-toolbar-actions) .project-customize-menu-trigger {
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.tracks-toolbar-action-btn {
+:is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.project-customize-menu-trigger, .customize-view-menu-trigger, .search-sort-menu-trigger, .tracks-toolbar-action-btn, .tracks-toolbar-reorder-btn) {
   border-radius: 6px;
   transition: background 0.2s;
 }
@@ -3793,8 +3827,12 @@ html:has(.app-content-wrapper--projects) {
   fill: var(--toolbar-play-icon);
 }
 
+[data-theme="light"] .tracks-toolbar-shuffle-icon {
+  filter: brightness(0);
+}
+
 @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
-  :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.project-customize-menu-trigger, .tracks-toolbar-action-btn):hover {
+  :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.project-customize-menu-trigger, .customize-view-menu-trigger, .search-sort-menu-trigger, .tracks-toolbar-action-btn, .tracks-toolbar-reorder-btn):hover {
     background: var(--surface-hover);
   }
 }
@@ -4086,6 +4124,11 @@ html:has(.app-content-wrapper--projects) {
 }
 
 /* Search sort dropdown */
+.search-sort-menu-trigger-value {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
 .search-sort-menu {
   display: flex;
   flex-direction: column;
@@ -4748,6 +4791,10 @@ html:has(.app-content-wrapper--projects) {
   opacity: 1;
   visibility: visible;
   z-index: 1100;
+}
+
+.app-hover-tooltip-portal--cursor {
+  transform: translate(-50%, calc(-100% - 8px));
 }
 
 /* ========== Project Card ========== */
@@ -7559,25 +7606,26 @@ html:has(.app-content-wrapper--projects) {
   cursor: grabbing;
 }
 
-.tracks-section--hold-drag-reorder .track-row-sortable {
+.tracks-section--reorder-mode .track-row-sortable {
   touch-action: none;
+  transition: none;
 }
 
-.tracks-section--hold-drag-reorder .track-row:not(.track-row--reorder-mode) {
-  cursor: grab;
+.tracks-section--reorder-mode .track-row-sortable[data-track-id] {
+  will-change: transform;
 }
 
-.tracks-section--hold-drag-reorder .track-row:not(.track-row--reorder-mode):active {
-  cursor: grabbing;
-}
-
-.tracks-section--hold-drag-reorder .track-row-sortable--drag-in-place {
+.tracks-section--reorder-mode .track-row-sortable--drag-in-place {
   z-index: 0;
 }
 
-.tracks-section--hold-drag-reorder .track-row-sortable--drag-in-place > .track-row,
-.tracks-section--hold-drag-reorder .track-row-sortable--drag-in-place > .track-row.track-row--mobile {
+.tracks-section--reorder-mode .track-row-sortable--drag-in-place > .track-row,
+.tracks-section--reorder-mode .track-row-sortable--drag-in-place > .track-row.track-row--mobile {
   opacity: 1;
+}
+
+.tracks-section--reorder-mode .track-row-sortable--flip-animating {
+  position: relative;
 }
 
 .track-reorder-drop-line {
@@ -7593,18 +7641,6 @@ html:has(.app-content-wrapper--projects) {
 
 [data-theme="light"] .track-reorder-drop-line {
   background: #007aff;
-}
-
-.tracks-section--hold-drag-reorder .track-row-sortable {
-  transition: none;
-}
-
-.tracks-section--hold-drag-reorder .track-row-sortable[data-track-id] {
-  will-change: transform;
-}
-
-.tracks-section--hold-drag-reorder .track-row-sortable--flip-animating {
-  position: relative;
 }
 
 .track-row-sortable--settle-hidden {
@@ -7674,7 +7710,7 @@ html:has(.app-content-wrapper--projects) {
 
 .track-reorder-drop-slot {
   width: 100%;
-  min-height: 115px;
+  min-height: 72px;
   background: var(--surface-selected);
   pointer-events: none;
   flex-shrink: 0;
@@ -7685,7 +7721,7 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .track-reorder-drop-slot--mobile {
-  min-height: 72px;
+  min-height: 56px;
 }
 
 .track-row--reorder-mode {
@@ -7695,7 +7731,7 @@ html:has(.app-content-wrapper--projects) {
 .track-row--reorder-mode:not(.track-row--mobile) {
   grid-template-columns: 28px minmax(0, 385px) minmax(0, 1fr) auto;
   align-items: center;
-  min-height: 115px;
+  min-height: 72px;
   row-gap: 0;
 }
 
@@ -7709,8 +7745,15 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .track-row--reorder-mode:not(.track-row-compact):not(.track-row--mobile) .track-thumb-col {
-  align-self: end;
-  height: 85px;
+  align-self: center;
+  height: auto;
+  gap: 10px;
+}
+
+.track-row--reorder-mode:not(.track-row-compact):not(.track-row--mobile) .track-thumb-wrap,
+.track-row--reorder-mode:not(.track-row-compact):not(.track-row--mobile) .track-thumb {
+  width: 48px;
+  height: 48px;
 }
 
 .track-row.track-row-compact.track-row--reorder-mode:not(.track-row--mobile) .track-thumb-col {
@@ -7719,8 +7762,8 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .track-row--reorder-mode:not(.track-row-compact):not(.track-row--mobile) .track-info-dropdowns {
-  min-height: 85px;
-  justify-content: space-between;
+  min-height: 0;
+  justify-content: center;
 }
 
 .track-row.track-row-compact.track-row--reorder-mode:not(.track-row--mobile) .track-info-dropdowns {
@@ -7731,8 +7774,8 @@ html:has(.app-content-wrapper--projects) {
 .track-row--reorder-mode:not(.track-row-compact):not(.track-row--mobile) .track-desc {
   grid-column: 3;
   grid-row: 1;
-  align-self: start;
-  padding-top: 18px;
+  align-self: center;
+  padding-top: 0;
 }
 
 .track-row.track-row-compact.track-row--reorder-mode:not(.track-row--mobile) .track-desc {
@@ -7878,8 +7921,14 @@ html:has(.app-content-wrapper--projects) {
   flex-direction: row;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   min-height: 0;
+}
+
+.track-row--mobile.track-row--reorder-mode .track-thumb--mobile,
+.track-row--mobile.track-row--reorder-mode .track-thumb-wrap--mobile {
+  width: 48px;
+  height: 48px;
 }
 
 .track-row-mobile-reorder-lead {
@@ -8417,6 +8466,8 @@ html:has(.app-content-wrapper--projects) {
   min-width: 0;
   margin-top: 4px;
   min-height: 44px;
+  container-type: inline-size;
+  container-name: tracks-toolbar;
 }
 
 .tracks-header-meta-default,
@@ -8705,6 +8756,86 @@ html:has(.app-content-wrapper--projects) {
   padding-right: 14px;
 }
 
+/* Toolbar labels collapse to icon-only with hover tooltips when header space is tight */
+@container tracks-toolbar (max-width: 720px) {
+  :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ) {
+    position: relative;
+    gap: 0;
+    padding: 8px 9px;
+    overflow: visible;
+  }
+
+  .tracks-toolbar-btn-label {
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    padding: 4px 8px;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    z-index: 60;
+  }
+
+  .tracks-toolbar-btn-label .search-sort-menu-trigger-value {
+    color: inherit;
+  }
+
+  :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):hover .tracks-toolbar-btn-label,
+  :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):focus-visible .tracks-toolbar-btn-label {
+    display: block;
+  }
+
+  .tracks-actions :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):first-child .tracks-toolbar-btn-label {
+    left: 0;
+    transform: none;
+  }
+
+  .tracks-actions :is(
+    .customize-view-menu-trigger,
+    .project-customize-menu-trigger,
+    .search-sort-menu-trigger,
+    .tracks-toolbar-action-btn,
+    .tracks-toolbar-reorder-btn
+  ):last-child .tracks-toolbar-btn-label {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+}
+
 :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.btn-secondary, .btn-invite, .project-customize-menu-trigger, .tracks-toolbar-action-btn) {
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
@@ -8863,6 +8994,37 @@ html:has(.app-content-wrapper--projects) {
   color: var(--text-primary);
   font-size: 13px;
   transition: background 0.12s ease;
+}
+
+.project-folder-row--reorder-mode {
+  cursor: grab;
+}
+
+.project-folder-row--reorder-mode:active {
+  cursor: grabbing;
+}
+
+.project-folder-row--reorder-landed {
+  position: relative;
+  overflow: hidden;
+}
+
+.project-folder-row--reorder-landed > :not(.track-reorder-landed-sweep) {
+  position: relative;
+  z-index: 1;
+}
+
+.project-folder-row__title-btn--static {
+  cursor: default;
+  pointer-events: none;
+}
+
+.project-folder-row-sortable--drag-in-place > .project-folder-row {
+  background: var(--surface-selected);
+}
+
+.project-folder-row-sortable--drag-in-place > .project-folder-row.project-folder-row--selected {
+  background: var(--surface-selected);
 }
 
 .tracks-section--condensed-view .project-folder-row:not(.project-folder-row--mobile),

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { getFolderUpdatedAtLabel } from '../constants/projectsPanelTree';
-import { ICON_FOLDER_FILLED } from '../constants/designSystem';
+import { ICON_FOLDER_FILLED, ICON_REORDER_DOTS } from '../constants/designSystem';
 import { closeOverflowMenusInGroup, registerOverflowMenuOpen, unregisterOverflowMenu } from '../hooks/useOverflowDropdownMenu';
 
 const FOLDER_MENU_GROUP = 'project-folder-row-menu';
@@ -79,6 +79,9 @@ function ProjectFolderRow({
   isSelected = false,
   onSelectChange,
   showCheckbox = true,
+  reorderMode = false,
+  onReorderRowClick = null,
+  folderReorderLandAnimation = null,
 }) {
   const instanceId = useId();
   const iconRef = useRef(null);
@@ -91,7 +94,35 @@ function ProjectFolderRow({
   const { isHovered, tooltipRect, bindHover } = useFolderExpandHint(iconRef, Boolean(expandHint));
   const [isRowHovered, setIsRowHovered] = useState(false);
   const showSelectCheckbox =
-    showCheckbox && !collapsedSummary && !mobileLayout && (isRowHovered || isSelected);
+    !reorderMode &&
+    showCheckbox &&
+    !collapsedSummary &&
+    !mobileLayout &&
+    (isRowHovered || isSelected);
+  const isFolderReorderLanding =
+    folderReorderLandAnimation?.folderId === String(folder?.id);
+
+  const handleRowClick = () => {
+    if (reorderMode) {
+      onReorderRowClick?.(folder.id);
+      return;
+    }
+  };
+
+  const renderReorderDotsCol = () => (
+    <div className="track-reorder-dots-col project-folder-row__reorder-dots">
+      <span className="track-reorder-dots" aria-hidden="true">
+        <img src={ICON_REORDER_DOTS} alt="" />
+      </span>
+    </div>
+  );
+
+  const renderReorderLandSweep = () =>
+    isFolderReorderLanding ? (
+      <div key={folderReorderLandAnimation.key} className="track-reorder-landed-sweep" aria-hidden>
+        <div className="track-reorder-landed-fill" />
+      </div>
+    ) : null;
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -189,7 +220,21 @@ function ProjectFolderRow({
 
   const renderLeadColumn = (iconProps = {}) => (
     <span className="track-num">
-      {renderSelectCheckbox()}
+      {reorderMode ? (
+        <span className="track-num-checkbox-slot">
+          <input
+            type="checkbox"
+            className="track-checkbox"
+            checked={isSelected}
+            onChange={() => onReorderRowClick?.(folder.id)}
+            aria-label={`Select ${folder.name}`}
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+          />
+        </span>
+      ) : (
+        renderSelectCheckbox()
+      )}
       <span className="track-num-play-slot">{renderFolderIcon(iconProps)}</span>
     </span>
   );
@@ -261,10 +306,12 @@ function ProjectFolderRow({
 
   return (
     <div
-      className={`project-folder-row${isSelected ? ' project-folder-row--selected' : ''}${mobileLayout ? ' project-folder-row--mobile' : ''}`}
+      className={`project-folder-row${isSelected ? ' project-folder-row--selected' : ''}${reorderMode ? ' project-folder-row--reorder-mode' : ''}${isFolderReorderLanding ? ' project-folder-row--reorder-landed' : ''}${mobileLayout ? ' project-folder-row--mobile' : ''}`}
       onMouseEnter={() => setIsRowHovered(true)}
       onMouseLeave={() => setIsRowHovered(false)}
+      onClick={reorderMode ? handleRowClick : undefined}
     >
+      {renderReorderLandSweep()}
       {renderLeadColumn(
         onIconClick
           ? {
@@ -278,12 +325,22 @@ function ProjectFolderRow({
           : {}
       )}
       <div className="project-folder-row__title-col">
-        <button type="button" className="project-folder-row__title-btn" onClick={handleOpen}>
-          <span className="project-folder-row__name">{folder.name}</span>
-          <span className="project-folder-row__track-count">{trackCountLabel}</span>
-        </button>
+        {reorderMode ? (
+          <div className="project-folder-row__title-btn project-folder-row__title-btn--static">
+            <span className="project-folder-row__name">{folder.name}</span>
+            <span className="project-folder-row__track-count">{trackCountLabel}</span>
+          </div>
+        ) : (
+          <button type="button" className="project-folder-row__title-btn" onClick={handleOpen}>
+            <span className="project-folder-row__name">{folder.name}</span>
+            <span className="project-folder-row__track-count">{trackCountLabel}</span>
+          </button>
+        )}
       </div>
       <span className="project-folder-row__date">{dateLabel}</span>
+      {reorderMode ? (
+        renderReorderDotsCol()
+      ) : (
       <div className="project-folder-row__more">
         <button
           ref={menuBtnRef}
@@ -301,6 +358,7 @@ function ProjectFolderRow({
           </svg>
         </button>
       </div>
+      )}
       {moreMenu}
       {isHovered && <FolderHoverHint text={expandHint} tooltipRect={tooltipRect} />}
     </div>

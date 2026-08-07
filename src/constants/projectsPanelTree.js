@@ -380,6 +380,30 @@ export function getSiblingFolders(tree, parentId) {
   return Array.isArray(parent?.children) ? parent.children : [];
 }
 
+/** Restore direct child folder order under `parentFolderId`. */
+export function replaceFolderChildrenOrder(tree, parentFolderId, orderedChildIds) {
+  const reorderChildren = (nodes) =>
+    nodes.map((node) => {
+      if (node.id === parentFolderId) {
+        const current = Array.isArray(node.children) ? node.children : [];
+        const byId = new Map(current.map((child) => [child.id, child]));
+        const ordered = orderedChildIds
+          .map((id) => byId.get(id))
+          .filter(Boolean);
+        for (const child of current) {
+          if (!orderedChildIds.includes(child.id)) ordered.push(child);
+        }
+        return { ...node, children: ordered };
+      }
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        return { ...node, children: reorderChildren(node.children) };
+      }
+      return node;
+    });
+
+  return reorderChildren(tree);
+}
+
 /** Reorder siblings under `parentId` (`null` / `'root'` for top-level roots). */
 export function reorderSiblingFolders(tree, parentId, fromIndex, toIndex) {
   if (fromIndex === toIndex) return tree;

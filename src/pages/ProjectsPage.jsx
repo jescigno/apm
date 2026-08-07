@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import ProjectCard from '../components/ProjectCard';
 import ProjectCollabBar from '../components/ProjectCollabBar';
 import TrackList from '../components/TrackList';
-import { TRACK_REORDER_INTERACTION_HOLD_DRAG } from '../constants/trackReorderDnD';
 import {
   DEFAULT_PROJECT_CUSTOMIZE,
   getProjectTrackViewMode,
@@ -130,6 +129,9 @@ export default function ProjectsPage({
   enableTrackDragToFolder = false,
   activeTrackDragId = null,
   onTracksReorder,
+  onTracksReorderCancel,
+  onFoldersReorder,
+  onFoldersReorderCancel,
 }) {
   useEffect(() => {
     document.title = 'Project-Details';
@@ -245,7 +247,9 @@ export default function ProjectsPage({
         sourceFolderId={activeFolderId}
         activeTrackDragId={activeTrackDragId}
         onTracksReorder={onTracksReorder}
-        trackReorderInteraction={TRACK_REORDER_INTERACTION_HOLD_DRAG}
+        onTracksReorderCancel={onTracksReorderCancel}
+        onFoldersReorder={onFoldersReorder}
+        onFoldersReorderCancel={onFoldersReorderCancel}
       />
     </div>
   );

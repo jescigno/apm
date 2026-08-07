@@ -46,8 +46,10 @@ import {
   folderHasProjectTracks,
   PROJECTS_PANEL_FOLDER_TREE,
   findFolderById,
+  getFolderChildren,
   getSiblingFolders,
   reorderSiblingFolders,
+  replaceFolderChildrenOrder,
 } from './constants/projectsPanelTree';
 import {
   PROJECTS_DND_HOLD_MS,
@@ -381,6 +383,25 @@ function AppContent() {
     [activeProjectFolderId, mergedProjects]
   );
 
+  const handleTracksReorderCancel = useCallback((restoredTracks) => {
+    setFolderTrackOverrides((prev) => ({
+      ...prev,
+      [activeProjectFolderId]: restoredTracks,
+    }));
+  }, [activeProjectFolderId]);
+
+  const handleFoldersReorder = useCallback((activeFolderId, overFolderId, parentFolderId) => {
+    const siblings = getFolderChildren(folderTree, parentFolderId);
+    const oldIndex = siblings.findIndex((folder) => folder.id === activeFolderId);
+    const newIndex = siblings.findIndex((folder) => folder.id === overFolderId);
+    if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+    setFolderTree(reorderSiblingFolders(folderTree, parentFolderId, oldIndex, newIndex));
+  }, [folderTree]);
+
+  const handleFoldersReorderCancel = useCallback((parentFolderId, orderedFolderIds) => {
+    setFolderTree((prev) => replaceFolderChildrenOrder(prev, parentFolderId, orderedFolderIds));
+  }, []);
+
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
   const refreshSoundsLikeResults = useCallback(() => {
@@ -678,6 +699,9 @@ function AppContent() {
                   enableTrackDragToFolder={enableProjectTrackDrag}
                   activeTrackDragId={activeTrackDragId}
                   onTracksReorder={handleTracksReorder}
+                  onTracksReorderCancel={handleTracksReorderCancel}
+                  onFoldersReorder={handleFoldersReorder}
+                  onFoldersReorderCancel={handleFoldersReorderCancel}
                 />
               }
             />

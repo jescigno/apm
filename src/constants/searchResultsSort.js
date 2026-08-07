@@ -35,6 +35,11 @@ export function getSearchSortDirectionLabel(field, direction) {
   return direction === SEARCH_SORT_DIRECTIONS.DESC ? labels.desc : labels.asc;
 }
 
+export function getSearchSortActiveLabel({ field } = DEFAULT_SEARCH_SORT) {
+  const option = SEARCH_SORT_OPTIONS.find(({ id }) => id === field);
+  return option?.label ?? '';
+}
+
 export function isDirectionalSearchSort(field) {
   return SEARCH_SORT_OPTIONS.some((option) => option.id === field && option.directional);
 }

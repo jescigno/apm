@@ -123,14 +123,6 @@ export default function SearchCustomizeViewMenu({
         visibility: menuRect ? 'visible' : 'hidden',
       }}
     >
-      <div className="customize-view-menu-field customize-view-menu-field--primary">
-        <span className="customize-view-menu-field-label">View</span>
-        <LayoutTypeToggle
-          value={value.layoutType}
-          onChange={(layoutType) => patch({ layoutType })}
-        />
-      </div>
-
       {isGrid ? (
         <div className="customize-view-menu-field">
           <span className="customize-view-menu-field-label">Poster Size</span>
@@ -162,7 +154,12 @@ export default function SearchCustomizeViewMenu({
   );
 
   return (
-    <div className="customize-view-menu-wrap" ref={wrapRef}>
+    <>
+      <LayoutTypeToggle
+        value={value.layoutType}
+        onChange={(layoutType) => patch({ layoutType })}
+      />
+      <div className="customize-view-menu-wrap" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -170,11 +167,13 @@ export default function SearchCustomizeViewMenu({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={toggleOpen}
+        aria-label="Customize view"
       >
         <img src={ICON_CUSTOMIZE} alt="" />
-        CUSTOMIZE
+        <span className="tracks-toolbar-btn-label">CUSTOMIZE</span>
       </button>
       {menu}
-    </div>
+      </div>
+    </>
   );
 }
