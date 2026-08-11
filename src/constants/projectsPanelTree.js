@@ -68,7 +68,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'apm-mkt',
     name: 'APM Marketing 2',
-    description: 'Primary marketing initiatives and seasonal campaigns.',
+    description:
+      'Primary marketing initiatives spanning broadcast, digital, and social. This folder holds seasonal campaigns, event tie-ins, and cross-platform promo packages used across the APM Music client roster.',
     purpose: 'Brand campaigns',
     lastUpdated: 'Mar 28, 2026',
     updatedAt: '3/28/2026, 3:00 PM',
@@ -76,7 +77,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'milan',
         name: '2026 Milan Olympics Updates',
-        description: 'Olympic-themed promos and athlete features.',
+        description:
+          'Olympic-themed promos, athlete features, and ceremony coverage for Milano-Cortina 2026. Subfolders are organized by sport, venue, and broadcast feed.',
         purpose: 'Event tie-ins',
         lastUpdated: 'Mar 27, 2026',
         updatedAt: '3/27/2026, 4:15 PM',
@@ -87,7 +89,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Winter Olympics 2026 - Contemporary Italy',
             15,
             0,
-            'Music beds for Italy-focused segments.',
+            'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.',
             'Regional broadcast'
           ),
           milanSubfolder(
@@ -103,7 +105,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Alpine Skiing Coverage',
             12,
             2,
-            'Downhill and slalom broadcast beds.',
+            'Downhill, slalom, and super-G broadcast beds built for high-speed cutaways. Includes intro stings, podium cues, and crowd reaction layers for European primetime feeds.',
             'Winter sports'
           ),
           milanSubfolder(
@@ -111,7 +113,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Figure Skating Packages',
             9,
             3,
-            'Performance underscores and recap themes.',
+            'Performance underscores and recap themes for singles, pairs, and ice dance. Ranges from elegant classical beds to contemporary hybrid cues for short programs, exhibitions, and medal-round packages used across domestic and international broadcasts.',
             'Winter sports'
           ),
           milanSubfolder(
@@ -127,7 +129,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Medal Ceremony Underscores',
             8,
             5,
-            'Podium moments and national anthem beds.',
+            'Podium moments, flag raises, and national anthem beds. Mix of triumphant orchestral themes and restrained emotional cues for silver and bronze ceremonies.',
             'Ceremony coverage'
           ),
           milanSubfolder(
@@ -135,7 +137,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Athlete Profile Features',
             14,
             6,
-            'Human-interest and backstory packages.',
+            'Human-interest and backstory packages profiling athletes, coaches, and host-nation stories. Used for feature segments, social cutdowns, and international feed bumpers throughout the Games window.',
             'Feature segments'
           ),
           milanSubfolder(
@@ -151,7 +153,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'Milano-Cortina Venue Themes',
             13,
             8,
-            'Location-specific music for venue bumpers.',
+            'Location-specific music for venue bumpers across Milan and Cortina sites. Includes arena intros, mountain cluster IDs, and cityscape atmosphere beds.',
             'Venue branding'
           ),
           milanSubfolder(
@@ -167,7 +169,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             'International Broadcast Cuts',
             11,
             10,
-            'Global feed transitions and multilingual stings.',
+            'Global feed transitions, multilingual stings, and neutral beds for rights-holding broadcasters. Cues are cleared for international syndication and trimmed for :30 and :15 promo windows across partner networks.',
             'International feed'
           ),
         ],
@@ -175,7 +177,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'spring-campaign',
         name: 'Spring 2026 Brand Campaign',
-        description: 'Seasonal brand spots and cross-platform promos.',
+        description:
+          'Seasonal brand spots and cross-platform promos for the spring launch window. Includes hero film cues, retail radio tags, and cut-downs for connected TV.',
         purpose: 'Brand awareness',
         lastUpdated: 'Mar 22, 2026',
         updatedAt: '3/22/2026, 9:30 AM',
@@ -185,7 +188,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'social-shorts',
         name: 'Social & Short-Form Content',
-        description: 'Music for reels, stories, and vertical video packages.',
+        description: 'Music for reels, stories, and vertical video.',
         purpose: 'Digital social',
         lastUpdated: 'Mar 19, 2026',
         updatedAt: '3/19/2026, 2:08 PM',
@@ -195,7 +198,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'podcast-beds',
         name: 'Podcast & Long-Form Beds',
-        description: 'Underscore and intro beds for podcast and streaming series.',
+        description:
+          'Underscore and intro beds for podcast and streaming series. Long-form friendly cues with minimal melodic distraction, plus branded opens for serialized shows and documentary miniseries.',
         purpose: 'Long-form audio',
         lastUpdated: 'Mar 14, 2026',
         updatedAt: '3/14/2026, 10:20 AM',
@@ -207,7 +211,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'fresh-fifteen',
     name: 'Fresh Fifteen Trailer Tracks',
-    description: 'Curated trailer music organized by mood and genre.',
+    description:
+      'Curated trailer music organized by mood and genre. Each subfolder holds fifteen fresh picks for pitch decks, temp scores, and client sizzles.',
     purpose: 'Trailer production',
     lastUpdated: 'Mar 24, 2026',
     updatedAt: '3/24/2026, 11:00 AM',
@@ -252,7 +257,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'stadium',
     name: 'Stadium Anthems',
-    description: 'High-energy tracks for arena and stadium use.',
+    description:
+      'High-energy tracks for arena and stadium use. Built for jumbotron moments, player intros, and crowd sing-alongs with big drums, chants, and singable hooks cleared for live sports broadcast.',
     purpose: 'Live sports',
     lastUpdated: 'Mar 20, 2026',
     updatedAt: '3/20/2026, 1:45 PM',
@@ -260,7 +266,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'nfl',
         name: 'NFL Primetime',
-        description: 'Sunday and primetime football packages.',
+        description:
+          'Sunday and primetime football packages with hype opens, touchdown stings, and halftime transitions tailored for network and streaming simulcasts.',
         purpose: 'NFL broadcast',
         lastUpdated: 'Mar 18, 2026',
         updatedAt: '3/18/2026, 11:20 AM',
@@ -290,7 +297,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'archive-root',
     name: 'Legacy Campaigns',
-    description: 'Archived projects retained for reference.',
+    description:
+      'Archived projects retained for reference and reuse. Older campaign beds, superseded brand iterations, and retired promo packages live here for historical lookup.',
     purpose: 'Historical',
     lastUpdated: 'Feb 2, 2026',
     updatedAt: '2/2/2026, 4:30 PM',
@@ -298,7 +306,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'legacy-1',
         name: '2024 Archive',
-        description: 'Year-end wrap and retrospective content.',
+        description:
+          'Year-end wrap and retrospective content from the 2024 calendar. Includes recap montage beds, end-of-year brand films, and holiday campaign music that rolled off active rotation but remains licensable for internal reference.',
         purpose: 'Archive',
         lastUpdated: 'Jan 10, 2026',
         updatedAt: '1/10/2026, 10:15 AM',
@@ -306,7 +315,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
           {
             id: 'legacy-1-a',
             name: 'Q4 Highlights',
-            description: 'Quarter four highlight reels.',
+            description:
+              'Quarter four highlight reels and end-of-year sizzle beds. Short punchy cues for montage opens plus longer underscore options for recap narrations.',
             purpose: 'Recap',
             lastUpdated: 'Dec 20, 2025',
             updatedAt: '12/20/2025, 2:50 PM',
@@ -402,6 +412,32 @@ export function replaceFolderChildrenOrder(tree, parentFolderId, orderedChildIds
     });
 
   return reorderChildren(tree);
+}
+
+/** Update a folder's display name anywhere in the tree. */
+export function updateFolderName(tree, folderId, name) {
+  return tree.map((node) => {
+    if (node.id === folderId) {
+      return { ...node, name };
+    }
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      return { ...node, children: updateFolderName(node.children, folderId, name) };
+    }
+    return node;
+  });
+}
+
+/** Update a folder's description anywhere in the tree. */
+export function updateFolderDescription(tree, folderId, description) {
+  return tree.map((node) => {
+    if (node.id === folderId) {
+      return { ...node, description };
+    }
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      return { ...node, children: updateFolderDescription(node.children, folderId, description) };
+    }
+    return node;
+  });
 }
 
 /** Reorder siblings under `parentId` (`null` / `'root'` for top-level roots). */

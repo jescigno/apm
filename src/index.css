@@ -5058,7 +5058,7 @@ html:has(.app-content-wrapper--projects) {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
 }
 
 .project-details-overlay-keywords {
@@ -5073,7 +5073,7 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .project-description {
-  margin-top: -8px;
+  margin-top: 0;
 }
 
 .project-title-row {
@@ -5135,6 +5135,39 @@ html:has(.app-content-wrapper--projects) {
   white-space: nowrap;
 }
 
+.project-title--editable {
+  cursor: text;
+}
+
+.project-title-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: inherit;
+  margin: 0 0 8px 0;
+  padding: 2px 6px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+}
+
+.project-title-input:focus {
+  border-color: var(--accent, var(--border));
+}
+
+.project-mobile-hero__title-input {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
 .project-visuals .project-actions {
   justify-content: center;
   margin-left: -6px;
@@ -5144,7 +5177,56 @@ html:has(.app-content-wrapper--projects) {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
+}
+
+.project-description--editable {
+  cursor: text;
+}
+
+.project-description--placeholder {
+  color: var(--text-secondary);
+}
+
+.project-description-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  padding: 2px 4px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  field-sizing: content;
+}
+
+.project-description-input:focus {
+  border-color: var(--accent, var(--border));
+}
+
+[data-theme="light"] :is(
+  .project-title-input,
+  .project-title-input:focus,
+  .project-description-input,
+  .project-description-input:focus
+) {
+  border: none;
+}
+
+.project-mobile-hero__desc-input {
+  margin: 0;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
 
 .keywords {
@@ -5152,7 +5234,7 @@ html:has(.app-content-wrapper--projects) {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 .keyword {

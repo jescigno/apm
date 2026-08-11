@@ -5,13 +5,276 @@ import { TRACK_THUMBNAILS } from './trackThumb';
 
 const PROJECT_IMAGES = TRACK_THUMBNAILS.slice(0, 4);
 
-const PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
-const PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
-const MOBILE_HEADER_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
 const PROJECT_DESCRIPTION =
   'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.';
 
 const KEYWORDS = ['Sound Design', 'Menacing', 'Ponderous/Heavy', 'Ponderous/Heavy', 'Aggressive', 'Flowing'];
+
+function ProjectEditableTitle({
+  title,
+  onTitleChange,
+  wrapRef,
+  className = 'project-title',
+  headingLevel: Heading = 'h2',
+  enableTooltip = true,
+}) {
+  const editable = Boolean(onTitleChange);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+  const inputRef = useRef(null);
+  const localWrapRef = useRef(null);
+  const wrapRefToUse = wrapRef ?? localWrapRef;
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipRect, setTooltipRect] = useState(null);
+
+  useEffect(() => {
+    if (!isEditing) setDraft(title);
+  }, [title, isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [isEditing]);
+
+  const updateTooltipRect = () => {
+    const el = wrapRefToUse.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setTooltipRect({ left: r.left, bottom: r.top });
+    }
+  };
+
+  useEffect(() => {
+    if (!enableTooltip || !isHovered || isEditing) return;
+    updateTooltipRect();
+    const onUpdate = () => updateTooltipRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [enableTooltip, isHovered, isEditing, wrapRefToUse]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    setIsEditing(false);
+    if (trimmed && trimmed !== title) {
+      onTitleChange(trimmed);
+    }
+  };
+
+  const cancel = () => {
+    setDraft(title);
+    setIsEditing(false);
+  };
+
+  const startEdit = () => {
+    if (!editable) return;
+    setDraft(title);
+    setIsEditing(true);
+    setIsHovered(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="project-title-wrap">
+        <input
+          ref={inputRef}
+          type="text"
+          className={`project-title-input ${className}`}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              cancel();
+            }
+          }}
+          aria-label="Project title"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={wrapRefToUse}
+      className="project-title-wrap"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Heading
+        className={`${className}${editable ? ' project-title--editable' : ''}`}
+        onDoubleClick={startEdit}
+      >
+        {title}
+      </Heading>
+      {enableTooltip && isHovered && tooltipRect && createPortal(
+        <span
+          className="project-title-tooltip project-title-tooltip-portal"
+          role="tooltip"
+          style={{
+            left: tooltipRect.left,
+            bottom: window.innerHeight - tooltipRect.bottom + 6,
+          }}
+        >
+          {title}
+        </span>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+function ProjectEditableDescription({
+  description,
+  onDescriptionChange,
+  className = '',
+  paragraphClassName = '',
+  unwrapped = false,
+}) {
+  const editable = Boolean(onDescriptionChange);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(description);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (!isEditing) setDraft(description);
+  }, [description, isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.focus();
+    el.select();
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft, isEditing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    setIsEditing(false);
+    if (trimmed !== description) {
+      onDescriptionChange(trimmed);
+    }
+  };
+
+  const cancel = () => {
+    setDraft(description);
+    setIsEditing(false);
+  };
+
+  const startEdit = () => {
+    if (!editable) return;
+    setDraft(description);
+    setIsEditing(true);
+  };
+
+  const wrapperClassName = ['project-description', className].filter(Boolean).join(' ');
+  const textClassName = [
+    paragraphClassName,
+    editable ? 'project-description--editable' : '',
+    editable && !description ? 'project-description--placeholder' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  if (isEditing) {
+    const textarea = (
+      <textarea
+        ref={textareaRef}
+        className={`project-description-input ${textClassName}`.trim()}
+        value={draft}
+        rows={1}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            cancel();
+          }
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            commit();
+          }
+        }}
+        aria-label="Project description"
+      />
+    );
+    return unwrapped ? textarea : <div className={wrapperClassName}>{textarea}</div>;
+  }
+
+  const paragraph = (
+    <p className={textClassName} onDoubleClick={startEdit}>
+      {description || (editable ? 'Double-click to add a description' : '')}
+    </p>
+  );
+  return unwrapped ? paragraph : <div className={wrapperClassName}>{paragraph}</div>;
+}
+
+function useInlineEditor(value, onChange, { requireNonEmpty = false } = {}) {
+  const editable = Boolean(onChange);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isEditing) setDraft(value);
+  }, [value, isEditing]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [isEditing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    setIsEditing(false);
+    if (requireNonEmpty && !trimmed) return;
+    if (trimmed !== value) {
+      onChange(trimmed);
+    }
+  };
+
+  const cancel = () => {
+    setDraft(value);
+    setIsEditing(false);
+  };
+
+  const startEdit = () => {
+    if (!editable) return;
+    setDraft(value);
+    setIsEditing(true);
+  };
+
+  return {
+    editable,
+    isEditing,
+    draft,
+    setDraft,
+    inputRef,
+    startEdit,
+    commit,
+    cancel,
+  };
+}
 
 const GRID_HEIGHTS = [
   { mq: '(max-width: 880px)', height: 110 },
@@ -53,9 +316,7 @@ function ProjectThumbnailVisual({ useDefaultThumbnail }) {
 }
 
 function ProjectCard({
-  title = PROJECT_TITLE,
-  titleTooltip = PROJECT_TITLE_TOOLTIP,
-  mobileHeaderTitle = MOBILE_HEADER_TITLE,
+  title = 'Project',
   description = PROJECT_DESCRIPTION,
   useDefaultThumbnail = false,
   hasTracks = true,
@@ -63,6 +324,8 @@ function ProjectCard({
   commentsPanelOpen,
   clockPanelOpen,
   onSoundsLikeClick,
+  onTitleChange,
+  onDescriptionChange,
 }) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
@@ -76,8 +339,8 @@ function ProjectCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [gridHeight, setGridHeight] = useState(220);
-  const [isTitleHovered, setIsTitleHovered] = useState(false);
-  const [titleTooltipRect, setTitleTooltipRect] = useState(null);
+  const mobileTitleEditor = useInlineEditor(title, onTitleChange, { requireNonEmpty: true });
+  const mobileDescriptionEditor = useInlineEditor(description, onDescriptionChange);
   const hideSoundsLikePromo = !hasTracks || soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
 
   useEffect(() => {
@@ -107,7 +370,7 @@ function ProjectCard({
     const ro = new ResizeObserver(check);
     ro.observe(measureEl);
     return () => ro.disconnect();
-  }, [isExpanded, gridHeight]);
+  }, [isExpanded, gridHeight, description]);
 
   useEffect(() => {
     if (!isOverlayOpen) return;
@@ -117,26 +380,6 @@ function ProjectCard({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOverlayOpen]);
-
-  const updateTitleTooltipRect = () => {
-    const el = titleRef.current;
-    if (el) {
-      const r = el.getBoundingClientRect();
-      setTitleTooltipRect({ left: r.left, bottom: r.top });
-    }
-  };
-
-  useEffect(() => {
-    if (!isTitleHovered) return;
-    updateTitleTooltipRect();
-    const onUpdate = () => updateTitleTooltipRect();
-    window.addEventListener('scroll', onUpdate, true);
-    window.addEventListener('resize', onUpdate);
-    return () => {
-      window.removeEventListener('scroll', onUpdate, true);
-      window.removeEventListener('resize', onUpdate);
-    };
-  }, [isTitleHovered]);
 
   const updateMobileTitleTruncation = useCallback(() => {
     const c = mobileTitleContainerRef.current;
@@ -148,7 +391,7 @@ function ProjectCard({
   useEffect(() => {
     const c = mobileTitleContainerRef.current;
     const t = mobileTitleTextRef.current;
-    if (!c || !t) return;
+    if (!c || !t || mobileTitleEditor.isEditing) return;
     updateMobileTitleTruncation();
     const ro = new ResizeObserver(() => updateMobileTitleTruncation());
     ro.observe(c);
@@ -159,9 +402,18 @@ function ProjectCard({
       ro.disconnect();
       window.removeEventListener('orientationchange', onOrient);
     };
-  }, [updateMobileTitleTruncation]);
+  }, [updateMobileTitleTruncation, title, mobileTitleEditor.isEditing]);
+
+  useEffect(() => {
+    if (!mobileDescriptionEditor.isEditing) return;
+    const el = mobileDescriptionEditor.inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [mobileDescriptionEditor.isEditing, description]);
 
   const handleMobileTitleActivate = useCallback(() => {
+    if (mobileTitleEditor.isEditing) return;
     const c = mobileTitleContainerRef.current;
     const t = mobileTitleTextRef.current;
     if (!c || !t || !mobileTitleTruncated || mobileTitlePhase !== 'idle') return;
@@ -172,7 +424,7 @@ function ProjectCard({
     t.style.setProperty('--marquee-x', `-${overflow}px`);
     t.style.setProperty('--scroll-duration', `${sec}s`);
     setMobileTitlePhase('scroll');
-  }, [mobileTitleTruncated, mobileTitlePhase]);
+  }, [mobileTitleTruncated, mobileTitlePhase, mobileTitleEditor.isEditing]);
 
   const handleMobileTitleAnimEnd = useCallback((e) => {
     const name = e.animationName ? String(e.animationName) : '';
@@ -222,7 +474,12 @@ function ProjectCard({
         <div className="project-details-overlay-panel">
           <div className="project-details-overlay-panel-scroll">
             <h3 className="project-details-overlay-title">{title}</h3>
-            <p className="project-details-overlay-description">{description}</p>
+            <ProjectEditableDescription
+              description={description}
+              onDescriptionChange={onDescriptionChange}
+              paragraphClassName="project-details-overlay-description"
+              unwrapped
+            />
             <div className="project-details-overlay-keywords">
               {KEYWORDS.map((kw, i) => (
                 <span key={i} className="keyword">
@@ -245,44 +502,109 @@ function ProjectCard({
       <section className="project-mobile-hero" aria-labelledby="project-mobile-hero-title">
         <h1
           id="project-mobile-hero-title"
-          className={`project-mobile-hero__title${mobileTitleTruncated ? ' project-mobile-hero__title--truncated' : ''}`}
+          className={`project-mobile-hero__title${mobileTitleTruncated && !mobileTitleEditor.isEditing ? ' project-mobile-hero__title--truncated' : ''}${mobileTitleEditor.editable ? ' project-title--editable' : ''}`}
           onClick={handleMobileTitleActivate}
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            mobileTitleEditor.startEdit();
+          }}
           onKeyDown={(e) => {
+            if (mobileTitleEditor.isEditing) return;
             if (!mobileTitleTruncated || mobileTitlePhase !== 'idle') return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               handleMobileTitleActivate();
             }
           }}
-          tabIndex={mobileTitleTruncated ? 0 : undefined}
-          aria-label={mobileHeaderTitle}
+          tabIndex={mobileTitleTruncated && !mobileTitleEditor.isEditing ? 0 : undefined}
+          aria-label={title}
         >
-          <span
-            ref={mobileTitleContainerRef}
-            className="project-mobile-hero__title-clip"
-          >
+          {mobileTitleEditor.isEditing ? (
+            <input
+              ref={mobileTitleEditor.inputRef}
+              type="text"
+              className="project-title-input project-mobile-hero__title-input"
+              value={mobileTitleEditor.draft}
+              onChange={(e) => mobileTitleEditor.setDraft(e.target.value)}
+              onBlur={mobileTitleEditor.commit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  mobileTitleEditor.commit();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  mobileTitleEditor.cancel();
+                }
+              }}
+              aria-label="Project title"
+            />
+          ) : (
             <span
-              ref={mobileTitleTextRef}
-              className={[
-                'project-mobile-hero__title-text',
-                mobileTitlePhase === 'scroll' && 'project-mobile-hero__title-text--scroll',
-                mobileTitlePhase === 'fadeOut' && 'project-mobile-hero__title-text--held-end project-mobile-hero__title-text--fade-out-anim',
-                mobileTitlePhase === 'fadeIn' && 'project-mobile-hero__title-text--fade-in-anim',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              onAnimationEnd={handleMobileTitleAnimEnd}
+              ref={mobileTitleContainerRef}
+              className="project-mobile-hero__title-clip"
             >
-              {mobileHeaderTitle}
+              <span
+                ref={mobileTitleTextRef}
+                className={[
+                  'project-mobile-hero__title-text',
+                  mobileTitlePhase === 'scroll' && 'project-mobile-hero__title-text--scroll',
+                  mobileTitlePhase === 'fadeOut' && 'project-mobile-hero__title-text--held-end project-mobile-hero__title-text--fade-out-anim',
+                  mobileTitlePhase === 'fadeIn' && 'project-mobile-hero__title-text--fade-in-anim',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onAnimationEnd={handleMobileTitleAnimEnd}
+              >
+                {title}
+              </span>
             </span>
-          </span>
+          )}
         </h1>
         <div className="project-mobile-hero__row">
           <div className="project-mobile-hero__visuals" aria-hidden="true">
             <ProjectThumbnailVisual useDefaultThumbnail={useDefaultThumbnail} />
           </div>
           <div className="project-mobile-hero__text">
-            <p className="project-mobile-hero__desc">{description}</p>
+            {mobileDescriptionEditor.isEditing ? (
+              <textarea
+                ref={mobileDescriptionEditor.inputRef}
+                className="project-description-input project-mobile-hero__desc-input"
+                value={mobileDescriptionEditor.draft}
+                rows={1}
+                onChange={(e) => {
+                  mobileDescriptionEditor.setDraft(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
+                onBlur={mobileDescriptionEditor.commit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    mobileDescriptionEditor.cancel();
+                  }
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    mobileDescriptionEditor.commit();
+                  }
+                }}
+                aria-label="Project description"
+              />
+            ) : (
+              <p
+                className={[
+                  'project-mobile-hero__desc',
+                  mobileDescriptionEditor.editable ? 'project-description--editable' : '',
+                  mobileDescriptionEditor.editable && !description ? 'project-description--placeholder' : '',
+                ].filter(Boolean).join(' ')}
+                onDoubleClick={(e) => {
+                  e.preventDefault();
+                  mobileDescriptionEditor.startEdit();
+                }}
+              >
+                {description || (mobileDescriptionEditor.editable ? 'Double-click to add a description' : '')}
+              </p>
+            )}
             <button
               type="button"
               className="project-mobile-hero__details"
@@ -344,31 +666,16 @@ function ProjectCard({
                 </div>
                 <div ref={contentRef} className="project-info-content project-info-content-constrained">
                   <div className="project-title-row">
-                    <div
-                      ref={titleRef}
-                      className="project-title-wrap"
-                      onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
-                      onMouseLeave={() => setIsTitleHovered(false)}
-                    >
-                      <h2 className="project-title">{title}</h2>
-                      {isTitleHovered && titleTooltipRect && createPortal(
-                        <span
-                          className="project-title-tooltip project-title-tooltip-portal"
-                          role="tooltip"
-                          style={{
-                            left: titleTooltipRect.left,
-                            bottom: window.innerHeight - titleTooltipRect.bottom + 6,
-                          }}
-                        >
-                          {titleTooltip}
-                        </span>,
-                        document.body
-                      )}
-                    </div>
+                    <ProjectEditableTitle
+                      title={title}
+                      onTitleChange={onTitleChange}
+                      wrapRef={titleRef}
+                    />
                   </div>
-                  <div className="project-description">
-                    <p>{description}</p>
-                  </div>
+                  <ProjectEditableDescription
+                    description={description}
+                    onDescriptionChange={onDescriptionChange}
+                  />
                   {!isTruncated && (
                     <div className="keywords">
                       {KEYWORDS.map((kw, i) => (
@@ -384,31 +691,16 @@ function ProjectCard({
             ) : (
               <div ref={contentRef} className="project-info-content">
                 <div className="project-title-row">
-                  <div
-                    ref={titleRef}
-                    className="project-title-wrap"
-                    onMouseEnter={() => { setIsTitleHovered(true); updateTitleTooltipRect(); }}
-                    onMouseLeave={() => setIsTitleHovered(false)}
-                  >
-                    <h2 className="project-title">{title}</h2>
-                    {isTitleHovered && titleTooltipRect && createPortal(
-                      <span
-                        className="project-title-tooltip project-title-tooltip-portal"
-                        role="tooltip"
-                        style={{
-                          left: titleTooltipRect.left,
-                          bottom: window.innerHeight - titleTooltipRect.bottom + 6,
-                        }}
-                      >
-                        {titleTooltip}
-                      </span>,
-                      document.body
-                    )}
-                  </div>
+                  <ProjectEditableTitle
+                    title={title}
+                    onTitleChange={onTitleChange}
+                    wrapRef={titleRef}
+                  />
                 </div>
-                <div className="project-description">
-                  <p>{description}</p>
-                </div>
+                <ProjectEditableDescription
+                  description={description}
+                  onDescriptionChange={onDescriptionChange}
+                />
                 <div className="keywords">
                   {KEYWORDS.map((kw, i) => (
                     <span key={i} className="keyword">

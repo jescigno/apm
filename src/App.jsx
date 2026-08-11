@@ -50,6 +50,8 @@ import {
   getSiblingFolders,
   reorderSiblingFolders,
   replaceFolderChildrenOrder,
+  updateFolderDescription,
+  updateFolderName,
 } from './constants/projectsPanelTree';
 import {
   PROJECTS_DND_HOLD_MS,
@@ -402,6 +404,16 @@ function AppContent() {
     setFolderTree((prev) => replaceFolderChildrenOrder(prev, parentFolderId, orderedFolderIds));
   }, []);
 
+  const handleProjectTitleChange = useCallback((folderId, name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setFolderTree((prev) => updateFolderName(prev, folderId, trimmed));
+  }, []);
+
+  const handleProjectDescriptionChange = useCallback((folderId, description) => {
+    setFolderTree((prev) => updateFolderDescription(prev, folderId, description.trim()));
+  }, []);
+
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
   const refreshSoundsLikeResults = useCallback(() => {
@@ -702,6 +714,8 @@ function AppContent() {
                   onTracksReorderCancel={handleTracksReorderCancel}
                   onFoldersReorder={handleFoldersReorder}
                   onFoldersReorderCancel={handleFoldersReorderCancel}
+                  onProjectTitleChange={handleProjectTitleChange}
+                  onProjectDescriptionChange={handleProjectDescriptionChange}
                 />
               }
             />

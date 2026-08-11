@@ -10,18 +10,12 @@ import {
 } from '../constants/projectTrackCustomize';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import {
-  CURRENT_PROJECT_FOLDER_ID,
   EMPTY_PROJECT_FOLDER_ID,
   getFolderChildren,
   getFolderPath,
   PROJECTS_PANEL_FOLDER_TREE,
 } from '../constants/projectsPanelTree';
 import { COMMENTS_PANEL_INITIAL_ITEMS } from '../constants/commentsPanel';
-
-const ITALY_PROJECT_TITLE = 'Winter Olympics 2026 - Contemporary Italy (Update 10.28.25)';
-const ITALY_PROJECT_TITLE_TOOLTIP = 'Winter Olympics 2026 - Contemporary Italy\n(Update 10.28.25)';
-const ITALY_PROJECT_DESCRIPTION =
-  'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -132,6 +126,8 @@ export default function ProjectsPage({
   onTracksReorderCancel,
   onFoldersReorder,
   onFoldersReorderCancel,
+  onProjectTitleChange,
+  onProjectDescriptionChange,
 }) {
   useEffect(() => {
     document.title = 'Project-Details';
@@ -149,18 +145,8 @@ export default function ProjectsPage({
     () => getFolderChildren(folderTree, activeFolderId),
     [folderTree, activeFolderId]
   );
-  const projectTitle =
-    activeFolderId === CURRENT_PROJECT_FOLDER_ID
-      ? ITALY_PROJECT_TITLE
-      : activeFolder?.name ?? 'Project';
-  const projectTitleTooltip =
-    activeFolderId === CURRENT_PROJECT_FOLDER_ID
-      ? ITALY_PROJECT_TITLE_TOOLTIP
-      : activeFolder?.name ?? 'Project';
-  const projectDescription =
-    activeFolderId === CURRENT_PROJECT_FOLDER_ID
-      ? ITALY_PROJECT_DESCRIPTION
-      : activeFolder?.description ?? '';
+  const projectTitle = activeFolder?.name ?? 'Project';
+  const projectDescription = activeFolder?.description ?? '';
 
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
   const [projectCustomize, setProjectCustomize] = useState(DEFAULT_PROJECT_CUSTOMIZE);
@@ -186,13 +172,7 @@ export default function ProjectsPage({
                   visibleFolders.map((folder, i) => (
                     <span key={folder.id} style={{ display: 'contents' }}>
                       {i > 0 && <span className="breadcrumb-sep"> / </span>}
-                      <BreadcrumbSegment
-                        label={
-                          folder.id === CURRENT_PROJECT_FOLDER_ID
-                            ? ITALY_PROJECT_TITLE
-                            : folder.name
-                        }
-                      />
+                      <BreadcrumbSegment label={folder.name} />
                     </span>
                   ))
                 ) : (
@@ -216,8 +196,6 @@ export default function ProjectsPage({
 
       <ProjectCard
         title={projectTitle}
-        titleTooltip={projectTitleTooltip}
-        mobileHeaderTitle={projectTitle}
         description={projectDescription}
         useDefaultThumbnail={tracks.length === 0}
         hasTracks={tracks.length > 0}
@@ -225,6 +203,16 @@ export default function ProjectsPage({
         commentsPanelOpen={commentsPanelOpen}
         clockPanelOpen={clockPanelOpen}
         onSoundsLikeClick={onPromoSoundsLikeClick}
+        onTitleChange={
+          activeFolderId && onProjectTitleChange
+            ? (name) => onProjectTitleChange(activeFolderId, name)
+            : undefined
+        }
+        onDescriptionChange={
+          activeFolderId && onProjectDescriptionChange
+            ? (nextDescription) => onProjectDescriptionChange(activeFolderId, nextDescription)
+            : undefined
+        }
       />
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}
