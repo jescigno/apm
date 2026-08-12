@@ -85,6 +85,7 @@ export const CSS_VARS = {
   control: {
     closeButton: '--control-close-bg',
     scrollbarThumb: '--scrollbar-thumb',
+    selectionBg: '--selection-bg',
   },
   icon: {
     filter: '--icon-filter',
@@ -190,7 +191,7 @@ export const THEME_PALETTES = {
     '--bg-panel': '#FFFFFF',
     '--bg-nested': '#F9F9F9',
     '--bg-dropdown': '#FFFFFF',
-    '--bg-search': '#D9D9D9',
+    '--bg-search': '#FFFFFF',
     '--surface-default': '#FFFFFF',
     '--surface-raised': '#FFFFFF',
     '--surface-muted': '#F9F9F9',
@@ -209,7 +210,7 @@ export const THEME_PALETTES = {
     '--border': '#E0E0E0',
     '--border-strong': '#4D4D4D',
     '--border-divider': '#E0E0E0',
-    '--border-search': '#4D4D4D',
+    '--border-search': 'transparent',
     '--border-sidebar': '#B1B1B1',
     '--accent-red': BRAND_RED,
     '--accent-red-hover': BRAND_RED_HOVER,
@@ -234,6 +235,7 @@ export const THEME_PALETTES = {
     '--account-surface-text-muted': '#808080',
     '--account-surface-border': '#808080',
     '--account-surface-radius': '8px',
+    '--selection-bg': '#e9e9e9',
     '--profile-amber': '#C17C2A',
     '--profile-spring': '#2BC174',
     '--profile-cyan': '#2AA3C1',
