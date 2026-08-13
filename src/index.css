@@ -2805,6 +2805,10 @@ html:has(.app-content-wrapper--projects) {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+[data-theme="light"] .search-filters-group {
+  border-bottom-color: var(--border-sidebar);
+}
+
 .search-filters-group-header {
   display: flex;
   align-items: center;
@@ -3643,6 +3647,7 @@ html:has(.app-content-wrapper--projects) {
     gap: 0;
     margin-left: auto;
     overflow: visible;
+    flex-wrap: nowrap;
   }
 
   .tracks-mobile-toolbar-actions .tracks-toolbar-btn-label {
@@ -8575,6 +8580,7 @@ html:has(.app-content-wrapper--projects) {
   min-width: 0;
   width: 100%;
   flex: 1;
+  flex-wrap: nowrap;
 }
 
 .tracks-header-toolbar-slot--hidden {
@@ -8851,10 +8857,26 @@ html:has(.app-content-wrapper--projects) {
   align-items: center;
   gap: 2px;
   padding-right: 14px;
+  flex-wrap: nowrap;
+}
+
+:is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(
+  .customize-view-menu-trigger,
+  .project-customize-menu-trigger,
+  .search-sort-menu-trigger,
+  .tracks-toolbar-action-btn,
+  .tracks-toolbar-reorder-btn
+) {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tracks-toolbar-btn-label {
+  white-space: nowrap;
 }
 
 /* Toolbar labels collapse to icon-only with hover tooltips when header space is tight */
-@container tracks-toolbar (max-width: 720px) {
+@container tracks-toolbar (max-width: 860px) {
   :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(
     .customize-view-menu-trigger,
     .project-customize-menu-trigger,

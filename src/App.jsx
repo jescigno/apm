@@ -156,6 +156,7 @@ function AppContent() {
   const suppressFolderClickRef = useRef(false);
   const projectsDragOverlayClearTimerRef = useRef(null);
   const folderReorderLandTimerRef = useRef(null);
+  const [searchBarValue, setSearchBarValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const headerMenuRef = useRef(null);
   const { currentTrack, isPlayerClosing } = usePlayer();
@@ -561,6 +562,7 @@ function AppContent() {
       setProjectsPanelOpen(false);
     } else {
       setSearchQuery('');
+      setSearchBarValue('');
     }
   }, [location.pathname]);
 
@@ -658,9 +660,30 @@ function AppContent() {
   const isFullBleedRoute =
     isAccountRoute || isAdminRoute || isNotificationsRoute || isDesignSystemRoute;
 
-  const handleRecentSearchSelect = useCallback((item) => {
-    setSearchQuery(item.label);
+  const handleSearchSubmit = useCallback(() => {
+    const trimmed = searchBarValue.trim();
+    setSearchQuery(trimmed);
+    setSearchBarValue(trimmed);
+    if (location.pathname !== ROUTE_SEARCH) {
+      navigate(ROUTE_SEARCH);
+    }
+  }, [location.pathname, navigate, searchBarValue]);
+
+  const handleSearchClear = useCallback(() => {
+    setSearchBarValue('');
+    setSearchQuery('');
   }, []);
+
+  const handleRecentSearchSelect = useCallback(
+    (item) => {
+      setSearchBarValue(item.label);
+      setSearchQuery(item.label);
+      if (location.pathname !== ROUTE_SEARCH) {
+        navigate(ROUTE_SEARCH);
+      }
+    },
+    [location.pathname, navigate]
+  );
 
   return (
     <DndContext
@@ -674,8 +697,10 @@ function AppContent() {
     <div className={currentTrack || isPlayerClosing ? 'app-root player-visible' : 'app-root'}>
       <Header
         onOpenProjectsPanel={openProjectsPanel}
-        searchQuery={isSearchRoute ? searchQuery : ''}
-        onSearchQueryChange={isSearchRoute ? setSearchQuery : undefined}
+        searchQuery={searchBarValue}
+        onSearchQueryChange={setSearchBarValue}
+        onSearchSubmit={handleSearchSubmit}
+        onSearchClear={handleSearchClear}
         headerMenuRef={headerMenuRef}
       />
       <Sidebar onHomeClick={handleHomeNavClick} />
