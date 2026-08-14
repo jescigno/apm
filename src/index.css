@@ -250,7 +250,7 @@
   .clock-panel.open,
   .team-member-activity-panel.open
 ) {
-  border-left-color: var(--border-sidebar);
+  border-left-color: var(--bg-sidebar);
 }
 
 [data-theme="light"] :is(
