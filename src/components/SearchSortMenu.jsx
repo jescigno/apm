@@ -204,7 +204,7 @@ export default function SearchSortMenu({
       >
         <img src={ICON_SORT} alt="" />
         <span className="tracks-toolbar-btn-label">
-          SORT{' '}
+          Sort{' '}
           <span className="search-sort-menu-trigger-value">{activeSortLabel}</span>
         </span>
       </button>

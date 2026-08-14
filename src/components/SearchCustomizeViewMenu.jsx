@@ -170,7 +170,7 @@ export default function SearchCustomizeViewMenu({
         aria-label="Customize view"
       >
         <img src={ICON_CUSTOMIZE} alt="" />
-        <span className="tracks-toolbar-btn-label">CUSTOMIZE</span>
+        <span className="tracks-toolbar-btn-label">Customize</span>
       </button>
       {menu}
       </div>

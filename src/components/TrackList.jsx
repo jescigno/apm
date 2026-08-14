@@ -1241,7 +1241,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       aria-label="Reorder tracks"
     >
       <img src={ICON_REORDER} alt="" />
-      <span className="tracks-toolbar-btn-label">REORDER</span>
+      <span className="tracks-toolbar-btn-label">Reorder</span>
     </button>
   ) : null;
 
@@ -1254,7 +1254,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       aria-label="Reorder tracks"
     >
       <img src={ICON_REORDER} alt="" />
-      <span className="tracks-toolbar-btn-label">REORDER</span>
+      <span className="tracks-toolbar-btn-label">Reorder</span>
     </button>
   ) : null;
 

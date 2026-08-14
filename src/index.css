@@ -8953,6 +8953,16 @@ html:has(.app-content-wrapper--projects) {
     right: 0;
     transform: none;
   }
+
+  /* Search results toolbar sits flush under fixed header — show labels below, not behind nav */
+  .tracks-section--search-results .tracks-actions .tracks-toolbar-btn-label {
+    bottom: auto;
+    top: calc(100% + 6px);
+  }
+
+  :is(.tracks-section--search-results, .projects-page .tracks-section) :is(.tracks-actions, .tracks-mobile-toolbar-actions) .tracks-toolbar-btn-label {
+    text-transform: none;
+  }
 }
 
 :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.btn-secondary, .btn-invite, .project-customize-menu-trigger, .tracks-toolbar-action-btn) {
