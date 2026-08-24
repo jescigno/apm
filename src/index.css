@@ -7579,7 +7579,7 @@ html:has(.app-content-wrapper--projects) {
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background: var(--accent-red);
+  background: var(--surface-folder-reorder-sweep);
   animation: projects-panel-track-landed-fill 1.5s ease-out forwards;
 }
 
