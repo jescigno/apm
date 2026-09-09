@@ -179,6 +179,8 @@ export const THEME_PALETTES = {
     '--icon-filter-folder': 'brightness(0) invert(0.533333)',
     '--icon-filter-on-dark-surface': 'brightness(0) invert(1)',
     '--icon-filter-none': 'none',
+    '--admin-bg': '#181818',
+    '--admin-surface': '#262626',
   },
   light: {
     '--bg-chrome': '#D9D9D9',
@@ -235,6 +237,8 @@ export const THEME_PALETTES = {
     '--account-surface-text-muted': '#808080',
     '--account-surface-border': '#808080',
     '--account-surface-radius': '8px',
+    '--admin-bg': '#f2f2f2',
+    '--admin-surface': '#DEDEDE',
     '--selection-bg': '#e9e9e9',
     '--profile-amber': '#C17C2A',
     '--profile-spring': '#2BC174',

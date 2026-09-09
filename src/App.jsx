@@ -34,8 +34,10 @@ import {
   ROUTE_ACCOUNT,
   ROUTE_NOTIFICATIONS,
   ROUTE_ACCOUNT_NOTIFICATIONS,
+  ADMIN_ROUTES,
   ROUTE_ADMIN,
   ROUTE_ADMIN_TEAM,
+  ROUTE_ADMIN_ACCOUNT,
   ROUTE_ADMIN_SETTINGS,
   ROUTE_ADMIN_NOTIFICATIONS,
   ROUTE_DESIGN_SYSTEM,
@@ -591,13 +593,7 @@ function AppContent() {
   }, [clockPanelOpen]);
 
   useEffect(() => {
-    const adminRoutes = [
-      ROUTE_ADMIN,
-      ROUTE_ADMIN_TEAM,
-      ROUTE_ADMIN_SETTINGS,
-      ROUTE_ADMIN_NOTIFICATIONS,
-    ];
-    if (!adminRoutes.includes(location.pathname)) {
+    if (!ADMIN_ROUTES.includes(location.pathname)) {
       setTeamMemberActivityPanelOpen(false);
       setActiveTeamMemberForActivity(null);
     }
@@ -649,12 +645,7 @@ function AppContent() {
   const isProjectsRoute = location.pathname === ROUTE_PROJECT_DETAILS;
   const isAccountRoute =
     location.pathname === ROUTE_ACCOUNT || location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS;
-  const isAdminRoute = [
-    ROUTE_ADMIN,
-    ROUTE_ADMIN_TEAM,
-    ROUTE_ADMIN_SETTINGS,
-    ROUTE_ADMIN_NOTIFICATIONS,
-  ].includes(location.pathname);
+  const isAdminRoute = ADMIN_ROUTES.includes(location.pathname);
   const isNotificationsRoute = location.pathname === ROUTE_NOTIFICATIONS;
   const isDesignSystemRoute = location.pathname === ROUTE_DESIGN_SYSTEM;
   const isFullBleedRoute =
@@ -695,17 +686,19 @@ function AppContent() {
       onDragCancel={handleProjectsDragCancel}
     >
     <div className={currentTrack || isPlayerClosing ? 'app-root player-visible' : 'app-root'}>
-      <Header
-        onOpenProjectsPanel={openProjectsPanel}
-        searchQuery={searchBarValue}
-        onSearchQueryChange={setSearchBarValue}
-        onSearchSubmit={handleSearchSubmit}
-        onSearchClear={handleSearchClear}
-        headerMenuRef={headerMenuRef}
-      />
-      <Sidebar onHomeClick={handleHomeNavClick} />
+      {!isAdminRoute && (
+        <Header
+          onOpenProjectsPanel={openProjectsPanel}
+          searchQuery={searchBarValue}
+          onSearchQueryChange={setSearchBarValue}
+          onSearchSubmit={handleSearchSubmit}
+          onSearchClear={handleSearchClear}
+          headerMenuRef={headerMenuRef}
+        />
+      )}
+      {!isAdminRoute && <Sidebar onHomeClick={handleHomeNavClick} />}
       <div
-        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isFullBleedRoute ? ' app-content-wrapper--account' : ''}`}
+        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isAdminRoute ? ' app-content-wrapper--admin' : ''}${isFullBleedRoute && !isAdminRoute ? ' app-content-wrapper--account' : ''}`}
         style={rightPanelOpen ? { paddingRight: `${mainPaddingRight}px` } : undefined}
       >
         {isSearchRoute && <SearchFiltersPanel />}
@@ -775,10 +768,11 @@ function AppContent() {
             <Route path={ROUTE_NOTIFICATIONS} element={<NotificationsPage />} />
             <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route path={ROUTE_ACCOUNT} element={<AccountPage headerMenuRef={headerMenuRef} />} />
-            <Route path={ROUTE_ADMIN_NOTIFICATIONS} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN_SETTINGS} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN_TEAM} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN} element={<AdminPage headerMenuRef={headerMenuRef} onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_NOTIFICATIONS} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_SETTINGS} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_ACCOUNT} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN_TEAM} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route path={ROUTE_ADMIN} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
             <Route path={ROUTE_DESIGN_SYSTEM} element={<DesignSystemPage />} />
           </Routes>
         </main>

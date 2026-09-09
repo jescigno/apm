@@ -9,6 +9,15 @@ export const ROUTE_NOTIFICATIONS = '/notifications';
 export const ROUTE_ACCOUNT_NOTIFICATIONS = '/account/notifications';
 export const ROUTE_ADMIN = '/admin';
 export const ROUTE_ADMIN_TEAM = '/admin/team';
+export const ROUTE_ADMIN_ACCOUNT = '/admin/account';
 export const ROUTE_ADMIN_SETTINGS = '/admin/settings';
 export const ROUTE_ADMIN_NOTIFICATIONS = '/admin/notifications';
 export const ROUTE_DESIGN_SYSTEM = '/design-system';
+
+export const ADMIN_ROUTES = [
+  ROUTE_ADMIN,
+  ROUTE_ADMIN_TEAM,
+  ROUTE_ADMIN_ACCOUNT,
+  ROUTE_ADMIN_SETTINGS,
+  ROUTE_ADMIN_NOTIFICATIONS,
+];

@@ -5,7 +5,7 @@ import {
   DEFAULT_SEARCH_SORT,
   SEARCH_SORT_DIRECTIONS,
   SEARCH_SORT_OPTIONS,
-  getSearchSortDirectionLabel,
+  SEARCH_SORT_DIRECTION_LABELS,
   getSearchSortActiveLabel,
 } from '../constants/searchResultsSort';
 import {
@@ -32,10 +32,26 @@ function ArrowUpIcon() {
   );
 }
 
+function resolveDirectionLabel(field, direction, directionLabels) {
+  const labels = directionLabels[field];
+  if (!labels) return '';
+  return direction === SEARCH_SORT_DIRECTIONS.DESC ? labels.desc : labels.asc;
+}
+
 export default function SearchSortMenu({
   value = DEFAULT_SEARCH_SORT,
   onChange,
   className = '',
+  options = SEARCH_SORT_OPTIONS,
+  directionLabels = SEARCH_SORT_DIRECTION_LABELS,
+  getActiveLabel = getSearchSortActiveLabel,
+  getDirectionLabel,
+  triggerVariant = 'toolbar',
+  triggerIcon = null,
+  menuAriaLabel = 'Sort options',
+  portalDataAttr = 'search-sort-menu-portal',
+  menuGroup = SEARCH_RESULTS_TOOLBAR_MENU_GROUP,
+  radioName = 'search-results-sort',
 }) {
   const instanceId = useId();
   const [open, setOpen] = useState(false);
@@ -47,8 +63,10 @@ export default function SearchSortMenu({
   const closeMenu = useCallback(() => {
     setOpen(false);
     setMenuRect(null);
-    unregisterOverflowMenu(SEARCH_RESULTS_TOOLBAR_MENU_GROUP, instanceId);
-  }, [instanceId]);
+    if (menuGroup) {
+      unregisterOverflowMenu(menuGroup, instanceId);
+    }
+  }, [instanceId, menuGroup]);
 
   const updateMenuRect = useCallback(() => {
     const trigger = triggerRef.current;
@@ -57,6 +75,7 @@ export default function SearchSortMenu({
     setMenuRect({
       top: rect.bottom + 6,
       right: window.innerWidth - rect.right,
+      center: rect.left + rect.width / 2,
     });
   }, []);
 
@@ -65,11 +84,13 @@ export default function SearchSortMenu({
       closeMenu();
       return;
     }
-    registerOverflowMenuOpen(SEARCH_RESULTS_TOOLBAR_MENU_GROUP, instanceId, closeMenu);
+    if (menuGroup) {
+      registerOverflowMenuOpen(menuGroup, instanceId, closeMenu);
+    }
     skipOutsideCloseRef.current = true;
     updateMenuRect();
     setOpen(true);
-  }, [open, updateMenuRect, closeMenu, instanceId]);
+  }, [open, updateMenuRect, closeMenu, instanceId, menuGroup]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -90,14 +111,14 @@ export default function SearchSortMenu({
         return;
       }
       const inWrap = wrapRef.current?.contains(event.target);
-      const inMenu = event.target.closest('[data-search-sort-menu-portal]');
+      const inMenu = event.target.closest(`[data-sort-menu-portal="${portalDataAttr}"]`);
       if (!inWrap && !inMenu) {
         closeMenu();
       }
     };
     document.addEventListener('pointerdown', handlePointerDown, true);
     return () => document.removeEventListener('pointerdown', handlePointerDown, true);
-  }, [open, closeMenu]);
+  }, [open, closeMenu, portalDataAttr]);
 
   useEffect(() => {
     if (!open) return;
@@ -108,7 +129,14 @@ export default function SearchSortMenu({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, closeMenu]);
 
-  useEffect(() => () => unregisterOverflowMenu(SEARCH_RESULTS_TOOLBAR_MENU_GROUP, instanceId), [instanceId]);
+  useEffect(
+    () => () => {
+      if (menuGroup) {
+        unregisterOverflowMenu(menuGroup, instanceId);
+      }
+    },
+    [instanceId, menuGroup]
+  );
 
   const selectSort = (field, direction) => {
     onChange?.({
@@ -126,26 +154,42 @@ export default function SearchSortMenu({
     selectSort(field, nextDirection);
   };
 
-  const activeSortLabel = getSearchSortActiveLabel(value);
+  const activeSortLabel = getActiveLabel(value, options);
+  const directionLabelFor = (field, direction) => (
+    getDirectionLabel
+      ? getDirectionLabel(field, direction)
+      : resolveDirectionLabel(field, direction, directionLabels)
+  );
 
-  const menu = open && createPortal(
-    <div
-      data-search-sort-menu-portal
-      className="search-sort-menu search-sort-menu--portal"
-      role="listbox"
-      aria-label="Sort options"
-      style={{
+  const menuStyle = triggerVariant === 'icon'
+    ? {
+        position: 'fixed',
+        left: menuRect?.center ?? 0,
+        top: menuRect?.top ?? 0,
+        transform: 'translateX(-50%)',
+        zIndex: 2100,
+        visibility: menuRect ? 'visible' : 'hidden',
+      }
+    : {
         position: 'fixed',
         top: menuRect?.top ?? 0,
         right: menuRect?.right ?? 0,
         zIndex: 2100,
         visibility: menuRect ? 'visible' : 'hidden',
-      }}
+      };
+
+  const menu = open && createPortal(
+    <div
+      data-sort-menu-portal={portalDataAttr}
+      className="search-sort-menu search-sort-menu--portal"
+      role="listbox"
+      aria-label={menuAriaLabel}
+      style={menuStyle}
     >
-      {SEARCH_SORT_OPTIONS.map(({ id, label, directional }) => {
+      {options.map(({ id, label, directional }) => {
         const checked = value.field === id;
         const isAscending = value.direction === SEARCH_SORT_DIRECTIONS.ASC;
-        const directionLabel = getSearchSortDirectionLabel(id, value.direction);
+        const directionLabel = directionLabelFor(id, value.direction);
 
         return (
           <label
@@ -155,7 +199,7 @@ export default function SearchSortMenu({
             <input
               type="radio"
               className="account-settings-radio__input"
-              name="search-results-sort"
+              name={radioName}
               value={id}
               checked={checked}
               onChange={() => selectSort(id)}
@@ -191,23 +235,39 @@ export default function SearchSortMenu({
     document.body
   );
 
+  const triggerAriaLabel = `Sort by ${activeSortLabel}`;
+
   return (
     <div className={`search-sort-menu-wrap${className ? ` ${className}` : ''}`} ref={wrapRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={`btn-secondary search-sort-menu-trigger${open ? ' search-sort-menu-trigger--open' : ''}`}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={toggleOpen}
-        aria-label={`Sort by ${activeSortLabel}`}
-      >
-        <img src={ICON_SORT} alt="" />
-        <span className="tracks-toolbar-btn-label">
-          Sort{' '}
-          <span className="search-sort-menu-trigger-value">{activeSortLabel}</span>
-        </span>
-      </button>
+      {triggerVariant === 'icon' ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          className={`admin-activity-filter__trigger admin-activity-filter__trigger--with-icon admin-activity-filter__trigger--icon-only search-sort-menu-trigger--icon${open ? ' search-sort-menu-trigger--open' : ''}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={triggerAriaLabel}
+          onClick={toggleOpen}
+        >
+          {triggerIcon}
+        </button>
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          className={`btn-secondary search-sort-menu-trigger${open ? ' search-sort-menu-trigger--open' : ''}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={toggleOpen}
+          aria-label={triggerAriaLabel}
+        >
+          <img src={ICON_SORT} alt="" />
+          <span className="tracks-toolbar-btn-label">
+            Sort{' '}
+            <span className="search-sort-menu-trigger-value">{activeSortLabel}</span>
+          </span>
+        </button>
+      )}
       {menu}
     </div>
   );

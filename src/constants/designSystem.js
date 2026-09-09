@@ -472,6 +472,10 @@ export const ICON_COMMENTS = '/icons/comments.svg';
 export const ICON_COMMENTS_ACTIVE = '/icons/comments-active.svg';
 export const ICON_TRACK_DETAILS = '/icons/TrackDetails.svg';
 export const ICON_SORT = '/icons/sort.svg';
+export const ICON_SORT_ARROW_UP = '/icons/sort-arrow-up.svg';
+export const ICON_SORT_ARROW_DOWN = '/icons/sort-arrow-down.svg';
+export const ICON_FILTER = '/icons/filters_quickfilters.svg';
+export const ICON_UI_FILTER = '/icons/ui-filter.svg';
 export const ICON_SHUFFLE = '/icons/shuffle.svg';
 export const ICON_REFRESH = '/icons/refresh.svg';
 export const ICON_SEARCH = '/icons/search.svg';
@@ -576,6 +580,7 @@ export const DESIGN_SYSTEM_ICONS = [
       { name: 'Trash', src: ICON_DELETE },
       { name: 'Customize', src: ICON_CUSTOMIZE },
       { name: 'Sort', src: ICON_SORT },
+      { name: 'Filter (quick filters)', src: ICON_FILTER },
       { name: 'Reorder', src: ICON_REORDER },
       { name: 'Refresh', src: ICON_REFRESH },
       { name: 'Archive', src: ICON_ARCHIVE },
