@@ -15171,7 +15171,7 @@ html:has(.app-content-wrapper--admin) {
 
 .admin-layout__nav-label {
   display: block;
-  padding: 0 12px 2px;
+  padding: 0 24px 2px;
   font-family: 'Poppins', sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -15189,11 +15189,12 @@ html:has(.app-content-wrapper--admin) {
   flex-direction: column;
   gap: 4px;
   padding-top: 24px;
+  margin-inline: -24px;
 }
 
 .admin-layout__nav-item {
   display: block;
-  padding: 10px 12px;
+  padding: 10px 24px;
   border-radius: 0;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
@@ -15233,9 +15234,10 @@ html:has(.app-content-wrapper--admin) {
 
 .admin-layout__sidebar-footer {
   margin-top: auto;
+  margin-inline: -24px;
   padding-top: 16px;
   align-self: stretch;
-  width: 100%;
+  width: auto;
 }
 
 .admin-layout__user-menu-wrap {
@@ -15248,7 +15250,7 @@ html:has(.app-content-wrapper--admin) {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 6px 4px;
+  padding: 6px 24px;
   border: none;
   border-radius: 0;
   background: none;
@@ -15374,6 +15376,7 @@ html:has(.app-content-wrapper--admin) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin: 0 0 24px;
 }
@@ -15381,7 +15384,11 @@ html:has(.app-content-wrapper--admin) {
 .admin-page-header__actions {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 12px;
 }
 
 .admin-page-title {
@@ -15484,6 +15491,7 @@ html:has(.app-content-wrapper--admin) {
 .admin-activity-filters {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   flex-shrink: 0;
 }
@@ -15836,6 +15844,8 @@ html:has(.app-content-wrapper--admin) {
   flex-direction: column;
   gap: 0;
   min-width: 0;
+  container-type: inline-size;
+  container-name: admin-activity;
 }
 
 .admin-activity__stats {
@@ -15843,6 +15853,13 @@ html:has(.app-content-wrapper--admin) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   padding-bottom: 40px;
+  min-width: 0;
+}
+
+@container admin-activity (max-width: 1008px) {
+  .admin-activity__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .admin-activity-stat__card {
@@ -15854,6 +15871,9 @@ html:has(.app-content-wrapper--admin) {
   background: var(--account-surface);
   border-radius: var(--account-surface-radius);
   box-sizing: border-box;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: admin-stat-card;
 }
 
 .admin-activity-stat__label {
@@ -15865,23 +15885,28 @@ html:has(.app-content-wrapper--admin) {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--account-surface-text);
+  overflow-wrap: break-word;
 }
 
 .admin-activity-stat__footer {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   margin-top: auto;
+  min-width: 0;
 }
 
 .admin-activity-stat__value {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  font-size: 40px;
+  font-size: clamp(28px, 17cqi, 40px);
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.4;
   color: var(--account-surface-text);
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .admin-activity-stat__trend {
@@ -15889,7 +15914,19 @@ html:has(.app-content-wrapper--admin) {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+@container admin-stat-card (max-width: 240px) {
+  .admin-activity-stat__footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-activity-stat__trend {
+    align-items: flex-start;
+  }
 }
 
 .admin-activity-stat__trend-row {
@@ -15917,6 +15954,8 @@ html:has(.app-content-wrapper--admin) {
   font-weight: 400;
   line-height: 1.2;
   color: var(--account-surface-text-muted);
+  text-align: inherit;
+  white-space: normal;
 }
 
 .admin-activity-stat__trend--up .admin-activity-stat__trend-icon,
@@ -15959,6 +15998,7 @@ html:has(.app-content-wrapper--admin) {
 .admin-activity-section-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 0;
   padding: 0;
@@ -16245,6 +16285,44 @@ html:has(.app-content-wrapper--admin) {
   }
 }
 
+@media (max-width: 1180px) {
+  .admin-activity__content {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-activity-downloads__list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-layout__content {
+    padding: 48px 28px 40px;
+  }
+
+  .admin-page-title {
+    font-size: 28px;
+  }
+
+  .admin-activity-stat__value {
+    font-size: clamp(24px, 17cqi, 32px);
+  }
+
+  .admin-team-toolbar {
+    align-items: stretch;
+  }
+
+  .admin-team-search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .admin-team-toolbar__actions {
+    flex-wrap: wrap;
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-page-tabs-row {
     flex-wrap: wrap;
@@ -16255,16 +16333,7 @@ html:has(.app-content-wrapper--admin) {
   }
 
   .admin-activity-filters {
-    flex-wrap: wrap;
     justify-content: flex-end;
-  }
-
-  .admin-activity__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-activity__content {
-    grid-template-columns: 1fr;
   }
 
   .admin-activity-user-row {
@@ -16282,10 +16351,6 @@ html:has(.app-content-wrapper--admin) {
     grid-column: 2;
     grid-row: 2;
     white-space: normal;
-  }
-
-  .admin-activity-downloads__list {
-    max-height: none;
   }
 }
 

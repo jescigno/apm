@@ -73,11 +73,147 @@ export const ADMIN_ACTIVITY_USER_MORE_ACTIONS = [
 ];
 
 export const ADMIN_ACTIVITY_STATS = [
-  { id: 'members', value: '30', label: 'Active Members', trend: 12.9, trendDirection: 'up' },
-  { id: 'searches', value: '325', label: 'Recent Searches', trend: 5.6, trendDirection: 'up' },
-  { id: 'auditions', value: '2682', label: 'Recent Auditions', trend: -1.9, trendDirection: 'down' },
-  { id: 'projects', value: '62', label: 'Recent Projects', trend: 122.9, trendDirection: 'up' },
+  { id: 'members', value: 30, label: 'Active Members', trend: 12.9, trendDirection: 'up' },
+  { id: 'searches', value: 325, label: 'Recent Searches', trend: 5.6, trendDirection: 'up' },
+  { id: 'auditions', value: 2682, label: 'Recent Auditions', trend: -1.9, trendDirection: 'down' },
+  { id: 'projects', value: 62, label: 'Recent Projects', trend: 122.9, trendDirection: 'up' },
 ];
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function endOfDay(date) {
+  const day = startOfDay(date);
+  day.setHours(23, 59, 59, 999);
+  return day;
+}
+
+function hoursAgo(hours) {
+  const date = new Date();
+  date.setHours(date.getHours() - hours);
+  return date;
+}
+
+function daysAgo(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+}
+
+export function getAdminActivityDateRange(filterId, customRange = {}) {
+  const now = new Date();
+
+  switch (filterId) {
+    case 'today':
+      return { start: startOfDay(now), end: now };
+    case 'this-week': {
+      const start = startOfDay(now);
+      start.setDate(start.getDate() - start.getDay());
+      return { start, end: now };
+    }
+    case 'last-30-days':
+      return { start: daysAgo(30), end: now };
+    case 'year-to-date':
+      return { start: new Date(now.getFullYear(), 0, 1), end: now };
+    case 'custom': {
+      const { start, end } = customRange;
+      if (!start) return null;
+      return {
+        start: startOfDay(start),
+        end: end ? endOfDay(end) : endOfDay(start),
+      };
+    }
+    default:
+      return { start: daysAgo(30), end: now };
+  }
+}
+
+export function isWithinAdminActivityDateRange(date, range) {
+  if (!range?.start || !date) return true;
+  const time = date.getTime();
+  return time >= range.start.getTime() && time <= range.end.getTime();
+}
+
+function getAdminActivityPeriodScale(filterId, range) {
+  if (filterId === 'today') return 0.06;
+  if (filterId === 'this-week') return 0.28;
+  if (filterId === 'last-30-days') return 1;
+  if (filterId === 'year-to-date') {
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    return Math.max(1, dayOfYear / 30);
+  }
+  if (filterId === 'custom' && range?.start && range?.end) {
+    const days = Math.max(
+      1,
+      Math.round((startOfDay(range.end) - startOfDay(range.start)) / 86400000) + 1
+    );
+    return Math.min(4, days / 30);
+  }
+  return 1;
+}
+
+export function getAdminActivityTrendPeriodLabel(filterId) {
+  switch (filterId) {
+    case 'today':
+      return 'vs yesterday';
+    case 'this-week':
+      return 'vs last week';
+    case 'year-to-date':
+      return 'vs last year';
+    case 'custom':
+      return 'vs prior period';
+    default:
+      return 'vs last month';
+  }
+}
+
+function formatAdminActivityStatValue(id, value) {
+  if (id === 'members' || id === 'projects') {
+    return String(value);
+  }
+  return value.toLocaleString('en-US');
+}
+
+export function getAdminActivityStatsForRange(filterId, customRange, users) {
+  const range = getAdminActivityDateRange(filterId, customRange);
+  const activeMembersInRange = users.filter(
+    (user) => user.status === 'active' && isWithinAdminActivityDateRange(user.activityAt, range)
+  ).length;
+  const scale = getAdminActivityPeriodScale(filterId, range);
+
+  return ADMIN_ACTIVITY_STATS.map((stat) => {
+    if (stat.id === 'members') {
+      return {
+        ...stat,
+        value: formatAdminActivityStatValue(stat.id, activeMembersInRange),
+        trend: filterId === 'today' ? 4.2 : stat.trend,
+        trendDirection: filterId === 'today' ? 'up' : stat.trendDirection,
+      };
+    }
+
+    const scaledValue = Math.max(1, Math.round(stat.value * scale));
+    const scaledTrend = Number((stat.trend * (filterId === 'today' ? 0.35 : 0.65)).toFixed(1));
+
+    return {
+      ...stat,
+      value: formatAdminActivityStatValue(stat.id, scaledValue),
+      trend: Math.abs(scaledTrend) < 0.1 ? stat.trend : scaledTrend,
+      trendDirection: scaledTrend < 0 ? 'down' : stat.trendDirection,
+    };
+  });
+}
+
+export function filterAdminActivityUsersByDate(users, filterId, customRange) {
+  const range = getAdminActivityDateRange(filterId, customRange);
+  return users.filter((user) => isWithinAdminActivityDateRange(user.activityAt, range));
+}
+
+export function filterAdminActivityDownloadsByDate(downloads, filterId, customRange) {
+  const range = getAdminActivityDateRange(filterId, customRange);
+  return downloads.filter((download) => isWithinAdminActivityDateRange(download.downloadedAt, range));
+}
 
 const ADMIN_ACTIVITY_USER_SEEDS = [
   { name: 'Matthew Robinson', initials: 'MR', status: 'active' },
@@ -146,6 +282,45 @@ function getAdminActivityRecentAction(index) {
   return `${prefix} ${time}`;
 }
 
+const ADMIN_ACTIVITY_USER_ACTIVITY_OFFSETS = [
+  { hours: 2 },
+  { hours: 3 },
+  { hours: 5 },
+  { hours: 6 },
+  { hours: 8 },
+  { days: 1 },
+  { days: 2 },
+  { days: 3 },
+  { days: 4 },
+  { days: 5 },
+  { days: 6 },
+  { days: 8 },
+  { days: 10 },
+  { days: 12 },
+  { days: 14 },
+  { days: 16 },
+  { days: 18 },
+  { days: 20 },
+  { days: 22 },
+  { days: 24 },
+  { days: 26 },
+  { days: 28 },
+  { days: 32 },
+  { days: 38 },
+  { days: 45 },
+  { days: 52 },
+  { days: 60 },
+  { days: 75 },
+  { days: 90 },
+  { days: 120 },
+];
+
+function getAdminActivityUserActivityDate(index) {
+  const offset = ADMIN_ACTIVITY_USER_ACTIVITY_OFFSETS[index] ?? { days: 30 + index };
+  if (offset.hours != null) return hoursAgo(offset.hours);
+  return daysAgo(offset.days);
+}
+
 export const ADMIN_ACTIVITY_USERS = ADMIN_ACTIVITY_USER_SEEDS.map((seed, index) => ({
   id: `activity-user-${index + 1}`,
   initials: seed.initials,
@@ -153,6 +328,7 @@ export const ADMIN_ACTIVITY_USERS = ADMIN_ACTIVITY_USER_SEEDS.map((seed, index) 
   email: adminActivityUserEmail(seed.name),
   recentActivity: getAdminActivityRecentAction(index),
   status: seed.status,
+  activityAt: getAdminActivityUserActivityDate(index),
 }));
 
 const ADMIN_ACTIVITY_DOWNLOAD_SAMPLES = [
@@ -166,8 +342,26 @@ const ADMIN_ACTIVITY_DOWNLOAD_SAMPLES = [
   { title: 'Afterglow', code: 'AG-5520 #4', type: 'album', sortOrder: 8 },
 ];
 
+const ADMIN_ACTIVITY_DOWNLOAD_OFFSETS = [
+  { hours: 2 },
+  { hours: 18 },
+  { days: 2 },
+  { days: 4 },
+  { days: 12 },
+  { days: 20 },
+  { days: 35 },
+  { days: 90 },
+];
+
+function getAdminActivityDownloadDate(index) {
+  const offset = ADMIN_ACTIVITY_DOWNLOAD_OFFSETS[index] ?? { days: 30 + index * 7 };
+  if (offset.hours != null) return hoursAgo(offset.hours);
+  return daysAgo(offset.days);
+}
+
 export const ADMIN_ACTIVITY_DOWNLOADS = ADMIN_ACTIVITY_DOWNLOAD_SAMPLES.map((download, index) => ({
   id: `download-${index + 1}`,
   thumbSrc: TRACK_THUMBNAILS[index % TRACK_THUMBNAILS.length],
+  downloadedAt: getAdminActivityDownloadDate(index),
   ...download,
 }));

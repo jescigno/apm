@@ -11,12 +11,15 @@ import {
   ADMIN_ACTIVITY_DOWNLOAD_LIST_FILTERS,
   ADMIN_ACTIVITY_DOWNLOAD_LIST_SORTS,
   ADMIN_ACTIVITY_DOWNLOAD_SORT_DIRECTION_LABELS,
-  ADMIN_ACTIVITY_STATS,
   ADMIN_ACTIVITY_USER_LIST_FILTERS,
   ADMIN_ACTIVITY_USER_LIST_SORTS,
   ADMIN_ACTIVITY_USER_MORE_ACTIONS,
   ADMIN_ACTIVITY_USER_SORT_DIRECTION_LABELS,
   ADMIN_ACTIVITY_USERS,
+  filterAdminActivityDownloadsByDate,
+  filterAdminActivityUsersByDate,
+  getAdminActivityStatsForRange,
+  getAdminActivityTrendPeriodLabel,
   getAdminActivitySortActiveLabel,
 } from '../constants/adminActivity';
 import { SEARCH_SORT_DIRECTIONS } from '../constants/searchResultsSort';
@@ -186,15 +189,18 @@ function AdminActivitySelectDropdown({
   );
 }
 
-function AdminActivityDateFilterDropdown() {
+function AdminActivityDateFilterDropdown({
+  dateFilter,
+  customDateRange,
+  onDateFilterChange,
+  onCustomDateRangeChange,
+}) {
   const triggerRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuRect, setMenuRect] = useState(null);
-  const [selectedDateFilter, setSelectedDateFilter] = useState(ADMIN_ACTIVITY_DEFAULT_DATE_FILTER);
-  const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
 
   const selectedLabel = useMemo(() => {
-    if (selectedDateFilter === 'custom' && customDateRange.start) {
+    if (dateFilter === 'custom' && customDateRange.start) {
       const formatDate = (date) => date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -208,8 +214,8 @@ function AdminActivityDateFilterDropdown() {
       return formatDate(customDateRange.start);
     }
 
-    return ADMIN_ACTIVITY_DATE_FILTERS.find((option) => option.id === selectedDateFilter)?.label ?? 'Last 30 days';
-  }, [selectedDateFilter, customDateRange]);
+    return ADMIN_ACTIVITY_DATE_FILTERS.find((option) => option.id === dateFilter)?.label ?? 'Last 30 days';
+  }, [dateFilter, customDateRange]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -257,22 +263,22 @@ function AdminActivityDateFilterDropdown() {
   }, [menuOpen, closeMenu]);
 
   const selectDateFilter = (filterId) => {
-    setSelectedDateFilter(filterId);
+    onDateFilterChange(filterId);
     if (filterId !== 'custom') {
       closeMenu();
     }
   };
 
   const selectCustomDateRange = (range) => {
-    setCustomDateRange(range);
-    setSelectedDateFilter('custom');
+    onCustomDateRangeChange(range);
+    onDateFilterChange('custom');
   };
 
   const filterMenu =
     menuOpen &&
     createPortal(
       <div
-        className={`admin-activity-date-filter-panel${selectedDateFilter === 'custom' ? ' admin-activity-date-filter-panel--with-picker' : ''}`}
+        className={`admin-activity-date-filter-panel${dateFilter === 'custom' ? ' admin-activity-date-filter-panel--with-picker' : ''}`}
         data-admin-activity-date-filter-menu
         style={{
           position: 'fixed',
@@ -284,7 +290,7 @@ function AdminActivityDateFilterDropdown() {
       >
         <div className="admin-activity-filter-menu" role="listbox" aria-label="Date filters">
           {ADMIN_ACTIVITY_DATE_FILTERS.map((option) => {
-            const checked = selectedDateFilter === option.id;
+            const checked = dateFilter === option.id;
             return (
               <label
                 key={option.id}
@@ -309,7 +315,7 @@ function AdminActivityDateFilterDropdown() {
             );
           })}
         </div>
-        {selectedDateFilter === 'custom' ? (
+        {dateFilter === 'custom' ? (
           <AdminActivityDatePicker
             value={customDateRange}
             onChange={selectCustomDateRange}
@@ -336,10 +342,20 @@ function AdminActivityDateFilterDropdown() {
   );
 }
 
-function AdminActivityFilters() {
+function AdminActivityFilters({
+  dateFilter,
+  customDateRange,
+  onDateFilterChange,
+  onCustomDateRangeChange,
+}) {
   return (
     <div className="admin-activity-filters">
-      <AdminActivityDateFilterDropdown />
+      <AdminActivityDateFilterDropdown
+        dateFilter={dateFilter}
+        customDateRange={customDateRange}
+        onDateFilterChange={onDateFilterChange}
+        onCustomDateRangeChange={onCustomDateRangeChange}
+      />
     </div>
   );
 }
@@ -423,7 +439,7 @@ function AdminActivityTrendIcon({ direction }) {
   );
 }
 
-function AdminActivityStatCard({ value, label, trend, trendDirection }) {
+function AdminActivityStatCard({ value, label, trend, trendDirection, trendPeriod }) {
   const trendLabel = `${trend > 0 ? '+' : ''}${trend}%`;
 
   return (
@@ -436,7 +452,7 @@ function AdminActivityStatCard({ value, label, trend, trendDirection }) {
             <AdminActivityTrendIcon direction={trendDirection} />
             <span className="admin-activity-stat__trend-value">{trendLabel}</span>
           </div>
-          <span className="admin-activity-stat__trend-period">this month</span>
+          <span className="admin-activity-stat__trend-period">{trendPeriod}</span>
         </div>
       </div>
     </article>
@@ -628,14 +644,38 @@ function AdminActivityDownloadRow({ download }) {
   );
 }
 
-export default function AdminActivityTab({ onOpenMemberActivity }) {
+export default function AdminActivityTab({
+  onOpenMemberActivity,
+  dateFilter = ADMIN_ACTIVITY_DEFAULT_DATE_FILTER,
+  customDateRange = { start: null, end: null },
+}) {
   const [userListFilter, setUserListFilter] = useState(ADMIN_ACTIVITY_DEFAULT_USER_LIST_FILTER);
   const [userListSort, setUserListSort] = useState(ADMIN_ACTIVITY_DEFAULT_USER_LIST_SORT);
   const [downloadListFilter, setDownloadListFilter] = useState(ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_FILTER);
   const [downloadListSort, setDownloadListSort] = useState(ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_SORT);
 
+  const dateFilteredUsers = useMemo(
+    () => filterAdminActivityUsersByDate(ADMIN_ACTIVITY_USERS, dateFilter, customDateRange),
+    [dateFilter, customDateRange]
+  );
+
+  const dateFilteredDownloads = useMemo(
+    () => filterAdminActivityDownloadsByDate(ADMIN_ACTIVITY_DOWNLOADS, dateFilter, customDateRange),
+    [dateFilter, customDateRange]
+  );
+
+  const visibleStats = useMemo(
+    () => getAdminActivityStatsForRange(dateFilter, customDateRange, ADMIN_ACTIVITY_USERS),
+    [dateFilter, customDateRange]
+  );
+
+  const trendPeriod = useMemo(
+    () => getAdminActivityTrendPeriodLabel(dateFilter),
+    [dateFilter]
+  );
+
   const visibleUsers = useMemo(() => {
-    let users = ADMIN_ACTIVITY_USERS;
+    let users = dateFilteredUsers;
 
     if (userListFilter !== 'all') {
       users = users.filter((user) => user.status === userListFilter);
@@ -655,10 +695,10 @@ export default function AdminActivityTab({ onOpenMemberActivity }) {
     }
 
     return sorted;
-  }, [userListFilter, userListSort]);
+  }, [dateFilteredUsers, userListFilter, userListSort]);
 
   const visibleDownloads = useMemo(() => {
-    let downloads = ADMIN_ACTIVITY_DOWNLOADS;
+    let downloads = dateFilteredDownloads;
 
     if (downloadListFilter !== 'all') {
       downloads = downloads.filter((download) => download.type === downloadListFilter.slice(0, -1));
@@ -681,18 +721,19 @@ export default function AdminActivityTab({ onOpenMemberActivity }) {
     }
 
     return sorted;
-  }, [downloadListFilter, downloadListSort]);
+  }, [dateFilteredDownloads, downloadListFilter, downloadListSort]);
 
   return (
     <div className="admin-activity">
       <div className="admin-activity__stats">
-        {ADMIN_ACTIVITY_STATS.map((stat) => (
+        {visibleStats.map((stat) => (
           <AdminActivityStatCard
             key={stat.id}
             value={stat.value}
             label={stat.label}
             trend={stat.trend}
             trendDirection={stat.trendDirection}
+            trendPeriod={trendPeriod}
           />
         ))}
       </div>

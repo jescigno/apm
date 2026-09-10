@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+  ADMIN_ACTIVITY_DEFAULT_DATE_FILTER,
+} from '../constants/adminActivity';
 import { ADMIN_TABS, adminPageTitleFromPath, adminTabIdFromPath } from '../constants/adminPage';
 import AccountPersonalTab from '../components/AccountPersonalTab';
 import AdminActivityTab, { AdminActivityFilters } from '../components/AdminActivityTab';
@@ -40,6 +43,8 @@ function AdminNotificationsTab() {
 export default function AdminPage({ onOpenMemberActivity }) {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(() => adminTabIdFromPath(location.pathname));
+  const [activityDateFilter, setActivityDateFilter] = useState(ADMIN_ACTIVITY_DEFAULT_DATE_FILTER);
+  const [activityCustomDateRange, setActivityCustomDateRange] = useState({ start: null, end: null });
 
   useEffect(() => {
     setActiveTab(adminTabIdFromPath(location.pathname));
@@ -47,7 +52,15 @@ export default function AdminPage({ onOpenMemberActivity }) {
 
   const activePageTitle = adminPageTitleFromPath(location.pathname);
 
-  const headerActions = activeTab === 'activity' ? <AdminActivityFilters /> : null;
+  const headerActions =
+    activeTab === 'activity' ? (
+      <AdminActivityFilters
+        dateFilter={activityDateFilter}
+        customDateRange={activityCustomDateRange}
+        onDateFilterChange={setActivityDateFilter}
+        onCustomDateRangeChange={setActivityCustomDateRange}
+      />
+    ) : null;
 
   return (
     <AdminLayout pageTitle={activePageTitle} headerActions={headerActions}>
@@ -60,7 +73,13 @@ export default function AdminPage({ onOpenMemberActivity }) {
           hidden={activeTab !== id}
           className="admin-page-panel"
         >
-          {id === 'activity' && <AdminActivityTab onOpenMemberActivity={onOpenMemberActivity} />}
+          {id === 'activity' && (
+            <AdminActivityTab
+              onOpenMemberActivity={onOpenMemberActivity}
+              dateFilter={activityDateFilter}
+              customDateRange={activityCustomDateRange}
+            />
+          )}
           {id === 'team' && <AdminTeamTab onOpenMemberActivity={onOpenMemberActivity} />}
           {id === 'account' && <AccountPersonalTab />}
           {id === 'settings' && <AdminSettingsTab />}
