@@ -326,7 +326,7 @@ function AdminActivityDateFilterDropdown({
     );
 
   return (
-    <div className="admin-activity-filter admin-activity-filter--dropdown">
+    <div className="admin-activity-filter admin-activity-filter--dropdown admin-activity-filter--date">
       <button
         ref={triggerRef}
         type="button"
