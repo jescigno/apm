@@ -209,33 +209,34 @@ function CommentsPanel({
           </button>
         </div>
       </div>
-      <div className="comments-panel-content">
-        <div className={`comments-panel-compose${hasDraft ? ' comments-panel-compose--active' : ''}`}>
-          <div className="comments-panel-compose-field">
-            <textarea
-              ref={inputRef}
-              rows={1}
-              className="comments-panel-input"
-              placeholder="Add a comment..."
-              aria-label="Add a comment"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-            />
-            {hasDraft && (
-              <button
-                type="button"
-                className="comments-panel-send-btn"
-                onClick={handleSend}
-                aria-label="Send comment"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M3.4 20.4 22 12 3.4 3.6 3 10.8l9.6 1.2-9.6 1.2z" />
-                </svg>
-              </button>
-            )}
-          </div>
+      <div className="comments-panel-header-divider" aria-hidden="true" />
+      <div className={`comments-panel-compose${hasDraft ? ' comments-panel-compose--active' : ''}`}>
+        <div className="comments-panel-compose-field">
+          <textarea
+            ref={inputRef}
+            rows={1}
+            className="comments-panel-input"
+            placeholder="Add a comment..."
+            aria-label="Add a comment"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleDraftKeyDown}
+          />
+          {hasDraft && (
+            <button
+              type="button"
+              className="comments-panel-send-btn"
+              onClick={handleSend}
+              aria-label="Send comment"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M3.4 20.4 22 12 3.4 3.6 3 10.8l9.6 1.2-9.6 1.2z" />
+              </svg>
+            </button>
+          )}
         </div>
+      </div>
+      <section className="comments-panel-others" aria-label="Comments list">
         <div className="comments-panel-list-clip">
           <div className="comments-panel-list" ref={listRef}>
             {commentItems.map((item) => {
@@ -275,7 +276,7 @@ function CommentsPanel({
             })}
           </div>
         </div>
-      </div>
+      </section>
     </aside>
   );
 }

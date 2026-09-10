@@ -6312,8 +6312,14 @@ html:has(.app-content-wrapper--projects) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 8px 12px 10px;
   flex-shrink: 0;
+}
+
+.comments-panel-header-divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: var(--panel-divider);
 }
 
 .comments-panel-title-row {
@@ -6388,7 +6394,14 @@ html:has(.app-content-wrapper--projects) {
   height: 12px;
 }
 
-.comments-panel-content {
+.comments-panel-compose {
+  flex-shrink: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.comments-panel-others {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -6402,14 +6415,6 @@ html:has(.app-content-wrapper--projects) {
   flex: 1;
   min-height: 0;
   overflow: clip;
-}
-
-.comments-panel-compose {
-  flex-shrink: 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--panel-divider);
-  box-sizing: border-box;
-  width: 100%;
 }
 
 .comments-panel-compose-field {
