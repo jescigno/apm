@@ -798,8 +798,8 @@ body {
   display: flex;
   align-items: center;
   background: var(--bg-search);
-  border: none;
-  border-radius: 9999px;
+  border: 1px solid var(--border-search);
+  border-radius: 4px;
   padding: 0 16px;
 }
 
@@ -2770,12 +2770,16 @@ html:has(.app-content-wrapper--projects) {
   padding: 0 0 24px;
 }
 
-/* Thin scrollbar shared by search filters + main search column + account page + projects page */
+/* Thin scrollbar shared by search filters + main search column + account page + projects page + admin panels */
 .search-home,
 .search-results-page,
 .search-filters-panel-body,
 .account-page-body,
-.projects-page {
+.projects-page,
+.admin-layout__content,
+.admin-activity-users__list,
+.admin-activity-downloads__list,
+.team-member-activity-panel-content {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
@@ -2784,7 +2788,11 @@ html:has(.app-content-wrapper--projects) {
 .search-results-page::-webkit-scrollbar,
 .search-filters-panel-body::-webkit-scrollbar,
 .account-page-body::-webkit-scrollbar,
-.projects-page::-webkit-scrollbar {
+.projects-page::-webkit-scrollbar,
+.admin-layout__content::-webkit-scrollbar,
+.admin-activity-users__list::-webkit-scrollbar,
+.admin-activity-downloads__list::-webkit-scrollbar,
+.team-member-activity-panel-content::-webkit-scrollbar {
   width: 4px;
 }
 
@@ -2792,7 +2800,11 @@ html:has(.app-content-wrapper--projects) {
 .search-results-page::-webkit-scrollbar-track,
 .search-filters-panel-body::-webkit-scrollbar-track,
 .account-page-body::-webkit-scrollbar-track,
-.projects-page::-webkit-scrollbar-track {
+.projects-page::-webkit-scrollbar-track,
+.admin-layout__content::-webkit-scrollbar-track,
+.admin-activity-users__list::-webkit-scrollbar-track,
+.admin-activity-downloads__list::-webkit-scrollbar-track,
+.team-member-activity-panel-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
@@ -2800,7 +2812,11 @@ html:has(.app-content-wrapper--projects) {
 .search-results-page::-webkit-scrollbar-thumb,
 .search-filters-panel-body::-webkit-scrollbar-thumb,
 .account-page-body::-webkit-scrollbar-thumb,
-.projects-page::-webkit-scrollbar-thumb {
+.projects-page::-webkit-scrollbar-thumb,
+.admin-layout__content::-webkit-scrollbar-thumb,
+.admin-activity-users__list::-webkit-scrollbar-thumb,
+.admin-activity-downloads__list::-webkit-scrollbar-thumb,
+.team-member-activity-panel-content::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
@@ -2810,7 +2826,11 @@ html:has(.app-content-wrapper--projects) {
 .search-results-page::-webkit-scrollbar-thumb:hover,
 .search-filters-panel-body::-webkit-scrollbar-thumb:hover,
 .account-page-body::-webkit-scrollbar-thumb:hover,
-.projects-page::-webkit-scrollbar-thumb:hover {
+.projects-page::-webkit-scrollbar-thumb:hover,
+.admin-layout__content::-webkit-scrollbar-thumb:hover,
+.admin-activity-users__list::-webkit-scrollbar-thumb:hover,
+.admin-activity-downloads__list::-webkit-scrollbar-thumb:hover,
+.team-member-activity-panel-content::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb);
 }
 }
@@ -6255,10 +6275,6 @@ html:has(.app-content-wrapper--projects) {
   bottom: var(--player-height);
 }
 
-.app-root.player-visible .team-member-activity-panel.open {
-  bottom: var(--player-height);
-}
-
 .comments-panel.open.comments-panel--overlay {
   z-index: 100;
   box-shadow: none;
@@ -6379,6 +6395,7 @@ html:has(.app-content-wrapper--projects) {
   flex-direction: column;
   padding: 0 12px 12px;
   overflow: hidden;
+  gap: 8px;
 }
 
 .comments-panel-list-clip {
@@ -6389,9 +6406,8 @@ html:has(.app-content-wrapper--projects) {
 
 .comments-panel-compose {
   flex-shrink: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--panel-divider);
-  margin-top: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--panel-divider);
   box-sizing: border-box;
   width: 100%;
 }
@@ -12985,12 +13001,6 @@ body:has(.account-page) {
   min-width: 0;
 }
 
-.account-page-launch-admin {
-  flex-shrink: 0;
-  margin-left: auto;
-  text-decoration: none;
-}
-
 .notifications-page-actions-row {
   justify-content: flex-end;
 }
@@ -15106,7 +15116,7 @@ html:has(.app-content-wrapper--admin) {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px 16px;
+  padding: 16px 24px 24px;
   box-sizing: border-box;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
@@ -15127,13 +15137,11 @@ html:has(.app-content-wrapper--admin) {
 
 .admin-layout__brand {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 0 4px;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0;
   text-decoration: none;
   color: inherit;
-  border-radius: 8px;
   transition: opacity 0.15s ease;
 }
 
@@ -15151,8 +15159,9 @@ html:has(.app-content-wrapper--admin) {
 }
 
 .admin-layout__logo {
-  height: 42px;
+  height: var(--header-logo-display-height);
   width: auto;
+  display: block;
 }
 
 .admin-layout__nav-label {
@@ -15180,7 +15189,7 @@ html:has(.app-content-wrapper--admin) {
 .admin-layout__nav-item {
   display: block;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 0;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   font-weight: 400;
@@ -15236,7 +15245,7 @@ html:has(.app-content-wrapper--admin) {
   width: 100%;
   padding: 6px 4px;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   background: none;
   color: var(--text-primary);
   cursor: pointer;
@@ -15393,7 +15402,8 @@ html:has(.app-content-wrapper--admin) {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
-    padding: 16px 20px;
+    height: var(--header-height);
+    padding: 0 var(--header-row-padding-x);
     border-bottom: 1px solid var(--border-divider);
     background: var(--bg-sidebar);
   }
@@ -16650,9 +16660,11 @@ html:has(.app-content-wrapper--admin) {
 
 .team-member-activity-panel.open {
   position: fixed;
-  top: var(--header-stack-height);
+  top: 0;
   right: 0;
   bottom: 0;
+  height: 100vh;
+  height: 100dvh;
   z-index: 85;
   overflow: hidden;
   overflow-x: hidden;
@@ -16700,7 +16712,7 @@ html:has(.app-content-wrapper--admin) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px 8px;
+  padding: 16px 16px 16px;
   flex-shrink: 0;
 }
 
@@ -16854,7 +16866,8 @@ html:has(.app-content-wrapper--admin) {
   flex-direction: column;
   gap: 12px;
   padding: 0 16px 16px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .team-member-activity-panel__stats {
@@ -16887,8 +16900,7 @@ html:has(.app-content-wrapper--admin) {
 .team-member-activity-panel-downloads {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  flex: 1;
+  flex-shrink: 0;
   border-radius: var(--account-surface-radius);
   background: var(--account-surface);
   overflow: hidden;
@@ -16909,8 +16921,6 @@ html:has(.app-content-wrapper--admin) {
   list-style: none;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
-  min-height: 0;
 }
 
 .team-member-activity-panel-download-row {
@@ -16920,6 +16930,7 @@ html:has(.app-content-wrapper--admin) {
   gap: 10px;
   padding: 10px 16px;
   border-top: 1px solid var(--panel-divider);
+  flex-shrink: 0;
 }
 
 .team-member-activity-panel-download-row__thumb {

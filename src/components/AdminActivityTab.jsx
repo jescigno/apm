@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom';
 import {
   ADMIN_ACTIVITY_DATE_FILTERS,
   ADMIN_ACTIVITY_DEFAULT_DATE_FILTER,
-  ADMIN_ACTIVITY_DEFAULT_USER_STATUS_FILTERS,
-  getAdminActivityMemberStatusFilterLabel,
   ADMIN_ACTIVITY_DEFAULT_USER_LIST_FILTER,
   ADMIN_ACTIVITY_DEFAULT_USER_LIST_SORT,
   ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_FILTER,
@@ -18,7 +16,6 @@ import {
   ADMIN_ACTIVITY_USER_LIST_SORTS,
   ADMIN_ACTIVITY_USER_MORE_ACTIONS,
   ADMIN_ACTIVITY_USER_SORT_DIRECTION_LABELS,
-  ADMIN_ACTIVITY_USER_STATUS_FILTERS,
   ADMIN_ACTIVITY_USERS,
   getAdminActivitySortActiveLabel,
 } from '../constants/adminActivity';
@@ -189,124 +186,6 @@ function AdminActivitySelectDropdown({
   );
 }
 
-function AdminActivityUserFilterDropdown() {
-  const triggerRef = useRef(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuRect, setMenuRect] = useState(null);
-  const [selectedStatuses, setSelectedStatuses] = useState(
-    () => new Set(ADMIN_ACTIVITY_DEFAULT_USER_STATUS_FILTERS)
-  );
-
-  const closeMenu = useCallback(() => {
-    setMenuOpen(false);
-  }, []);
-
-  const updateMenuRect = useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setMenuRect({ right: rect.right, bottom: rect.bottom });
-  }, []);
-
-  const toggleMenu = useCallback(() => {
-    if (menuOpen) {
-      closeMenu();
-      return;
-    }
-    updateMenuRect();
-    setMenuOpen(true);
-  }, [menuOpen, closeMenu, updateMenuRect]);
-
-  useLayoutEffect(() => {
-    if (!menuOpen) return;
-    updateMenuRect();
-    const onUpdate = () => updateMenuRect();
-    window.addEventListener('scroll', onUpdate, true);
-    window.addEventListener('resize', onUpdate);
-    return () => {
-      window.removeEventListener('scroll', onUpdate, true);
-      window.removeEventListener('resize', onUpdate);
-    };
-  }, [menuOpen, updateMenuRect]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (event) => {
-      const target = event.target;
-      if (triggerRef.current?.contains(target)) return;
-      if (target.closest?.('[data-admin-activity-user-filter-menu]')) return;
-      closeMenu();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [menuOpen, closeMenu]);
-
-  const toggleStatus = (statusId) => {
-    setSelectedStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(statusId)) next.delete(statusId);
-      else next.add(statusId);
-      return next;
-    });
-  };
-
-  const triggerLabel = useMemo(
-    () => getAdminActivityMemberStatusFilterLabel(selectedStatuses),
-    [selectedStatuses]
-  );
-
-  const filterMenu =
-    menuOpen &&
-    createPortal(
-      <div
-        className="admin-activity-filter-menu"
-        data-admin-activity-user-filter-menu
-        style={{
-          position: 'fixed',
-          right: menuRect ? window.innerWidth - menuRect.right : 0,
-          top: menuRect ? menuRect.bottom + 4 : 0,
-          visibility: menuRect ? 'visible' : 'hidden',
-          zIndex: 2000,
-        }}
-        role="listbox"
-        aria-label="Member status filters"
-        aria-multiselectable="true"
-      >
-        {ADMIN_ACTIVITY_USER_STATUS_FILTERS.map((option) => {
-          const checked = selectedStatuses.has(option.id);
-          return (
-            <label key={option.id} className="admin-activity-filter-menu__option">
-              <input
-                type="checkbox"
-                className="track-checkbox admin-activity-filter-menu__checkbox"
-                checked={checked}
-                onChange={() => toggleStatus(option.id)}
-              />
-              <span className="admin-activity-filter-menu__label">{option.label}</span>
-            </label>
-          );
-        })}
-      </div>,
-      document.body
-    );
-
-  return (
-    <div className="admin-activity-filter admin-activity-filter--dropdown">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="admin-activity-filter__trigger"
-        aria-haspopup="listbox"
-        aria-expanded={menuOpen}
-        onClick={toggleMenu}
-      >
-        {triggerLabel}
-      </button>
-      {filterMenu}
-    </div>
-  );
-}
-
 function AdminActivityDateFilterDropdown() {
   const triggerRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -460,7 +339,6 @@ function AdminActivityDateFilterDropdown() {
 function AdminActivityFilters() {
   return (
     <div className="admin-activity-filters">
-      <AdminActivityUserFilterDropdown />
       <AdminActivityDateFilterDropdown />
     </div>
   );
@@ -699,7 +577,7 @@ function AdminActivityUserRow({ user, onOpenMemberActivity }) {
         <p className="admin-activity-user-row__name">{user.name}</p>
         <p className="admin-activity-user-row__email">{user.email}</p>
       </div>
-      <p className="admin-activity-user-row__meta">{user.lastLogin}</p>
+      <p className="admin-activity-user-row__meta">{user.recentActivity}</p>
       <button
         ref={menuBtnRef}
         type="button"
@@ -771,7 +649,7 @@ export default function AdminActivityTab({ onOpenMemberActivity }) {
       sorted.sort((a, b) => multiplier * a.name.localeCompare(b.name));
     } else if (field === 'last-login') {
       const multiplier = direction === SEARCH_SORT_DIRECTIONS.ASC ? 1 : -1;
-      sorted.sort((a, b) => multiplier * a.lastLogin.localeCompare(b.lastLogin));
+      sorted.sort((a, b) => multiplier * a.recentActivity.localeCompare(b.recentActivity));
     } else if (field === 'most-active' && direction === SEARCH_SORT_DIRECTIONS.ASC) {
       sorted.reverse();
     }
@@ -822,7 +700,7 @@ export default function AdminActivityTab({ onOpenMemberActivity }) {
       <div className="admin-activity__content">
         <section className="admin-activity-users">
           <AdminActivityListSectionHeader
-            title="Members"
+            title="Recent Activity"
             filter={userListFilter}
             sort={userListSort}
             onFilterChange={setUserListFilter}

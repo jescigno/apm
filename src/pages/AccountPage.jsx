@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import { ACCOUNT_TABS } from '../constants/accountPage';
-import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS, ROUTE_ADMIN } from '../constants/routes';
+import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
 import AccountPersonalTab from '../components/AccountPersonalTab';
 import { HeaderMenuButton } from '../components/Header';
 import AccountNotificationSettingsContent from '../components/AccountNotificationSettingsContent';
@@ -96,9 +96,6 @@ export default function AccountPage({ headerMenuRef }) {
               </button>
             ))}
           </div>
-          <Link to={ROUTE_ADMIN} className="btn-cta btn-cta--primary account-page-launch-admin">
-            Launch Admin
-          </Link>
         </div>
       </div>
 

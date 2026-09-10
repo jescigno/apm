@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
-import { ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
+import { ROUTE_ADMIN, ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
 import ThemeModeToggle from './ThemeModeToggle';
 import { useThemeName } from '../utils/theme';
 
@@ -45,6 +45,7 @@ const HEADER_NAV_DROPDOWNS = {
 
 /** Profile icon menu (wide + mobile My APM section). Set routes as pages exist. */
 const PROFILE_MENU_ITEMS = [
+  { label: 'Admin Console', to: ROUTE_ADMIN },
   { label: 'Projects', action: 'projectsPanel' },
   { label: 'Notifications', to: ROUTE_NOTIFICATIONS },
   { label: 'Favorites', to: ROUTE_FAVORITES },

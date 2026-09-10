@@ -1,29 +1,5 @@
 import { TRACK_THUMBNAILS } from '../components/trackThumb';
 
-export const ADMIN_ACTIVITY_USER_STATUS_FILTERS = [
-  { id: 'active', label: 'Active Members' },
-  { id: 'pending', label: 'Pending Members' },
-  { id: 'archived', label: 'Archived Members' },
-];
-
-export const ADMIN_ACTIVITY_DEFAULT_USER_STATUS_FILTERS = ['active', 'pending'];
-
-export function getAdminActivityMemberStatusFilterLabel(selectedStatuses) {
-  if (selectedStatuses.size === ADMIN_ACTIVITY_USER_STATUS_FILTERS.length) {
-    return 'Members: All';
-  }
-
-  const checkedLabels = ADMIN_ACTIVITY_USER_STATUS_FILTERS.filter((option) =>
-    selectedStatuses.has(option.id)
-  ).map((option) => option.label.replace(' Members', ''));
-
-  if (checkedLabels.length === 0) {
-    return 'Members: None';
-  }
-
-  return `Members: ${checkedLabels.join(', ')}`;
-}
-
 export const ADMIN_ACTIVITY_DATE_FILTERS = [
   { id: 'today', label: 'Today' },
   { id: 'this-week', label: 'This week' },
@@ -136,19 +112,38 @@ const ADMIN_ACTIVITY_USER_SEEDS = [
   { name: 'Lily Washington', initials: 'LW', status: 'active' },
 ];
 
-const ADMIN_ACTIVITY_LAST_LOGINS = [
-  'Last login 3 hours ago',
-  'Last login 5 hours ago',
-  'Last login 6 hours ago',
-  'Last login 1 day ago',
-  'Last login 2 days ago',
-  'Last login 4 days ago',
-  'Last login 1 week ago',
-  'Last login 2 weeks ago',
+const ADMIN_ACTIVITY_RECENT_ACTION_PREFIXES = [
+  'Created a project',
+  'Audition songs',
+  'Searched catalog',
+  'Updated a project',
+  'Last login',
+];
+
+const ADMIN_ACTIVITY_RECENT_TIME_PERIODS = [
+  '3 hours ago',
+  '5 hours ago',
+  '6 hours ago',
+  '1 day ago',
+  '2 days ago',
+  '4 days ago',
+  '1 week ago',
+  '2 weeks ago',
 ];
 
 function adminActivityUserEmail(name) {
   return `${name.toLowerCase().replace(/\s+/g, '')}@ucla.edu`;
+}
+
+function getAdminActivityRecentAction(index) {
+  const prefix =
+    ADMIN_ACTIVITY_RECENT_ACTION_PREFIXES[index % ADMIN_ACTIVITY_RECENT_ACTION_PREFIXES.length];
+  const time =
+    ADMIN_ACTIVITY_RECENT_TIME_PERIODS[
+      Math.floor(index / ADMIN_ACTIVITY_RECENT_ACTION_PREFIXES.length) %
+        ADMIN_ACTIVITY_RECENT_TIME_PERIODS.length
+    ];
+  return `${prefix} ${time}`;
 }
 
 export const ADMIN_ACTIVITY_USERS = ADMIN_ACTIVITY_USER_SEEDS.map((seed, index) => ({
@@ -156,7 +151,7 @@ export const ADMIN_ACTIVITY_USERS = ADMIN_ACTIVITY_USER_SEEDS.map((seed, index) 
   initials: seed.initials,
   name: seed.name,
   email: adminActivityUserEmail(seed.name),
-  lastLogin: ADMIN_ACTIVITY_LAST_LOGINS[index % ADMIN_ACTIVITY_LAST_LOGINS.length],
+  recentActivity: getAdminActivityRecentAction(index),
   status: seed.status,
 }));
 
