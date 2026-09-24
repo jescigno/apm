@@ -6,7 +6,7 @@ import { ROUTE_ADMIN, ROUTE_PROJECT_DETAILS } from '../constants/routes';
 import AdminSidebarUserMenu from './AdminSidebarUserMenu';
 import { useThemeName } from '../utils/theme';
 
-export default function AdminLayout({ children, pageTitle, headerActions }) {
+export default function AdminLayout({ children, pageTitle, headerActions, onAdminDashboardNav }) {
   const theme = useThemeName();
   const isDark = theme === 'dark';
   const [mobileLayout, setMobileLayout] = useState(false);
@@ -41,6 +41,7 @@ export default function AdminLayout({ children, pageTitle, headerActions }) {
               className={({ isActive }) =>
                 `admin-layout__nav-item${isActive ? ' admin-layout__nav-item--active' : ''}`
               }
+              onClick={to === ROUTE_ADMIN ? () => onAdminDashboardNav?.() : undefined}
             >
               {label}
             </NavLink>
@@ -72,12 +73,13 @@ export default function AdminLayout({ children, pageTitle, headerActions }) {
                     to={to}
                     end={to === ROUTE_ADMIN}
                     className={({ isActive }) => `tab admin-layout__mobile-tab${isActive ? ' active' : ''}`}
+                    onClick={to === ROUTE_ADMIN ? () => onAdminDashboardNav?.() : undefined}
                   >
                     {label}
                   </NavLink>
                 ))}
               </nav>
-              {headerActions ? (
+              {headerActions && typeof pageTitle === 'string' ? (
                 <div className="admin-layout__mobile-nav-actions">{headerActions}</div>
               ) : null}
             </div>
@@ -85,8 +87,8 @@ export default function AdminLayout({ children, pageTitle, headerActions }) {
         ) : null}
         <div className="admin-layout__content">
           <header className="admin-page-header">
-            <h1 className="admin-page-title">{pageTitle}</h1>
-            {!mobileLayout && headerActions ? (
+            {typeof pageTitle === 'string' ? <h1 className="admin-page-title">{pageTitle}</h1> : pageTitle}
+            {(!mobileLayout || typeof pageTitle !== 'string') && headerActions ? (
               <div className="admin-page-header__actions">{headerActions}</div>
             ) : null}
           </header>

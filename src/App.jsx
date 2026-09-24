@@ -42,6 +42,7 @@ import {
   ROUTE_ADMIN_NOTIFICATIONS,
   ROUTE_DESIGN_SYSTEM,
 } from './constants/routes';
+import { buildSearchResultsPath, parseSearchTermsFromSearch } from './utils/searchUrl';
 import AdminPage from './pages/AdminPage';
 import {
   CURRENT_PROJECT_FOLDER_ID,
@@ -159,6 +160,7 @@ function AppContent() {
   const projectsDragOverlayClearTimerRef = useRef(null);
   const folderReorderLandTimerRef = useRef(null);
   const [searchBarValue, setSearchBarValue] = useState('');
+  const [searchTerms, setSearchTerms] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const headerMenuRef = useRef(null);
   const { currentTrack, isPlayerClosing } = usePlayer();
@@ -565,8 +567,18 @@ function AppContent() {
     } else {
       setSearchQuery('');
       setSearchBarValue('');
+      setSearchTerms([]);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname !== ROUTE_SEARCH) return;
+    const termsFromUrl = parseSearchTermsFromSearch(location.search);
+    if (termsFromUrl.length === 0) return;
+    setSearchTerms(termsFromUrl);
+    setSearchQuery(termsFromUrl.join(' '));
+    setSearchBarValue('');
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!soundsLikePanelOpen) {
@@ -594,6 +606,11 @@ function AppContent() {
 
   useEffect(() => {
     if (!ADMIN_ROUTES.includes(location.pathname)) {
+      setTeamMemberActivityPanelOpen(false);
+      setActiveTeamMemberForActivity(null);
+      return;
+    }
+    if (location.pathname !== ROUTE_ADMIN) {
       setTeamMemberActivityPanelOpen(false);
       setActiveTeamMemberForActivity(null);
     }
@@ -653,24 +670,44 @@ function AppContent() {
 
   const handleSearchSubmit = useCallback(() => {
     const trimmed = searchBarValue.trim();
-    setSearchQuery(trimmed);
-    setSearchBarValue(trimmed);
-    if (location.pathname !== ROUTE_SEARCH) {
-      navigate(ROUTE_SEARCH);
+    let nextTerms = searchTerms;
+    if (trimmed) {
+      nextTerms = [...searchTerms, trimmed];
+      setSearchTerms(nextTerms);
+      setSearchBarValue('');
     }
-  }, [location.pathname, navigate, searchBarValue]);
+    const queryText = nextTerms.length > 0 ? nextTerms.join(' ') : trimmed;
+    if (!queryText) return;
+
+    setSearchQuery(queryText);
+    const path = buildSearchResultsPath(nextTerms.length > 0 ? nextTerms : [queryText]);
+    if (location.pathname !== ROUTE_SEARCH) {
+      navigate(path);
+    } else {
+      navigate(path, { replace: true });
+    }
+  }, [location.pathname, navigate, searchBarValue, searchTerms]);
 
   const handleSearchClear = useCallback(() => {
     setSearchBarValue('');
     setSearchQuery('');
-  }, []);
+    setSearchTerms([]);
+    if (location.pathname === ROUTE_SEARCH) {
+      navigate(ROUTE_SEARCH, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const handleRecentSearchSelect = useCallback(
     (item) => {
-      setSearchBarValue(item.label);
+      const terms = [item.label];
+      setSearchTerms(terms);
+      setSearchBarValue('');
       setSearchQuery(item.label);
+      const path = buildSearchResultsPath(terms);
       if (location.pathname !== ROUTE_SEARCH) {
-        navigate(ROUTE_SEARCH);
+        navigate(path);
+      } else {
+        navigate(path, { replace: true });
       }
     },
     [location.pathname, navigate]
@@ -690,6 +727,7 @@ function AppContent() {
         <Header
           onOpenProjectsPanel={openProjectsPanel}
           searchQuery={searchBarValue}
+          searchTerms={searchTerms}
           onSearchQueryChange={setSearchBarValue}
           onSearchSubmit={handleSearchSubmit}
           onSearchClear={handleSearchClear}
@@ -768,11 +806,51 @@ function AppContent() {
             <Route path={ROUTE_NOTIFICATIONS} element={<NotificationsPage />} />
             <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route path={ROUTE_ACCOUNT} element={<AccountPage headerMenuRef={headerMenuRef} />} />
-            <Route path={ROUTE_ADMIN_NOTIFICATIONS} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN_SETTINGS} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN_ACCOUNT} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN_TEAM} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
-            <Route path={ROUTE_ADMIN} element={<AdminPage onOpenMemberActivity={openTeamMemberActivityPanel} />} />
+            <Route
+              path={ROUTE_ADMIN_NOTIFICATIONS}
+              element={
+                <AdminPage
+                  onOpenMemberActivity={openTeamMemberActivityPanel}
+                  onAdminDashboardNav={closeTeamMemberActivityPanel}
+                />
+              }
+            />
+            <Route
+              path={ROUTE_ADMIN_SETTINGS}
+              element={
+                <AdminPage
+                  onOpenMemberActivity={openTeamMemberActivityPanel}
+                  onAdminDashboardNav={closeTeamMemberActivityPanel}
+                />
+              }
+            />
+            <Route
+              path={ROUTE_ADMIN_ACCOUNT}
+              element={
+                <AdminPage
+                  onOpenMemberActivity={openTeamMemberActivityPanel}
+                  onAdminDashboardNav={closeTeamMemberActivityPanel}
+                />
+              }
+            />
+            <Route
+              path={ROUTE_ADMIN_TEAM}
+              element={
+                <AdminPage
+                  onOpenMemberActivity={openTeamMemberActivityPanel}
+                  onAdminDashboardNav={closeTeamMemberActivityPanel}
+                />
+              }
+            />
+            <Route
+              path={ROUTE_ADMIN}
+              element={
+                <AdminPage
+                  onOpenMemberActivity={openTeamMemberActivityPanel}
+                  onAdminDashboardNav={closeTeamMemberActivityPanel}
+                />
+              }
+            />
             <Route path={ROUTE_DESIGN_SYSTEM} element={<DesignSystemPage />} />
           </Routes>
         </main>

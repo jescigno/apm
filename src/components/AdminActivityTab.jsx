@@ -3,34 +3,41 @@ import { createPortal } from 'react-dom';
 import {
   ADMIN_ACTIVITY_DATE_FILTERS,
   ADMIN_ACTIVITY_DEFAULT_DATE_FILTER,
+  ADMIN_ACTIVITY_DEFAULT_TEAM_ID,
+  ADMIN_ACTIVITY_TEAMS,
   ADMIN_ACTIVITY_DEFAULT_USER_LIST_FILTER,
   ADMIN_ACTIVITY_DEFAULT_USER_LIST_SORT,
-  ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_FILTER,
-  ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_SORT,
+  ADMIN_ACTIVITY_AUDITIONS,
   ADMIN_ACTIVITY_DOWNLOADS,
-  ADMIN_ACTIVITY_DOWNLOAD_LIST_FILTERS,
-  ADMIN_ACTIVITY_DOWNLOAD_LIST_SORTS,
-  ADMIN_ACTIVITY_DOWNLOAD_SORT_DIRECTION_LABELS,
+  ADMIN_ACTIVITY_PROJECTS,
+  ADMIN_ACTIVITY_SEARCHES,
+  filterAdminActivityByTeam,
+  filterAdminActivityFeedByDate,
   ADMIN_ACTIVITY_USER_LIST_FILTERS,
   ADMIN_ACTIVITY_USER_LIST_SORTS,
-  ADMIN_ACTIVITY_USER_MORE_ACTIONS,
   ADMIN_ACTIVITY_USER_SORT_DIRECTION_LABELS,
   ADMIN_ACTIVITY_USERS,
+  adminActivityDownloadToPlayerTrack,
   filterAdminActivityDownloadsByDate,
   filterAdminActivityUsersByDate,
   getAdminActivityStatsForRange,
   getAdminActivityTrendPeriodLabel,
   getAdminActivitySortActiveLabel,
 } from '../constants/adminActivity';
+import { getTrackMetadataForAdminDownload } from '../constants/trackMetadata';
 import { SEARCH_SORT_DIRECTIONS } from '../constants/searchResultsSort';
+import TrackMetadataOverlay from './TrackMetadataOverlay';
 import {
-  ICON_ARCHIVE,
-  ICON_MORE_MENU,
+  ICON_FOLDER_FILLED,
+  ICON_PAUSE_IN_CIRCLE,
+  ICON_PLAY_IN_CIRCLE_ON,
   ICON_SORT_ARROW_DOWN,
   ICON_SORT_ARROW_UP,
-  ICON_TRACK_DETAILS,
   ICON_UI_FILTER,
 } from '../constants/designSystem';
+import { usePlayer } from '../context/PlayerContext';
+import { openSearchResultsInNewTab } from '../utils/searchUrl';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
 import { getProfileColorVar } from '../constants/profileColors';
 import AdminActivityDatePicker from './AdminActivityDatePicker';
 import SearchSortMenu from './SearchSortMenu';
@@ -58,6 +65,7 @@ function AdminActivitySelectDropdown({
   iconSrc,
   triggerIcon,
   iconOnly = false,
+  filterModifierClass = '',
 }) {
   const triggerRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -170,7 +178,7 @@ function AdminActivitySelectDropdown({
 
   return (
     <div
-      className={`admin-activity-filter admin-activity-filter--dropdown${iconOnly ? ' admin-activity-filter--icon-only' : ''}`}
+      className={`admin-activity-filter admin-activity-filter--dropdown${filterModifierClass ? ` ${filterModifierClass}` : ''}${iconOnly ? ' admin-activity-filter--icon-only' : ''}`}
     >
       <button
         ref={triggerRef}
@@ -342,7 +350,28 @@ function AdminActivityDateFilterDropdown({
   );
 }
 
+function AdminActivityTeamFilterDropdown({ teamFilter, onTeamFilterChange }) {
+  const triggerLabel = useMemo(() => {
+    const team = ADMIN_ACTIVITY_TEAMS.find(({ id }) => id === teamFilter);
+    return team?.label ?? 'Team';
+  }, [teamFilter]);
+
+  return (
+    <AdminActivitySelectDropdown
+      options={ADMIN_ACTIVITY_TEAMS}
+      value={teamFilter}
+      onChange={onTeamFilterChange}
+      triggerLabel={triggerLabel}
+      menuAriaLabel="Team filters"
+      menuDataAttr="admin-activity-team-filter"
+      filterModifierClass="admin-activity-filter--team"
+    />
+  );
+}
+
 function AdminActivityFilters({
+  teamFilter,
+  onTeamFilterChange,
   dateFilter,
   customDateRange,
   onDateFilterChange,
@@ -350,6 +379,10 @@ function AdminActivityFilters({
 }) {
   return (
     <div className="admin-activity-filters">
+      <AdminActivityTeamFilterDropdown
+        teamFilter={teamFilter}
+        onTeamFilterChange={onTeamFilterChange}
+      />
       <AdminActivityDateFilterDropdown
         dateFilter={dateFilter}
         customDateRange={customDateRange}
@@ -439,11 +472,26 @@ function AdminActivityTrendIcon({ direction }) {
   );
 }
 
-function AdminActivityStatCard({ value, label, trend, trendDirection, trendPeriod }) {
+function AdminActivityStatCard({
+  statId,
+  value,
+  label,
+  trend,
+  trendDirection,
+  trendPeriod,
+  selected,
+  onToggle,
+}) {
   const trendLabel = `${trend > 0 ? '+' : ''}${trend}%`;
 
   return (
-    <article className="admin-activity-stat__card">
+    <button
+      type="button"
+      className={`admin-activity-stat__card${selected ? ' admin-activity-stat__card--selected' : ''}`}
+      aria-pressed={selected}
+      aria-label={`${label}, ${value}`}
+      onClick={() => onToggle(statId)}
+    >
       <p className="admin-activity-stat__label">{label}</p>
       <div className="admin-activity-stat__footer">
         <p className="admin-activity-stat__value">{value}</p>
@@ -455,131 +503,11 @@ function AdminActivityStatCard({ value, label, trend, trendDirection, trendPerio
           <span className="admin-activity-stat__trend-period">{trendPeriod}</span>
         </div>
       </div>
-    </article>
+    </button>
   );
 }
 
-function AdminActivityUserMoreMenuIcon({ actionId }) {
-  if (actionId === 'edit') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
-        <path
-          d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0 0-3L16.5 4.5a2.1 2.1 0 0 0-3 0L3 15v5z"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M13.5 6.5l4 4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  if (actionId === 'activity') {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
-        <path d="M4 18l5-6 4 3 7-9" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M17 6h3v3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  return <img src={ICON_ARCHIVE} alt="" aria-hidden="true" />;
-}
-
-function AdminActivityUserRow({ user, onOpenMemberActivity }) {
-  const menuBtnRef = useRef(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuRect, setMenuRect] = useState(null);
-
-  const closeMenu = useCallback(() => {
-    setMenuOpen(false);
-  }, []);
-
-  const updateMenuRect = useCallback(() => {
-    const el = menuBtnRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setMenuRect({ right: rect.right, bottom: rect.bottom });
-  }, []);
-
-  const toggleMenu = useCallback(
-    (event) => {
-      event.stopPropagation();
-      if (menuOpen) {
-        closeMenu();
-        return;
-      }
-      updateMenuRect();
-      setMenuOpen(true);
-    },
-    [menuOpen, closeMenu, updateMenuRect]
-  );
-
-  useLayoutEffect(() => {
-    if (!menuOpen) return;
-    updateMenuRect();
-    const onUpdate = () => updateMenuRect();
-    window.addEventListener('scroll', onUpdate, true);
-    window.addEventListener('resize', onUpdate);
-    return () => {
-      window.removeEventListener('scroll', onUpdate, true);
-      window.removeEventListener('resize', onUpdate);
-    };
-  }, [menuOpen, updateMenuRect]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (event) => {
-      const target = event.target;
-      if (menuBtnRef.current?.contains(target)) return;
-      if (target.closest?.('[data-admin-activity-user-more-menu]')) return;
-      closeMenu();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [menuOpen, closeMenu]);
-
-  const moreMenu =
-    menuOpen &&
-    createPortal(
-      <div
-        className="admin-team-more-menu"
-        data-admin-activity-user-more-menu
-        style={{
-          position: 'fixed',
-          right: menuRect ? window.innerWidth - menuRect.right : 0,
-          top: menuRect ? menuRect.bottom + 4 : 0,
-          visibility: menuRect ? 'visible' : 'hidden',
-          zIndex: 2000,
-        }}
-        role="menu"
-        aria-label={`Actions for ${user.name}`}
-      >
-        {ADMIN_ACTIVITY_USER_MORE_ACTIONS.map((action) => (
-          <button
-            key={action.id}
-            type="button"
-            role="menuitem"
-            className="admin-team-more-menu__item"
-            onClick={() => {
-              if (action.id === 'activity') {
-                onOpenMemberActivity?.({
-                  id: user.id,
-                  name: user.name,
-                  email: user.email,
-                  initials: user.initials,
-                });
-              }
-              closeMenu();
-            }}
-          >
-            <AdminActivityUserMoreMenuIcon actionId={action.id} />
-            {action.label}
-          </button>
-        ))}
-      </div>,
-      document.body
-    );
-
+function AdminActivityUserRow({ user }) {
   return (
     <li className="admin-activity-user-row">
       <span
@@ -594,25 +522,136 @@ function AdminActivityUserRow({ user, onOpenMemberActivity }) {
         <p className="admin-activity-user-row__email">{user.email}</p>
       </div>
       <p className="admin-activity-user-row__meta">{user.recentActivity}</p>
-      <button
-        ref={menuBtnRef}
-        type="button"
-        className="admin-activity-user-row__more-btn"
-        aria-label={`More actions for ${user.name}`}
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        onClick={toggleMenu}
-      >
-        <img src={ICON_MORE_MENU} alt="" aria-hidden="true" />
-      </button>
-      {moreMenu}
     </li>
   );
 }
 
-function AdminActivityDownloadRow({ download }) {
+function AdminActivityFeedRow({ item, layout = 'sidebar', variant = 'default' }) {
+  const theme = useThemeName();
+  const isMain = layout === 'main';
+  const isProjectMain = isMain && variant === 'project';
+  const metaText = isMain ? (item.activity ?? item.meta) : item.meta;
+
   return (
-    <li className="admin-activity-download-row">
+    <li
+      className={`admin-activity-feed-row${isMain ? ' admin-activity-feed-row--main' : ''}${isProjectMain ? ' admin-activity-feed-row--main-project' : ''}`}
+    >
+      {isProjectMain ? (
+        <span className="projects-panel-folder-glyph admin-activity-project-row__folder" aria-hidden>
+          <img
+            src={resolveThemedAsset(ICON_FOLDER_FILLED, theme)}
+            alt=""
+            className="projects-panel-folder-glyph-img"
+            width="18"
+            height="18"
+          />
+        </span>
+      ) : null}
+      <p className="admin-activity-feed-row__title">{item.title}</p>
+      <p
+        className={
+          isMain
+            ? 'admin-activity-feed-row__meta admin-activity-feed-row__activity'
+            : 'admin-activity-feed-row__meta'
+        }
+      >
+        {metaText}
+      </p>
+    </li>
+  );
+}
+
+function AdminActivitySearchRow({ item, layout = 'sidebar' }) {
+  const terms = item.terms ?? [item.title];
+  const isMain = layout === 'main';
+  const metaText = item.meta;
+
+  return (
+    <li
+      className={`admin-activity-search-row${isMain ? ' admin-activity-search-row--main' : ''}`}
+    >
+      <div className="admin-activity-search-row__pills">
+        {terms.map((term, index) => (
+          <button
+            key={`${item.id}-${index}`}
+            type="button"
+            className="admin-activity-search-row__pill"
+            onClick={() => openSearchResultsInNewTab(terms)}
+          >
+            {term}
+          </button>
+        ))}
+      </div>
+      <p
+        className={
+          isMain
+            ? 'admin-activity-search-row__meta admin-activity-search-row__activity'
+            : 'admin-activity-search-row__meta'
+        }
+      >
+        {metaText}
+      </p>
+    </li>
+  );
+}
+
+function AdminActivityFeedSection({ title, items, variant = 'default', onTrackInfoClick }) {
+  const listClassName =
+    variant === 'download' ? 'admin-activity-downloads__list' : 'admin-activity-feed-section__list';
+
+  return (
+    <section className="admin-activity-feed-section">
+      <h2 className="admin-activity-section-title">{title}</h2>
+      <div className="admin-activity-feed-section__card account-card">
+        <ul className={listClassName}>
+          {items.map((item) => {
+            if (variant === 'search') {
+              return <AdminActivitySearchRow key={item.id} item={item} />;
+            }
+            if (variant === 'download') {
+              return (
+                <AdminActivityDownloadRow
+                  key={item.id}
+                  download={item}
+                  onTrackInfoClick={onTrackInfoClick}
+                />
+              );
+            }
+            return <AdminActivityFeedRow key={item.id} item={item} />;
+          })}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function AdminActivityDownloadRow({
+  download,
+  onTrackInfoClick,
+  layout = 'sidebar',
+  onPlayClick,
+  isCurrentTrack = false,
+  isPlaying = false,
+}) {
+  const theme = useThemeName();
+  const isMain = layout === 'main';
+  const showPause = isMain && isCurrentTrack && isPlaying;
+
+  return (
+    <li className={`admin-activity-download-row${isMain ? ' admin-activity-download-row--main' : ''}`}>
+      {isMain ? (
+        <button
+          type="button"
+          className="admin-activity-download-row__play track-play-btn track-play-btn--play-in-circle"
+          aria-label={showPause ? `Pause ${download.title}` : `Play ${download.title}`}
+          onClick={() => onPlayClick?.(download)}
+        >
+          <img
+            src={resolveThemedAsset(showPause ? ICON_PAUSE_IN_CIRCLE : ICON_PLAY_IN_CIRCLE_ON, theme)}
+            alt=""
+          />
+        </button>
+      ) : null}
       <div
         className="admin-activity-download-row__thumb"
         style={{ backgroundImage: `url('${download.thumbSrc}')` }}
@@ -620,53 +659,110 @@ function AdminActivityDownloadRow({ download }) {
       />
       <div className="admin-activity-download-row__info">
         <p className="admin-activity-download-row__title">{download.title}</p>
-        <p className="admin-activity-download-row__code">{download.code}</p>
+        <div className="admin-activity-download-row__id-row track-id-row">
+          <span className="admin-activity-download-row__code">{download.code}</span>
+          <button
+            type="button"
+            className="track-id-icon-btn"
+            aria-label="Track info"
+            onClick={() => onTrackInfoClick?.(download)}
+          >
+            <img src="/icons/TrackInfo.svg" alt="" />
+          </button>
+        </div>
       </div>
-      <div className="admin-activity-download-row__actions">
-        <button type="button" className="admin-activity-download-row__action" aria-label="Track details">
-          <img src={ICON_TRACK_DETAILS} alt="" />
-        </button>
-        <button type="button" className="admin-activity-download-row__action" aria-label="Share">
-          <img src="/icons/Share.svg" alt="" />
-        </button>
-        <button type="button" className="admin-activity-download-row__action" aria-label="Track info">
-          <img src="/icons/TrackInfo.svg" alt="" />
-        </button>
-        <button
-          type="button"
-          className="admin-activity-download-row__action admin-activity-download-row__action--more"
-          aria-label="More options"
-        >
-          <img src={ICON_MORE_MENU} alt="" />
-        </button>
-      </div>
+      {isMain && download.meta ? (
+        <p className="admin-activity-download-row__meta admin-activity-download-row__activity">{download.meta}</p>
+      ) : null}
     </li>
   );
 }
 
 export default function AdminActivityTab({
-  onOpenMemberActivity,
+  teamFilter = ADMIN_ACTIVITY_DEFAULT_TEAM_ID,
   dateFilter = ADMIN_ACTIVITY_DEFAULT_DATE_FILTER,
   customDateRange = { start: null, end: null },
 }) {
   const [userListFilter, setUserListFilter] = useState(ADMIN_ACTIVITY_DEFAULT_USER_LIST_FILTER);
   const [userListSort, setUserListSort] = useState(ADMIN_ACTIVITY_DEFAULT_USER_LIST_SORT);
-  const [downloadListFilter, setDownloadListFilter] = useState(ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_FILTER);
-  const [downloadListSort, setDownloadListSort] = useState(ADMIN_ACTIVITY_DEFAULT_DOWNLOAD_LIST_SORT);
+  const [selectedKpiId, setSelectedKpiId] = useState(null);
+  const [trackMetadataDownload, setTrackMetadataDownload] = useState(null);
+
+  const openTrackMetadata = useCallback((download) => {
+    setTrackMetadataDownload(download);
+  }, []);
+
+  const closeTrackMetadata = useCallback(() => {
+    setTrackMetadataDownload(null);
+  }, []);
+
+  const { playTrack, togglePlayPause, currentTrack, isPlaying } = usePlayer();
+
+  const handlePlayActivityDownload = useCallback(
+    (download, queueItems) => {
+      const track = adminActivityDownloadToPlayerTrack(download);
+      const queue = queueItems.map(adminActivityDownloadToPlayerTrack);
+      if (currentTrack?.id === track.id) {
+        togglePlayPause();
+        return;
+      }
+      playTrack(track, queue);
+    },
+    [currentTrack?.id, playTrack, togglePlayPause]
+  );
+
+  const toggleKpiSelection = useCallback((statId) => {
+    setSelectedKpiId((current) => (current === statId ? null : statId));
+  }, []);
+
+  useEffect(() => {
+    setSelectedKpiId(null);
+  }, [teamFilter]);
+
+  const teamUsers = useMemo(
+    () => filterAdminActivityByTeam(ADMIN_ACTIVITY_USERS, teamFilter),
+    [teamFilter]
+  );
+
+  const teamDownloads = useMemo(
+    () => filterAdminActivityByTeam(ADMIN_ACTIVITY_DOWNLOADS, teamFilter),
+    [teamFilter]
+  );
+
+  const teamSearches = useMemo(
+    () => filterAdminActivityByTeam(ADMIN_ACTIVITY_SEARCHES, teamFilter),
+    [teamFilter]
+  );
+
+  const teamAuditions = useMemo(
+    () => filterAdminActivityByTeam(ADMIN_ACTIVITY_AUDITIONS, teamFilter),
+    [teamFilter]
+  );
+
+  const teamProjects = useMemo(
+    () => filterAdminActivityByTeam(ADMIN_ACTIVITY_PROJECTS, teamFilter),
+    [teamFilter]
+  );
 
   const dateFilteredUsers = useMemo(
-    () => filterAdminActivityUsersByDate(ADMIN_ACTIVITY_USERS, dateFilter, customDateRange),
-    [dateFilter, customDateRange]
+    () => filterAdminActivityUsersByDate(teamUsers, dateFilter, customDateRange),
+    [teamUsers, dateFilter, customDateRange]
   );
 
   const dateFilteredDownloads = useMemo(
-    () => filterAdminActivityDownloadsByDate(ADMIN_ACTIVITY_DOWNLOADS, dateFilter, customDateRange),
-    [dateFilter, customDateRange]
+    () => filterAdminActivityDownloadsByDate(teamDownloads, dateFilter, customDateRange),
+    [teamDownloads, dateFilter, customDateRange]
   );
 
   const visibleStats = useMemo(
-    () => getAdminActivityStatsForRange(dateFilter, customDateRange, ADMIN_ACTIVITY_USERS),
-    [dateFilter, customDateRange]
+    () =>
+      getAdminActivityStatsForRange(dateFilter, customDateRange, {
+        downloads: teamDownloads,
+        searches: teamSearches,
+        auditions: teamAuditions,
+        projects: teamProjects,
+      }),
+    [dateFilter, customDateRange, teamDownloads, teamSearches, teamAuditions, teamProjects]
   );
 
   const trendPeriod = useMemo(
@@ -697,31 +793,50 @@ export default function AdminActivityTab({
     return sorted;
   }, [dateFilteredUsers, userListFilter, userListSort]);
 
-  const visibleDownloads = useMemo(() => {
-    let downloads = dateFilteredDownloads;
+  const visibleDownloads = useMemo(
+    () =>
+      [...dateFilteredDownloads]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .slice(0, 10),
+    [dateFilteredDownloads]
+  );
 
-    if (downloadListFilter !== 'all') {
-      downloads = downloads.filter((download) => download.type === downloadListFilter.slice(0, -1));
-    }
+  const sortFeedByRecent = (items) =>
+    [...items].sort((a, b) => b.activityAt.getTime() - a.activityAt.getTime());
 
-    const sorted = [...downloads];
-    const { field, direction } = downloadListSort;
+  const visibleSearches = useMemo(
+    () =>
+      sortFeedByRecent(filterAdminActivityFeedByDate(teamSearches, dateFilter, customDateRange)).slice(
+        0,
+        10
+      ),
+    [teamSearches, dateFilter, customDateRange]
+  );
 
-    if (field === 'title') {
-      const multiplier = direction === SEARCH_SORT_DIRECTIONS.ASC ? 1 : -1;
-      sorted.sort((a, b) => multiplier * a.title.localeCompare(b.title));
-    } else if (field === 'code') {
-      const multiplier = direction === SEARCH_SORT_DIRECTIONS.ASC ? 1 : -1;
-      sorted.sort((a, b) => multiplier * a.code.localeCompare(b.code));
-    } else if (field === 'most-recent') {
-      sorted.sort((a, b) => {
-        const cmp = a.sortOrder - b.sortOrder;
-        return direction === SEARCH_SORT_DIRECTIONS.DESC ? cmp : -cmp;
-      });
-    }
+  const visibleAuditions = useMemo(
+    () =>
+      sortFeedByRecent(filterAdminActivityFeedByDate(teamAuditions, dateFilter, customDateRange)).slice(
+        0,
+        10
+      ),
+    [teamAuditions, dateFilter, customDateRange]
+  );
 
-    return sorted;
-  }, [dateFilteredDownloads, downloadListFilter, downloadListSort]);
+  const visibleProjects = useMemo(
+    () =>
+      sortFeedByRecent(filterAdminActivityFeedByDate(teamProjects, dateFilter, customDateRange)).slice(
+        0,
+        10
+      ),
+    [teamProjects, dateFilter, customDateRange]
+  );
+
+  const selectedKpiStat = useMemo(
+    () => visibleStats.find((stat) => stat.id === selectedKpiId) ?? null,
+    [visibleStats, selectedKpiId]
+  );
+
+  const mainSectionTitle = selectedKpiStat?.label ?? 'Recent Activity';
 
   return (
     <div className="admin-activity">
@@ -729,64 +844,122 @@ export default function AdminActivityTab({
         {visibleStats.map((stat) => (
           <AdminActivityStatCard
             key={stat.id}
+            statId={stat.id}
             value={stat.value}
             label={stat.label}
             trend={stat.trend}
             trendDirection={stat.trendDirection}
             trendPeriod={trendPeriod}
+            selected={selectedKpiId === stat.id}
+            onToggle={toggleKpiSelection}
           />
         ))}
       </div>
 
       <div className="admin-activity__content">
         <section className="admin-activity-users">
-          <AdminActivityListSectionHeader
-            title="Recent Activity"
-            filter={userListFilter}
-            sort={userListSort}
-            onFilterChange={setUserListFilter}
-            onSortChange={setUserListSort}
-            filterOptions={ADMIN_ACTIVITY_USER_LIST_FILTERS}
-            sortOptions={ADMIN_ACTIVITY_USER_LIST_SORTS}
-            sortDirectionLabels={ADMIN_ACTIVITY_USER_SORT_DIRECTION_LABELS}
-            filterMenuDataAttr="users-filter"
-            sortMenuDataAttr="users-sort"
-            filterMenuAriaLabel="Filter members"
-            sortMenuAriaLabel="Sort members"
-          />
+          {selectedKpiId ? (
+            <div className="admin-activity-section-header">
+              <h2 className="admin-activity-section-title">{mainSectionTitle}</h2>
+            </div>
+          ) : (
+            <AdminActivityListSectionHeader
+              title={mainSectionTitle}
+              filter={userListFilter}
+              sort={userListSort}
+              onFilterChange={setUserListFilter}
+              onSortChange={setUserListSort}
+              filterOptions={ADMIN_ACTIVITY_USER_LIST_FILTERS}
+              sortOptions={ADMIN_ACTIVITY_USER_LIST_SORTS}
+              sortDirectionLabels={ADMIN_ACTIVITY_USER_SORT_DIRECTION_LABELS}
+              filterMenuDataAttr="users-filter"
+              sortMenuDataAttr="users-sort"
+              filterMenuAriaLabel="Filter members"
+              sortMenuAriaLabel="Sort members"
+            />
+          )}
           <div className="admin-activity-users__card account-card">
-            <ul className="admin-activity-users__list">
-              {visibleUsers.map((user) => (
-                <AdminActivityUserRow key={user.id} user={user} onOpenMemberActivity={onOpenMemberActivity} />
-              ))}
-            </ul>
+            {selectedKpiId === 'downloads' ? (
+              <ul className="admin-activity-downloads__list">
+                {visibleDownloads.map((download) => (
+                  <AdminActivityDownloadRow
+                    key={download.id}
+                    download={download}
+                    layout="main"
+                    onTrackInfoClick={openTrackMetadata}
+                    onPlayClick={(item) => handlePlayActivityDownload(item, visibleDownloads)}
+                    isCurrentTrack={currentTrack?.id === download.id}
+                    isPlaying={isPlaying}
+                  />
+                ))}
+              </ul>
+            ) : selectedKpiId === 'searches' ? (
+              <ul className="admin-activity-feed-section__list">
+                {visibleSearches.map((item) => (
+                  <AdminActivitySearchRow key={item.id} item={item} layout="main" />
+                ))}
+              </ul>
+            ) : selectedKpiId === 'auditions' ? (
+              <ul className="admin-activity-downloads__list">
+                {visibleAuditions.map((item) => (
+                  <AdminActivityDownloadRow
+                    key={item.id}
+                    download={item}
+                    layout="main"
+                    onTrackInfoClick={openTrackMetadata}
+                    onPlayClick={(row) => handlePlayActivityDownload(row, visibleAuditions)}
+                    isCurrentTrack={currentTrack?.id === item.id}
+                    isPlaying={isPlaying}
+                  />
+                ))}
+              </ul>
+            ) : selectedKpiId === 'projects' ? (
+              <ul className="admin-activity-feed-section__list">
+                {visibleProjects.map((item) => (
+                  <AdminActivityFeedRow key={item.id} item={item} layout="main" variant="project" />
+                ))}
+              </ul>
+            ) : (
+              <ul className="admin-activity-users__list">
+                {visibleUsers.map((user) => (
+                  <AdminActivityUserRow key={user.id} user={user} />
+                ))}
+              </ul>
+            )}
           </div>
         </section>
 
-        <aside className="admin-activity-downloads">
-          <AdminActivityListSectionHeader
-            title="Recent Downloads"
-            filter={downloadListFilter}
-            sort={downloadListSort}
-            onFilterChange={setDownloadListFilter}
-            onSortChange={setDownloadListSort}
-            filterOptions={ADMIN_ACTIVITY_DOWNLOAD_LIST_FILTERS}
-            sortOptions={ADMIN_ACTIVITY_DOWNLOAD_LIST_SORTS}
-            sortDirectionLabels={ADMIN_ACTIVITY_DOWNLOAD_SORT_DIRECTION_LABELS}
-            filterMenuDataAttr="downloads-filter"
-            sortMenuDataAttr="downloads-sort"
-            filterMenuAriaLabel="Filter downloads"
-            sortMenuAriaLabel="Sort downloads"
+        <aside className="admin-activity-sidebar">
+          <AdminActivityFeedSection title="Recent Searches" items={visibleSearches} variant="search" />
+          <section className="admin-activity-downloads">
+            <h2 className="admin-activity-section-title">Recent Downloads</h2>
+            <div className="admin-activity-downloads__card account-card">
+              <ul className="admin-activity-downloads__list">
+                {visibleDownloads.map((download) => (
+                  <AdminActivityDownloadRow
+                    key={download.id}
+                    download={download}
+                    onTrackInfoClick={openTrackMetadata}
+                  />
+                ))}
+              </ul>
+            </div>
+          </section>
+          <AdminActivityFeedSection
+            title="Recent Auditions"
+            items={visibleAuditions}
+            variant="download"
+            onTrackInfoClick={openTrackMetadata}
           />
-          <div className="admin-activity-downloads__card account-card">
-            <ul className="admin-activity-downloads__list">
-              {visibleDownloads.map((download) => (
-                <AdminActivityDownloadRow key={download.id} download={download} />
-              ))}
-            </ul>
-          </div>
+          <AdminActivityFeedSection title="Recent Projects" items={visibleProjects} variant="project" />
         </aside>
       </div>
+      {trackMetadataDownload ? (
+        <TrackMetadataOverlay
+          track={getTrackMetadataForAdminDownload(trackMetadataDownload)}
+          onClose={closeTrackMetadata}
+        />
+      ) : null}
     </div>
   );
 }

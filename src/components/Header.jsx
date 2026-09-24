@@ -90,13 +90,15 @@ export function HeaderMenuButton({ open, onClick, className = '' }) {
 function Header({
   onOpenProjectsPanel,
   searchQuery = '',
+  searchTerms = [],
   onSearchQueryChange,
   onSearchSubmit,
   onSearchClear,
   headerMenuRef,
 }) {
   const navigate = useNavigate();
-  const hasSearchQuery = searchQuery.trim().length > 0;
+  const hasSearchTerms = searchTerms.length > 0;
+  const hasSearchQuery = hasSearchTerms || searchQuery.trim().length > 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [myApmOpen, setMyApmOpen] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(null);
@@ -183,7 +185,7 @@ function Header({
           />
         </a>
         <form
-          className={`search-bar${hasSearchQuery ? ' search-bar--has-query' : ''}`}
+          className={`search-bar${hasSearchQuery ? ' search-bar--has-query' : ''}${hasSearchTerms ? ' search-bar--has-pills' : ''}`}
           onSubmit={(e) => {
             e.preventDefault();
             onSearchSubmit?.();
@@ -198,12 +200,27 @@ function Header({
             draggable={false}
             aria-hidden
           />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange?.(e.target.value)}
-            placeholder="Add keywords, paste a link, or try a prompt like 'climactic mountain summit at dawn'"
-          />
+          {hasSearchTerms ? (
+            <div className="search-bar__terms" aria-label="Search terms">
+              {searchTerms.map((term, index) => (
+                <span key={`${term}-${index}`} className="search-bar__pill">
+                  {term}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="search-bar-input-wrap">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange?.(e.target.value)}
+              placeholder={
+                hasSearchTerms
+                  ? 'Add keywords…'
+                  : "Add keywords, paste a link, or try a prompt like 'climactic mountain summit at dawn'"
+              }
+            />
+          </div>
           {hasSearchQuery && (
             <button
               type="button"
@@ -216,15 +233,16 @@ function Header({
               <svg
                 className="search-bar-clear-icon"
                 viewBox="0 0 18 18"
-                width={10}
-                height={10}
+                width={18}
+                height={18}
                 fill="none"
                 aria-hidden
               >
+                <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.25" />
                 <path
-                  d="M5 5L13 13M13 5L5 13"
+                  d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5"
                   stroke="currentColor"
-                  strokeWidth="1.75"
+                  strokeWidth="1.25"
                   strokeLinecap="round"
                 />
               </svg>
@@ -256,21 +274,14 @@ function Header({
           <div className="header-wide-actions">
             <div className="header-profile-wrap">
               <button type="button" className="icon-btn header-profile-btn" aria-haspopup="true" title="Account">
-                <svg
+                <img
+                  src="/nav-icons/Profile.svg"
+                  alt=""
                   className="header-profile-icon"
-                  viewBox="0 0 24 24"
                   width={24}
                   height={24}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                   aria-hidden="true"
-                >
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M6 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
-                </svg>
+                />
               </button>
               <div className="header-profile-dropdown" role="menu" aria-label="Account menu">
                 {PROFILE_MENU_ITEMS.map((opt, i) =>
