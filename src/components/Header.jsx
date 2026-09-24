@@ -62,6 +62,17 @@ const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(
   (o) => o.type !== 'divider'
 );
 
+function blurMenuOnPointerLeave(event) {
+  const focused = document.activeElement;
+  if (focused instanceof HTMLElement && event.currentTarget.contains(focused)) {
+    focused.blur();
+  }
+}
+
+function preventPointerFocus(event) {
+  event.preventDefault();
+}
+
 export function HeaderMenuButton({ open, onClick, className = '' }) {
   return (
     <button
@@ -254,14 +265,24 @@ function Header({
             {HEADER_MENU_OPTIONS.map(({ label, href }) => {
               const items = HEADER_NAV_DROPDOWNS[label] ?? [];
               return (
-                <div key={label} className="header-nav-wide__dropdown-wrap">
+                <div
+                  key={label}
+                  className="header-nav-wide__dropdown-wrap"
+                  onMouseLeave={blurMenuOnPointerLeave}
+                >
                   <a href={href} className="header-nav-wide__link">
                     {label}
                   </a>
                   <div className="header-nav-wide__dropdown" role="menu" aria-label={`${label} menu`}>
                     <div className="header-nav-wide__dropdown-panel">
                       {items.map((item) => (
-                        <a key={item.label} href={item.href} className="header-nav-wide__dropdown-item" role="menuitem">
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          className="header-nav-wide__dropdown-item"
+                          role="menuitem"
+                          onMouseDown={preventPointerFocus}
+                        >
                           {item.label}
                         </a>
                       ))}
@@ -272,7 +293,7 @@ function Header({
             })}
           </nav>
           <div className="header-wide-actions">
-            <div className="header-profile-wrap">
+            <div className="header-profile-wrap" onMouseLeave={blurMenuOnPointerLeave}>
               <button type="button" className="icon-btn header-profile-btn" aria-haspopup="true" title="Account">
                 <img
                   src="/nav-icons/Profile.svg"
@@ -293,6 +314,7 @@ function Header({
                       type="button"
                       className="header-profile-dropdown__item"
                       role="menuitem"
+                      onMouseDown={preventPointerFocus}
                       onClick={() => onOpenProjectsPanel?.()}
                     >
                       {opt.label}
@@ -303,6 +325,7 @@ function Header({
                       type="button"
                       className="header-profile-dropdown__item"
                       role="menuitem"
+                      onMouseDown={preventPointerFocus}
                     >
                       {opt.label}
                     </button>
@@ -312,6 +335,7 @@ function Header({
                       to={opt.to}
                       className="header-profile-dropdown__item"
                       role="menuitem"
+                      onMouseDown={preventPointerFocus}
                       onClick={() => navigate(opt.to)}
                     >
                       {opt.label}

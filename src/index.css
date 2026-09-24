@@ -533,7 +533,7 @@ body {
 
 /* Keep label dimmed while the flyout is in use (pointer on menu, not on the text). */
 .header-nav-wide__dropdown-wrap:hover .header-nav-wide__link,
-.header-nav-wide__dropdown-wrap:focus-within .header-nav-wide__link {
+.header-nav-wide__dropdown-wrap:has(:focus-visible) .header-nav-wide__link {
   opacity: 0.85;
 }
 
@@ -559,7 +559,7 @@ body {
 }
 
 .header-nav-wide__dropdown-wrap:hover::after,
-.header-nav-wide__dropdown-wrap:focus-within::after {
+.header-nav-wide__dropdown-wrap:has(:focus-visible)::after {
   opacity: 1;
 }
 
@@ -573,7 +573,7 @@ body {
 }
 
 .header-nav-wide__dropdown-panel {
-  padding: 0 0 8px;
+  padding: 0;
   background: var(--bg-dropdown);
   box-shadow: var(--shadow-dropdown);
 }
@@ -605,7 +605,7 @@ body {
 }
 
 .header-nav-wide__dropdown-wrap:hover .header-nav-wide__dropdown,
-.header-nav-wide__dropdown-wrap:focus-within .header-nav-wide__dropdown {
+.header-nav-wide__dropdown-wrap:has(:focus-visible) .header-nav-wide__dropdown {
   display: block;
 }
 
@@ -662,7 +662,7 @@ body {
 }
 
 .header-profile-wrap:hover .header-profile-dropdown,
-.header-profile-wrap:focus-within .header-profile-dropdown {
+.header-profile-wrap:has(:focus-visible) .header-profile-dropdown {
   display: flex;
 }
 
@@ -768,14 +768,46 @@ body {
 
   /*
    * Profile menu: align panel to the viewport’s right edge (not the icon cluster).
-   * Slight upward overlap + padding keeps a continuous hover path from the trigger into the menu.
+   * Full-height wrap + invisible bridges keep hover while the pointer travels
+   * from the icon across the header to the fixed panel.
    */
+  .header-wide-actions {
+    align-self: stretch;
+  }
+
+  .header-end-wide .header-profile-wrap {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    height: 100%;
+  }
+
+  .header-end-wide .header-profile-wrap:hover::after,
+  .header-end-wide .header-profile-wrap:has(:focus-visible)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 420px;
+    height: calc(var(--header-height) + 8px);
+    z-index: 598;
+  }
+
   .header-profile-dropdown {
     position: fixed;
-    top: calc(var(--header-height) - 10px);
+    top: calc(var(--header-height) / 2 + 0.5em + 12px);
     right: env(safe-area-inset-right, 0px);
     left: auto;
-    padding: 14px 0 8px;
+    padding: 0;
+  }
+
+  .header-profile-dropdown::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: var(--header-height);
   }
 
   /* Match nav link underline while profile flyout is active (hover or keyboard). */
@@ -784,21 +816,27 @@ body {
     transition: opacity 0.2s;
   }
 
-  .header-profile-wrap:hover .header-profile-btn,
-  .header-profile-wrap:focus-within .header-profile-btn {
-    opacity: 0.85;
-  }
-
-  .header-profile-wrap:hover .header-profile-btn::after,
-  .header-profile-wrap:focus-within .header-profile-btn::after {
+  .header-end-wide .header-profile-wrap::before {
     content: '';
     position: absolute;
     left: 8px;
     right: 8px;
-    bottom: 0;
-    height: 1px;
-    background: currentColor;
+    top: calc(50% + 0.5em + 6px);
+    height: 2px;
+    background: var(--text-on-chrome);
+    opacity: 0;
     pointer-events: none;
+    z-index: 601;
+  }
+
+  .header-end-wide .header-profile-wrap:hover::before,
+  .header-end-wide .header-profile-wrap:has(:focus-visible)::before {
+    opacity: 1;
+  }
+
+  .header-profile-wrap:hover .header-profile-btn,
+  .header-profile-wrap:has(:focus-visible) .header-profile-btn {
+    opacity: 0.85;
   }
 }
 
