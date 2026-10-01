@@ -1,15 +1,27 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useSearchParams } from 'react-router-dom';
+import { ADMIN_PHASE_2, getAdminPhaseCapabilities, parseAdminPhase } from '../constants/adminPhases';
 import { ADMIN_TABS } from '../constants/adminPage';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import { ROUTE_ADMIN, ROUTE_PROJECT_DETAILS } from '../constants/routes';
+import AdminPhaseSwitch from './AdminPhaseSwitch';
 import AdminSidebarUserMenu from './AdminSidebarUserMenu';
 import { useThemeName } from '../utils/theme';
 
 export default function AdminLayout({ children, pageTitle, headerActions, onAdminDashboardNav }) {
   const theme = useThemeName();
   const isDark = theme === 'dark';
+  const [searchParams] = useSearchParams();
+  const phase = parseAdminPhase(searchParams);
+  const phaseCapabilities = getAdminPhaseCapabilities(phase);
+  const navTabs = phaseCapabilities.fullNav
+    ? ADMIN_TABS
+    : ADMIN_TABS.filter((tab) => tab.id === 'team');
   const [mobileLayout, setMobileLayout] = useState(false);
+
+  const navTo = (to) => (
+    phase === ADMIN_PHASE_2 ? { pathname: to, search: '?phase=2' } : to
+  );
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
@@ -33,10 +45,10 @@ export default function AdminLayout({ children, pageTitle, headerActions, onAdmi
         </div>
         <nav className="admin-layout__nav">
           <span className="admin-layout__nav-label">Admin</span>
-          {ADMIN_TABS.map(({ id, label, to }) => (
+          {navTabs.map(({ id, label, to }) => (
             <NavLink
               key={id}
-              to={to}
+              to={navTo(to)}
               end={to === ROUTE_ADMIN}
               className={({ isActive }) =>
                 `admin-layout__nav-item${isActive ? ' admin-layout__nav-item--active' : ''}`
@@ -67,10 +79,10 @@ export default function AdminLayout({ children, pageTitle, headerActions, onAdmi
             </header>
             <div className="admin-layout__mobile-nav-bar">
               <nav className="admin-layout__mobile-nav tabs" aria-label="Admin sections">
-                {ADMIN_TABS.map(({ id, label, to }) => (
+                {navTabs.map(({ id, label, to }) => (
                   <NavLink
                     key={id}
-                    to={to}
+                    to={navTo(to)}
                     end={to === ROUTE_ADMIN}
                     className={({ isActive }) => `tab admin-layout__mobile-tab${isActive ? ' active' : ''}`}
                     onClick={to === ROUTE_ADMIN ? () => onAdminDashboardNav?.() : undefined}
@@ -94,6 +106,9 @@ export default function AdminLayout({ children, pageTitle, headerActions, onAdmi
           </header>
           {children}
         </div>
+      </div>
+      <div className="admin-layout__phase">
+        <AdminPhaseSwitch />
       </div>
     </div>
   );

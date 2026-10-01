@@ -675,7 +675,7 @@ function TrackReorderDragOverlay({ track, selectedCount }) {
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null, onTracksReorderCancel = null, onFoldersReorder = null, onFoldersReorderCancel = null }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null, onTracksReorderCancel = null, onFoldersReorder = null, onFoldersReorderCancel = null, showTrackLayoutControls = true, showShuffle = true }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const compact = compactTrackRows ?? tabsInBreadcrumb;
   const gridView = trackViewMode === 'grid';
@@ -1229,6 +1229,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       <ProjectCustomizeMenus
         value={searchCustomize ?? DEFAULT_PROJECT_CUSTOMIZE}
         onChange={onSearchCustomizeChange}
+        showLayoutControls={showTrackLayoutControls}
       />
     ) : null;
 
@@ -1263,9 +1264,11 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
       <ToolbarIconButton label="Play All" onClick={handlePlayAll}>
         <PlayAllIcon />
       </ToolbarIconButton>
-      <ToolbarIconButton label="Shuffle" onClick={handleShuffleAll}>
-        <ShuffleIcon />
-      </ToolbarIconButton>
+      {showShuffle ? (
+        <ToolbarIconButton label="Shuffle" onClick={handleShuffleAll}>
+          <ShuffleIcon />
+        </ToolbarIconButton>
+      ) : null}
     </>
   );
 
@@ -1585,6 +1588,8 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                         <ProjectCustomizeMenus
                           value={searchCustomize ?? DEFAULT_PROJECT_CUSTOMIZE}
                           onChange={onSearchCustomizeChange}
+                          showLayoutControls={showTrackLayoutControls}
+                          showCustomizeMenu={false}
                         />
                         {mobileReorderButton}
                         {playShuffleActions}

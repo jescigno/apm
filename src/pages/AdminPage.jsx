@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ADMIN_ACTIVITY_DEFAULT_DATE_FILTER, ADMIN_ACTIVITY_DEFAULT_TEAM_ID } from '../constants/adminActivity';
+import { getAdminPhaseCapabilities, parseAdminPhase } from '../constants/adminPhases';
 import { ADMIN_TEAM_DEFAULT_ID } from '../constants/adminTeam';
 import { ADMIN_TABS, adminPageTitleFromPath, adminTabIdFromPath } from '../constants/adminPage';
+import { ROUTE_ADMIN_TEAM } from '../constants/routes';
 import AccountPersonalTab from '../components/AccountPersonalTab';
 import AdminActivityTab, { AdminActivityFilters } from '../components/AdminActivityTab';
 import AdminLayout from '../components/AdminLayout';
@@ -41,6 +43,9 @@ function AdminNotificationsTab() {
 
 export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const phaseCapabilities = getAdminPhaseCapabilities(parseAdminPhase(searchParams));
   const [activeTab, setActiveTab] = useState(() => adminTabIdFromPath(location.pathname));
   const [activityTeamFilter, setActivityTeamFilter] = useState(ADMIN_ACTIVITY_DEFAULT_TEAM_ID);
   const [teamId, setTeamId] = useState(ADMIN_TEAM_DEFAULT_ID);
@@ -53,9 +58,18 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
     setActiveTab(adminTabIdFromPath(location.pathname));
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (phaseCapabilities.fullNav || location.pathname === ROUTE_ADMIN_TEAM) return;
+    navigate({ pathname: ROUTE_ADMIN_TEAM, search: location.search }, { replace: true });
+  }, [location.pathname, location.search, navigate, phaseCapabilities.fullNav]);
+
   const activePageTitle =
     activeTab === 'team' ? (
-      <AdminTeamTitleDropdown teamId={teamId} onTeamChange={setTeamId} />
+      <AdminTeamTitleDropdown
+        teamId={teamId}
+        onTeamChange={setTeamId}
+        interactive={phaseCapabilities.teamDropdown}
+      />
     ) : (
       adminPageTitleFromPath(location.pathname)
     );
@@ -74,6 +88,7 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
       <AdminTeamHeaderActions
         onBulkImport={() => setBulkImportOpen(true)}
         onAddMembers={() => setAddOpen(true)}
+        showBulkImport={phaseCapabilities.bulkImport}
       />
     ) : null;
 
@@ -107,6 +122,9 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
               addOpen={addOpen}
               onAddOpenChange={setAddOpen}
               onOpenMemberActivity={onOpenMemberActivity}
+              showBulkImport={phaseCapabilities.bulkImport}
+              showInviteMessage={phaseCapabilities.inviteMessage}
+              showMemberActivity={phaseCapabilities.memberActivity}
             />
           )}
           {id === 'account' && <AccountPersonalTab />}

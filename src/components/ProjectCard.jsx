@@ -326,6 +326,7 @@ function ProjectCard({
   onSoundsLikeClick,
   onTitleChange,
   onDescriptionChange,
+  showSoundsLikePromo = true,
 }) {
   const contentRef = useRef(null);
   const measureRef = useRef(null);
@@ -341,7 +342,8 @@ function ProjectCard({
   const [gridHeight, setGridHeight] = useState(220);
   const mobileTitleEditor = useInlineEditor(title, onTitleChange, { requireNonEmpty: true });
   const mobileDescriptionEditor = useInlineEditor(description, onDescriptionChange);
-  const hideSoundsLikePromo = !hasTracks || soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
+  const hideSoundsLikePromo =
+    !showSoundsLikePromo || !hasTracks || soundsLikePanelOpen || commentsPanelOpen || clockPanelOpen;
 
   useEffect(() => {
     const update = () => {
@@ -725,17 +727,6 @@ function ProjectCard({
             </div>
           )}
         </div>
-        {isTruncated && !isExpanded && (
-          <div className="project-view-full-details-wrap">
-            <button
-              type="button"
-              className="project-view-full-details"
-              onClick={() => setIsOverlayOpen(true)}
-            >
-              View full details
-            </button>
-          </div>
-        )}
       </div>
     </div>
     {isOverlayOpen && createPortal(overlayPanel, document.body)}

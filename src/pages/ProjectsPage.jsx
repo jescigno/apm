@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import ProjectCard from '../components/ProjectCard';
 import ProjectCollabBar from '../components/ProjectCollabBar';
 import TrackList from '../components/TrackList';
@@ -8,6 +9,12 @@ import {
   getProjectTrackViewMode,
   isProjectCompactList,
 } from '../constants/projectTrackCustomize';
+import { SEARCH_LAYOUT_TYPES } from '../constants/searchResultsCustomize';
+import {
+  PROJECT_PHASE_2,
+  getProjectPhaseCapabilities,
+  parseProjectPhase,
+} from '../constants/projectPhases';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import {
   EMPTY_PROJECT_FOLDER_ID,
@@ -129,12 +136,16 @@ export default function ProjectsPage({
   onProjectTitleChange,
   onProjectDescriptionChange,
 }) {
+  const [searchParams] = useSearchParams();
+  const phase = parseProjectPhase(searchParams);
+  const phaseCapabilities = getProjectPhaseCapabilities(phase);
+
   useEffect(() => {
-    document.title = 'Project-Details';
+    document.title = phase === PROJECT_PHASE_2 ? 'Project-Details · Phase 2' : 'Project-Details';
     return () => {
       document.title = DEFAULT_DOC_TITLE;
     };
-  }, []);
+  }, [phase]);
 
   const folderPath = useMemo(
     () => getFolderPath(folderTree, activeFolderId),
@@ -150,7 +161,26 @@ export default function ProjectsPage({
 
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
   const [projectCustomize, setProjectCustomize] = useState(DEFAULT_PROJECT_CUSTOMIZE);
-  const trackViewMode = getProjectTrackViewMode(projectCustomize);
+  const phaseCustomize = useMemo(() => {
+    if (phaseCapabilities.trackLayoutControls) return projectCustomize;
+    return {
+      ...projectCustomize,
+      layoutType: SEARCH_LAYOUT_TYPES.LIST,
+      listLayout: 'expanded',
+    };
+  }, [phaseCapabilities.trackLayoutControls, projectCustomize]);
+  const trackViewMode = getProjectTrackViewMode(phaseCustomize);
+
+  const handleProjectCustomizeChange = useCallback((next) => {
+    if (phaseCapabilities.trackLayoutControls) {
+      setProjectCustomize(next);
+      return;
+    }
+    setProjectCustomize((prev) => ({
+      ...prev,
+      displayFields: next.displayFields,
+    }));
+  }, [phaseCapabilities.trackLayoutControls]);
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
     const sync = () => setHideTracksHeader(mq.matches);
@@ -191,6 +221,7 @@ export default function ProjectsPage({
           onClockClick={onClockClick}
           clockPanelOpen={clockPanelOpen}
           collabsActive
+          hiddenActionIds={phaseCapabilities.soundsLikeCollab ? [] : ['sounds-like']}
         />
       </div>
 
@@ -213,6 +244,7 @@ export default function ProjectsPage({
             ? (nextDescription) => onProjectDescriptionChange(activeFolderId, nextDescription)
             : undefined
         }
+        showSoundsLikePromo={phaseCapabilities.soundsLikePromo}
       />
       <TrackList
         soundsLikePanelOpen={soundsLikePanelOpen}
@@ -225,10 +257,12 @@ export default function ProjectsPage({
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
-        compactTrackRows={isProjectCompactList(projectCustomize)}
+        compactTrackRows={isProjectCompactList(phaseCustomize)}
         trackViewMode={trackViewMode}
-        searchCustomize={projectCustomize}
-        onSearchCustomizeChange={setProjectCustomize}
+        searchCustomize={phaseCustomize}
+        onSearchCustomizeChange={handleProjectCustomizeChange}
+        showTrackLayoutControls={phaseCapabilities.trackLayoutControls}
+        showShuffle={phaseCapabilities.mobileShuffle}
         emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."
         enableTrackDragToFolder={enableTrackDragToFolder}

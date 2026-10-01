@@ -38,10 +38,12 @@ const PROFILE_COLOR_CYCLE = ['amber', 'spring', 'cyan', 'magenta', 'rust', 'indi
 export const ADMIN_TEAM_MORE_ACTIONS = [
   { id: 'edit', label: 'Edit' },
   { id: 'activity', label: 'Activity' },
-  { id: 'archive', label: 'Archive' },
+  { id: 'archive', label: 'Deactivate' },
 ];
 
-export const ADMIN_TEAM_BULK_ACTIONS = [{ id: 'archive', label: 'Archive' }];
+export const ADMIN_TEAM_RESEND_ACTION = { id: 'resend', label: 'Resend Invite' };
+
+export const ADMIN_TEAM_BULK_ACTIONS = [{ id: 'archive', label: 'Deactivate' }];
 
 export const ADMIN_TEAM_SORT_COLUMNS = [
   { id: 'name', label: 'Team member' },
@@ -56,7 +58,7 @@ export const ADMIN_TEAM_DEFAULT_SORT = { field: 'name', direction: 'asc' };
 export function archiveTeamMembers(members, ids) {
   const idSet = ids instanceof Set ? ids : new Set(Array.isArray(ids) ? ids : [ids]);
   return members.map((member) =>
-    idSet.has(member.id) ? { ...member, status: 'Archived' } : member
+    idSet.has(member.id) ? { ...member, status: 'Deactivated' } : member
   );
 }
 
@@ -140,7 +142,7 @@ export function splitMemberName(name) {
   return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
 }
 
-export const ADMIN_TEAM_EDIT_STATUSES = ['Active', 'Pending'];
+export const ADMIN_TEAM_EDIT_STATUSES = ['Active', 'Pending', 'Deactivated'];
 
 export function applyTeamMemberEdits(member, { firstName, lastName, email, status }) {
   const name = [firstName, lastName].map((part) => String(part || '').trim()).filter(Boolean).join(' ');

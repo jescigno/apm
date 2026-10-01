@@ -6,6 +6,7 @@ import {
   ADMIN_TEAM_MEMBERS_BY_ID,
   ADMIN_TEAM_DEFAULT_SORT,
   ADMIN_TEAM_MORE_ACTIONS,
+  ADMIN_TEAM_RESEND_ACTION,
   ADMIN_TEAM_SORT_COLUMNS,
   ADMIN_TEAMS,
   applyTeamMemberEdits,
@@ -35,11 +36,20 @@ function TitleChevron({ open }) {
   );
 }
 
-export function AdminTeamTitleDropdown({ teamId, onTeamChange }) {
+export function AdminTeamTitleDropdown({ teamId, onTeamChange, interactive = true }) {
+  const selectedTeam = ADMIN_TEAMS.find((team) => team.id === teamId) ?? ADMIN_TEAMS[0];
+  if (!interactive) {
+    return <h1 className="admin-page-title">{selectedTeam.label}</h1>;
+  }
+  return (
+    <AdminTeamTitleMenu selectedTeam={selectedTeam} onTeamChange={onTeamChange} />
+  );
+}
+
+function AdminTeamTitleMenu({ selectedTeam, onTeamChange }) {
   const triggerRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuRect, setMenuRect] = useState(null);
-  const selectedTeam = ADMIN_TEAMS.find((team) => team.id === teamId) ?? ADMIN_TEAMS[0];
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -154,13 +164,15 @@ export function AdminTeamTitleDropdown({ teamId, onTeamChange }) {
 
 const ICON_UPLOAD = '/icons/Upload.svg';
 
-export function AdminTeamHeaderActions({ onBulkImport, onAddMembers }) {
+export function AdminTeamHeaderActions({ onBulkImport, onAddMembers, showBulkImport = true }) {
   return (
     <div className="admin-team-header__actions">
-      <button type="button" className="admin-team-btn admin-team-btn--outline" onClick={onBulkImport}>
-        <img src={ICON_UPLOAD} alt="" aria-hidden="true" />
-        Bulk Import
-      </button>
+      {showBulkImport ? (
+        <button type="button" className="admin-team-btn admin-team-btn--outline" onClick={onBulkImport}>
+          <img src={ICON_UPLOAD} alt="" aria-hidden="true" />
+          Bulk Import
+        </button>
+      ) : null}
       <button type="button" className="admin-team-btn admin-team-btn--primary" onClick={onAddMembers}>
         <img src={ICON_ADD} alt="" aria-hidden="true" />
         Add Members
@@ -207,10 +219,40 @@ function AdminTeamMoreMenuIcon({ actionId }) {
     );
   }
 
+  if (actionId === 'resend') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
+        <path d="M4 7l8 6 8-6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
   return <img src={ICON_ARCHIVE} alt="" aria-hidden="true" />;
 }
 
-function AdminTeamRow({ member, selected, onSelectChange, onOpenMemberActivity, onArchive, onEdit }) {
+function memberMoreActions(member, showActivity) {
+  const actions = [];
+  ADMIN_TEAM_MORE_ACTIONS.forEach((action) => {
+    if (action.id === 'activity' && !showActivity) return;
+    if (action.id === 'archive' && member.status === 'Pending') {
+      actions.push(ADMIN_TEAM_RESEND_ACTION);
+    }
+    actions.push(action);
+  });
+  return actions;
+}
+
+function AdminTeamRow({
+  member,
+  selected,
+  onSelectChange,
+  onOpenMemberActivity,
+  onArchive,
+  onEdit,
+  onResendInvite,
+  showActivity = true,
+}) {
   const menuBtnRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuRect, setMenuRect] = useState(null);
@@ -279,7 +321,7 @@ function AdminTeamRow({ member, selected, onSelectChange, onOpenMemberActivity, 
         role="menu"
         aria-label={`Actions for ${member.name}`}
       >
-        {ADMIN_TEAM_MORE_ACTIONS.map((action) => (
+        {memberMoreActions(member, showActivity).map((action) => (
           <button
             key={action.id}
             type="button"
@@ -294,6 +336,9 @@ function AdminTeamRow({ member, selected, onSelectChange, onOpenMemberActivity, 
               }
               if (action.id === 'archive') {
                 onArchive?.(member.id);
+              }
+              if (action.id === 'resend') {
+                onResendInvite?.(member);
               }
               closeMenu();
             }}
@@ -352,12 +397,16 @@ export default function AdminTeamTab({
   addOpen = false,
   onAddOpenChange,
   onOpenMemberActivity,
+  showBulkImport = true,
+  showInviteMessage = true,
+  showMemberActivity = true,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [membersByTeamId, setMembersByTeamId] = useState(ADMIN_TEAM_MEMBERS_BY_ID);
   const [editingMember, setEditingMember] = useState(null);
   const [sort, setSort] = useState(ADMIN_TEAM_DEFAULT_SORT);
+  const [inviteNotice, setInviteNotice] = useState(null);
   const selectAllRef = useRef(null);
 
   const members = membersByTeamId[teamId] ?? [];
@@ -377,7 +426,7 @@ export default function AdminTeamTab({
   };
 
   const visibleMembers = useMemo(
-    () => members.filter((member) => member.status !== 'Archived'),
+    () => members.filter((member) => member.status !== 'Deactivated' && member.status !== 'Archived'),
     [members]
   );
 
@@ -471,6 +520,26 @@ export default function AdminTeamTab({
     );
   };
 
+  const dismissInviteNotice = useCallback(() => {
+    setInviteNotice((current) => (current && !current.exiting ? { ...current, exiting: true } : current));
+  }, []);
+
+  const showInviteNotice = useCallback((member) => {
+    setInviteNotice({ id: Date.now(), name: member.name, exiting: false });
+  }, []);
+
+  useEffect(() => {
+    if (!inviteNotice || inviteNotice.exiting) return undefined;
+    const timer = window.setTimeout(dismissInviteNotice, 4000);
+    return () => window.clearTimeout(timer);
+  }, [inviteNotice, dismissInviteNotice]);
+
+  useEffect(() => {
+    if (!inviteNotice?.exiting) return undefined;
+    const timer = window.setTimeout(() => setInviteNotice(null), 280);
+    return () => window.clearTimeout(timer);
+  }, [inviteNotice]);
+
   const handleArchiveSelected = () => {
     const ids = new Set(
       filteredMembers.filter((member) => selectedIds.has(member.id)).map((member) => member.id)
@@ -561,20 +630,25 @@ export default function AdminTeamTab({
               onOpenMemberActivity={onOpenMemberActivity}
               onArchive={handleArchiveIds}
               onEdit={setEditingMember}
+              onResendInvite={showInviteNotice}
+              showActivity={showMemberActivity}
             />
           ))}
         </div>
       </div>
 
-      <AdminTeamBulkImportOverlay
-        open={bulkImportOpen}
-        onClose={() => onBulkImportOpenChange?.(false)}
-        onImport={handleBulkImport}
-      />
+      {showBulkImport ? (
+        <AdminTeamBulkImportOverlay
+          open={bulkImportOpen}
+          onClose={() => onBulkImportOpenChange?.(false)}
+          onImport={handleBulkImport}
+        />
+      ) : null}
       <AdminTeamAddOverlay
         open={addOpen}
         onClose={() => onAddOpenChange?.(false)}
         onAdd={handleAddMembers}
+        showInviteMessage={showInviteMessage}
       />
       <AdminTeamEditOverlay
         member={editingMember}
@@ -584,6 +658,26 @@ export default function AdminTeamTab({
         onClose={() => setEditingMember(null)}
         onSave={handleEditMember}
       />
+      {inviteNotice
+        ? createPortal(
+            <div
+              key={inviteNotice.id}
+              className={`admin-team-toast${inviteNotice.exiting ? ' admin-team-toast--out' : ' admin-team-toast--in'}`}
+              role="status"
+            >
+              <p className="admin-team-toast__message">Invite sent to {inviteNotice.name}</p>
+              <button
+                type="button"
+                className="admin-team-toast__close"
+                aria-label="Dismiss notification"
+                onClick={dismissInviteNotice}
+              >
+                ×
+              </button>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

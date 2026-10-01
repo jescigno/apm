@@ -1511,6 +1511,67 @@ body {
   flex-shrink: 0;
   margin-top: auto;
   padding-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-phase__label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.sidebar-phase__toggle {
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-default);
+}
+
+.sidebar-phase__btn {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sidebar-phase__btn--selected {
+  background: var(--accent-red);
+  color: var(--cta-text);
+}
+
+.sidebar-phase--horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-phase--horizontal .sidebar-phase__toggle {
+  flex-direction: row;
 }
 
 .nav-item {
@@ -3834,10 +3895,6 @@ html:has(.app-content-wrapper--projects) {
     left: auto;
     right: 0;
     transform: none;
-  }
-
-  .tracks-mobile-toolbar .btn-secondary.tracks-mobile-toolbar-reorder {
-    transform: translateX(4px);
   }
 
   /* Track list (mobile): play + thumb + title / description — no #, checkbox, id, versions, stems, actions */
@@ -9125,6 +9182,30 @@ html:has(.app-content-wrapper--projects) {
   :is(.tracks-section--search-results, .projects-page .tracks-section) :is(.tracks-actions, .tracks-mobile-toolbar-actions) .tracks-toolbar-btn-label {
     text-transform: none;
   }
+}
+
+.tracks-mobile-toolbar-actions {
+  gap: 2px;
+}
+
+.tracks-mobile-toolbar-actions :is(
+  .project-customize-menu-trigger,
+  .customize-view-menu-trigger,
+  .tracks-toolbar-reorder-btn,
+  .tracks-toolbar-action-btn
+) {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.tracks-mobile-toolbar-actions :is(.project-customize-menu-trigger, .tracks-toolbar-reorder-btn) img,
+.tracks-mobile-toolbar-actions .tracks-toolbar-action-btn svg,
+.tracks-mobile-toolbar-actions .tracks-toolbar-action-btn img {
+  width: 20px;
+  height: 20px;
 }
 
 :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.btn-secondary, .btn-invite, .project-customize-menu-trigger, .tracks-toolbar-action-btn) {
@@ -15710,6 +15791,17 @@ html:has(.app-content-wrapper--admin) {
   width: auto;
 }
 
+.admin-layout__phase {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+}
+
+body:has(.player-visible) .admin-layout__phase {
+  bottom: calc(var(--player-height) + 24px);
+}
+
 .admin-layout__user-menu-wrap {
   position: relative;
   width: 100%;
@@ -17554,6 +17646,87 @@ html:has(.app-content-wrapper--admin) {
 [data-theme="light"] .admin-team-more-menu {
   background: var(--bg-dropdown);
   box-shadow: var(--shadow-dropdown);
+}
+
+.admin-team-toast {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 14px 12px 14px 16px;
+  border-radius: 10px;
+  background: var(--surface-default);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-dropdown);
+}
+
+body:has(.player-visible) .admin-team-toast {
+  bottom: calc(var(--player-height) + 24px);
+}
+
+.admin-team-toast--in {
+  animation: admin-team-toast-in 0.28s ease;
+}
+
+.admin-team-toast--out {
+  animation: admin-team-toast-out 0.28s ease forwards;
+}
+
+@keyframes admin-team-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes admin-team-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.admin-team-toast__message {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.admin-team-toast__close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  .admin-team-toast__close:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
 }
 
 /* ========== Admin Team Bulk Import Overlay (AdminTeamBulkImportOverlay.jsx) ========== */

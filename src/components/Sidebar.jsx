@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import ProjectPhaseSwitch from './ProjectPhaseSwitch';
 import { ROUTE_DESIGN_SYSTEM, ROUTE_PROJECT_DETAILS, ROUTE_SEARCH } from '../constants/routes';
 import { resolveThemedAsset, useThemeName } from '../utils/theme';
 
@@ -46,6 +47,8 @@ function NavSearchIcon({ theme }) {
 
 function Sidebar({ onHomeClick }) {
   const theme = useThemeName();
+  const location = useLocation();
+  const showPhaseSwitch = location.pathname === ROUTE_PROJECT_DETAILS;
 
   return (
     <aside className="sidebar">
@@ -84,6 +87,7 @@ function Sidebar({ onHomeClick }) {
         )}
       </nav>
       <div className="sidebar-footer">
+        {showPhaseSwitch ? <ProjectPhaseSwitch /> : null}
         <NavLink
           to={ROUTE_DESIGN_SYSTEM}
           className={({ isActive }) => `nav-item nav-item--design-system${isActive ? ' nav-item--active' : ''}`}

@@ -16,6 +16,7 @@ function ProjectCollabBar({
   collabsPanelOpen = false,
   collabsActive = false,
   onInviteClick,
+  hiddenActionIds = [],
 }) {
   const theme = useThemeName();
 
@@ -41,7 +42,7 @@ function ProjectCollabBar({
   return (
     <div className="project-collabs">
       <div className="project-collabs-actions">
-        {PROJECT_COLLAB_ACTIONS.map(({ id, label, src, activeSrc, wide }) => {
+        {PROJECT_COLLAB_ACTIONS.filter(({ id }) => !hiddenActionIds.includes(id)).map(({ id, label, src, activeSrc, wide }) => {
           const isPanelOpen = Boolean(panelOpenById[id]);
           const showActiveIcon = Boolean(iconActiveById[id]) && Boolean(activeSrc);
           const iconSrc = showActiveIcon

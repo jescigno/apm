@@ -39,7 +39,7 @@ function collectValidEmails(rows) {
   return emails;
 }
 
-export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
+export default function AdminTeamAddOverlay({ open, onClose, onAdd, showInviteMessage = true }) {
   const titleId = useId();
   const firstInputRef = useRef(null);
   const [rows, setRows] = useState(() => [createEmailRow()]);
@@ -238,33 +238,37 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
               </button>
             </div>
 
-            <label className="admin-team-add-overlay__field">
-              <span className="admin-team-add-overlay__label">Email subject</span>
-              <input
-                type="text"
-                name="team-invite-subject"
-                autoComplete="off"
-                data-1p-ignore="true"
-                data-lpignore="true"
-                className="admin-team-add-overlay__input"
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-              />
-            </label>
+            {showInviteMessage ? (
+              <>
+                <label className="admin-team-add-overlay__field">
+                  <span className="admin-team-add-overlay__label">Email subject</span>
+                  <input
+                    type="text"
+                    name="team-invite-subject"
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    className="admin-team-add-overlay__input"
+                    value={subject}
+                    onChange={(event) => setSubject(event.target.value)}
+                  />
+                </label>
 
-            <label className="admin-team-add-overlay__field">
-              <span className="admin-team-add-overlay__label">Email message</span>
-              <textarea
-                name="team-invite-message"
-                autoComplete="off"
-                data-1p-ignore="true"
-                data-lpignore="true"
-                className="admin-team-add-overlay__textarea"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                rows={6}
-              />
-            </label>
+                <label className="admin-team-add-overlay__field">
+                  <span className="admin-team-add-overlay__label">Email message</span>
+                  <textarea
+                    name="team-invite-message"
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    className="admin-team-add-overlay__textarea"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    rows={6}
+                  />
+                </label>
+              </>
+            ) : null}
 
             {error ? <p className="admin-team-add-overlay__error">{error}</p> : null}
           </form>
