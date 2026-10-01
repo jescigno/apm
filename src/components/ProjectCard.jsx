@@ -329,14 +329,12 @@ function ProjectCard({
   showSoundsLikePromo = true,
 }) {
   const contentRef = useRef(null);
-  const measureRef = useRef(null);
   const titleRef = useRef(null);
   const mobileTitleContainerRef = useRef(null);
   const mobileTitleTextRef = useRef(null);
   const [mobileTitleTruncated, setMobileTitleTruncated] = useState(false);
   /** idle → scroll (marquee) → fadeOut (at end, opacity 0) → fadeIn (truncated centered) → idle */
   const [mobileTitlePhase, setMobileTitlePhase] = useState('idle');
-  const [isTruncated, setIsTruncated] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [gridHeight, setGridHeight] = useState(220);
@@ -359,20 +357,6 @@ function ProjectCard({
     mql.forEach((m) => m.addEventListener('change', update));
     return () => mql.forEach((m) => m.removeEventListener('change', update));
   }, []);
-
-  useEffect(() => {
-    const measureEl = measureRef.current;
-    if (!measureEl) return;
-    const VIEW_FULL_DETAILS_HEIGHT = 32;
-    const check = () => {
-      const maxContentHeight = gridHeight - VIEW_FULL_DETAILS_HEIGHT;
-      setIsTruncated(measureEl.scrollHeight > maxContentHeight);
-    };
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(measureEl);
-    return () => ro.disconnect();
-  }, [isExpanded, gridHeight, description]);
 
   useEffect(() => {
     if (!isOverlayOpen) return;
@@ -645,7 +629,6 @@ function ProjectCard({
                 style={{ maxHeight: gridHeight }}
               >
                 <div
-                  ref={measureRef}
                   className="project-info-measure"
                   aria-hidden="true"
                 >
@@ -678,16 +661,14 @@ function ProjectCard({
                     description={description}
                     onDescriptionChange={onDescriptionChange}
                   />
-                  {!isTruncated && (
-                    <div className="keywords">
-                      {KEYWORDS.map((kw, i) => (
-                        <span key={i} className="keyword">
-                          {kw} <button type="button" className="remove">×</button>
-                        </span>
-                      ))}
-                      <button type="button" className="add-keyword">+ Add Keyword</button>
-                    </div>
-                  )}
+                  <div className="keywords">
+                    {KEYWORDS.map((kw, i) => (
+                      <span key={i} className="keyword">
+                        {kw} <button type="button" className="remove">×</button>
+                      </span>
+                    ))}
+                    <button type="button" className="add-keyword">+ Add Keyword</button>
+                  </div>
                 </div>
               </div>
             ) : (

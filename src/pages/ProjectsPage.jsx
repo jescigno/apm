@@ -192,7 +192,7 @@ export default function ProjectsPage({
   const visibleFolders = folderPath;
 
   return (
-    <div className="projects-page">
+    <div className={`projects-page${phase === PROJECT_PHASE_2 ? ' projects-page--phase-2' : ''}`}>
       <div className="breadcrumb-row">
         <div className="breadcrumb-wrapper">
           <span className="breadcrumb">

@@ -5130,6 +5130,14 @@ html:has(.app-content-wrapper--projects) {
   gap: 12px;
 }
 
+/* Phase 2 has no Sounds Like promo, so the text column would keep stretching.
+   Hold it at the width it has when the viewport is 1440. */
+@media (min-width: 1440px) {
+  .projects-page--phase-2 .project-text-block {
+    max-width: calc(1440px - var(--sidebar-width) - 48px - 16px - 4px - 220px);
+  }
+}
+
 /* Tablet: stack Sounds Like promo under title/description (desktop card only; below 769px is mobile hero). */
 @media (min-width: 769px) and (max-width: 1000px) {
   .project-content-row {
@@ -12298,7 +12306,7 @@ html:has(.app-content-wrapper--projects) {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1240px) {
   .project-info-wrapper {
     max-height: none !important;
   }
