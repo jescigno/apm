@@ -4,6 +4,7 @@ import { SEARCH_RESULTS_TRACKS } from '../components/TrackList';
 
 export default function SearchPage({
   searchQuery,
+  showResultsPage = false,
   onRecentSearchSelect,
   soundsLikePanelOpen,
   onSoundsLikeClick,
@@ -12,7 +13,7 @@ export default function SearchPage({
   enterHighlightTrackNum,
   scrollToBottomSignal,
 }) {
-  const showResults = Boolean(searchQuery?.trim());
+  const showResults = showResultsPage || Boolean(searchQuery?.trim());
 
   if (showResults) {
     return (

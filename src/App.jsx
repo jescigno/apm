@@ -56,6 +56,7 @@ import {
   replaceFolderChildrenOrder,
   updateFolderDescription,
   updateFolderName,
+  updateFolderPurpose,
 } from './constants/projectsPanelTree';
 import {
   PROJECTS_DND_HOLD_MS,
@@ -163,6 +164,7 @@ function AppContent() {
   const [searchBarValue, setSearchBarValue] = useState('');
   const [searchTerms, setSearchTerms] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [openSearchResults, setOpenSearchResults] = useState(false);
   const headerMenuRef = useRef(null);
   const { currentTrack, isPlayerClosing } = usePlayer();
 
@@ -423,6 +425,10 @@ function AppContent() {
     setFolderTree((prev) => updateFolderDescription(prev, folderId, description.trim()));
   }, []);
 
+  const handleProjectPurposeChange = useCallback((folderId, purpose) => {
+    setFolderTree((prev) => updateFolderPurpose(prev, folderId, purpose.trim()));
+  }, []);
+
   const mergedFavorites = useMemo(() => [...FAVORITES_TRACKS, ...favoritesExtraTracks], [favoritesExtraTracks]);
 
   const refreshSoundsLikeResults = useCallback(() => {
@@ -521,6 +527,22 @@ function AppContent() {
     setProjectsPanelOpen(true);
   };
 
+  const closeProjectsPanel = useCallback(() => {
+    setProjectsPanelOpen(false);
+    if (!window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches) return;
+    if (searchTerms.length > 0) {
+      navigate(buildSearchResultsPath(searchTerms));
+      return;
+    }
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      navigate(buildSearchResultsPath([trimmed]));
+      return;
+    }
+    setOpenSearchResults(true);
+    navigate(ROUTE_SEARCH);
+  }, [navigate, searchQuery, searchTerms]);
+
   const handleHomeNavClick = useCallback(() => {
     openProjectsPanel();
     if (location.pathname !== ROUTE_PROJECT_DETAILS) {
@@ -572,6 +594,7 @@ function AppContent() {
       setSearchQuery('');
       setSearchBarValue('');
       setSearchTerms([]);
+      setOpenSearchResults(false);
     }
   }, [location.pathname]);
 
@@ -776,6 +799,7 @@ function AppContent() {
                   onFoldersReorderCancel={handleFoldersReorderCancel}
                   onProjectTitleChange={handleProjectTitleChange}
                   onProjectDescriptionChange={handleProjectDescriptionChange}
+                  onProjectPurposeChange={handleProjectPurposeChange}
                   onMobileBack={openProjectsPanel}
                 />
               }
@@ -798,6 +822,7 @@ function AppContent() {
               element={
                 <SearchPage
                   searchQuery={searchQuery}
+                  showResultsPage={openSearchResults}
                   onRecentSearchSelect={handleRecentSearchSelect}
                   soundsLikePanelOpen={soundsLikePanelOpen}
                   onSoundsLikeClick={openSoundsLikePanel}
@@ -877,7 +902,7 @@ function AppContent() {
       />
       <ProjectsPanel
         isOpen={projectsPanelOpen}
-        onClose={() => setProjectsPanelOpen(false)}
+        onClose={closeProjectsPanel}
         width={projectsPanelWidth}
         onWidthChange={setProjectsPanelWidth}
         minWidth={PANEL_MIN_WIDTH}

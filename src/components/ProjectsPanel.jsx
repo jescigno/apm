@@ -272,6 +272,15 @@ function FolderRow({
         aria-current={isSelected ? 'page' : undefined}
         {...(sortableListeners?.attributes ?? {})}
         {...(sortableListeners?.listeners ?? {})}
+        onClick={(event) => {
+          if (!window.matchMedia('(max-width: 768px)').matches) return;
+          if (event.target.closest('.projects-panel-folder-chevron, .projects-panel-folder-more')) return;
+          if (suppressFolderClickRef?.current) {
+            suppressFolderClickRef.current = false;
+            return;
+          }
+          onFolderSelect?.(folder.id);
+        }}
       >
         <div
           className="projects-panel-folder-primary projects-panel-folder-primary--selectable"
@@ -303,7 +312,10 @@ function FolderRow({
                 className={`projects-panel-folder-chevron${expanded ? ' projects-panel-folder-chevron--open' : ''}`}
                 aria-expanded={expanded}
                 aria-label={expanded ? `Collapse ${folder.name}` : `Expand ${folder.name}`}
-                onClick={() => onToggleExpand(folder.id)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleExpand(folder.id);
+                }}
                 onPointerDown={(event) => event.stopPropagation()}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

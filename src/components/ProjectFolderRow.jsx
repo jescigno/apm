@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { getFolderUpdatedAtLabel } from '../constants/projectsPanelTree';
-import { ICON_FOLDER_FILLED, ICON_REORDER_DOTS } from '../constants/designSystem';
+import { ICON_DELETE, ICON_FOLDER, ICON_FOLDER_FILLED, ICON_MOVE_TO, ICON_REORDER_DOTS } from '../constants/designSystem';
 import { closeOverflowMenusInGroup, registerOverflowMenuOpen, unregisterOverflowMenu } from '../hooks/useOverflowDropdownMenu';
 
 const FOLDER_MENU_GROUP = 'project-folder-row-menu';
 
 const FOLDER_MORE_ACTIONS = [
-  { id: 'open', label: 'Open Project' },
-  { id: 'edit', label: 'Edit Project Details' },
-  { id: 'move', label: 'Move To' },
-  { id: 'delete', label: 'Delete' },
+  { id: 'open', label: 'Open Project', icon: ICON_FOLDER },
+  { id: 'edit', label: 'Edit Project Details', icon: '/icons/Settings.svg' },
+  { id: 'move', label: 'Move To', icon: ICON_MOVE_TO },
+  { id: 'delete', label: 'Delete', icon: ICON_DELETE },
 ];
 
 function FolderHoverHint({ text, tooltipRect }) {
@@ -297,6 +297,7 @@ function ProjectFolderRow({
               closeMenu();
             }}
           >
+            <img src={action.icon} alt="" />
             {action.label}
           </button>
         ))}

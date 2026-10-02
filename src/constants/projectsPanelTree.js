@@ -427,6 +427,19 @@ export function updateFolderName(tree, folderId, name) {
   });
 }
 
+/** Update a folder's purpose anywhere in the tree. Purpose is shown as the For value. */
+export function updateFolderPurpose(tree, folderId, purpose) {
+  return tree.map((node) => {
+    if (node.id === folderId) {
+      return { ...node, purpose };
+    }
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      return { ...node, children: updateFolderPurpose(node.children, folderId, purpose) };
+    }
+    return node;
+  });
+}
+
 /** Update a folder's description anywhere in the tree. */
 export function updateFolderDescription(tree, folderId, description) {
   return tree.map((node) => {

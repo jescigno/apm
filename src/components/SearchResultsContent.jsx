@@ -43,6 +43,7 @@ export default function SearchResultsContent({
         enterHighlightTrackNum={enterHighlightTrackNum}
         scrollToBottomSignal={scrollToBottomSignal}
         hideTracksHeader={hideTracksHeader}
+        expandableTrackDetails
         disableWaveformHighlights
         compactTrackRows={isCompactListLayout(searchCustomize)}
         trackViewMode={trackViewMode}

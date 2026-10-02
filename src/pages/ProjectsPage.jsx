@@ -153,6 +153,7 @@ export default function ProjectsPage({
   onFoldersReorderCancel,
   onProjectTitleChange,
   onProjectDescriptionChange,
+  onProjectPurposeChange,
   onMobileBack,
 }) {
   const [searchParams] = useSearchParams();
@@ -177,6 +178,7 @@ export default function ProjectsPage({
   );
   const projectTitle = activeFolder?.name ?? 'Project';
   const projectDescription = activeFolder?.description ?? '';
+  const projectPurpose = activeFolder?.purpose ?? '';
   const headerTitleClipRef = useRef(null);
   const headerTitleTextRef = useRef(null);
   const [headerTitleTruncated, setHeaderTitleTruncated] = useState(false);
@@ -337,6 +339,7 @@ export default function ProjectsPage({
       <ProjectCard
         title={projectTitle}
         description={projectDescription}
+        purpose={projectPurpose}
         useDefaultThumbnail={tracks.length === 0}
         hasTracks={tracks.length > 0}
         soundsLikePanelOpen={soundsLikePanelOpen}
@@ -351,6 +354,11 @@ export default function ProjectsPage({
         onDescriptionChange={
           activeFolderId && onProjectDescriptionChange
             ? (nextDescription) => onProjectDescriptionChange(activeFolderId, nextDescription)
+            : undefined
+        }
+        onPurposeChange={
+          activeFolderId && onProjectPurposeChange
+            ? (nextPurpose) => onProjectPurposeChange(activeFolderId, nextPurpose)
             : undefined
         }
         showSoundsLikePromo={phaseCapabilities.soundsLikePromo}

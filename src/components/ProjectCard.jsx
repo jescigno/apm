@@ -267,7 +267,7 @@ function ProjectEditableDescription({
   const textClassName = [
     paragraphClassName,
     editable ? 'project-description--editable' : '',
-    editable && !description ? 'project-description--placeholder' : '',
+    !description?.trim() ? 'project-description--placeholder' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -279,6 +279,7 @@ function ProjectEditableDescription({
         className={`project-description-input ${textClassName}`.trim()}
         value={draft}
         rows={1}
+        placeholder="Add a description"
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
@@ -299,7 +300,7 @@ function ProjectEditableDescription({
 
   const paragraph = (
     <p className={textClassName} onDoubleClick={startEdit}>
-      {description || (editable ? 'Double-click to add a description' : '')}
+      {description?.trim() ? description : 'Add a description'}
     </p>
   );
   return unwrapped ? paragraph : <div className={wrapperClassName}>{paragraph}</div>;
@@ -403,6 +404,8 @@ function ProjectCard({
   onSoundsLikeClick,
   onTitleChange,
   onDescriptionChange,
+  purpose = '',
+  onPurposeChange,
   showSoundsLikePromo = true,
 }) {
   const contentRef = useRef(null);
@@ -416,6 +419,7 @@ function ProjectCard({
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [overlayEditing, setOverlayEditing] = useState(false);
   const [overlayTitleDraft, setOverlayTitleDraft] = useState(title);
+  const [overlayPurposeDraft, setOverlayPurposeDraft] = useState(purpose);
   const [overlayDescriptionDraft, setOverlayDescriptionDraft] = useState(description);
   const overlayTitleRef = useRef(null);
   const overlayDescriptionRef = useRef(null);
@@ -447,8 +451,9 @@ function ProjectCard({
   useEffect(() => {
     if (overlayEditing) return;
     setOverlayTitleDraft(title);
+    setOverlayPurposeDraft(purpose);
     setOverlayDescriptionDraft(description);
-  }, [title, description, overlayEditing]);
+  }, [title, purpose, description, overlayEditing]);
 
   useEffect(() => {
     if (!overlayEditing) return;
@@ -470,14 +475,21 @@ function ProjectCard({
 
   const startOverlayEdit = () => {
     setOverlayTitleDraft(title);
+    setOverlayPurposeDraft(purpose);
     setOverlayDescriptionDraft(description);
     setOverlayEditing(true);
   };
 
+  const cancelOverlayEdit = () => {
+    setOverlayEditing(false);
+  };
+
   const finishOverlayEdit = () => {
     const nextTitle = overlayTitleDraft.trim();
+    const nextPurpose = overlayPurposeDraft.trim();
     const nextDescription = overlayDescriptionDraft.trim();
     if (nextTitle && nextTitle !== title) onTitleChange?.(nextTitle);
+    if (nextPurpose !== purpose) onPurposeChange?.(nextPurpose);
     if (nextDescription !== description) onDescriptionChange?.(nextDescription);
     setOverlayEditing(false);
   };
@@ -578,46 +590,58 @@ function ProjectCard({
         aria-label="Close overlay"
       />
       <div className="project-details-overlay-panel-wrap">
-        <button
-          type="button"
-          className="project-details-overlay-close"
-          onClick={closeOverlay}
-          aria-label="Close overlay"
-        >
-          <img src="/icons/close.svg" alt="" />
-        </button>
+        {!overlayEditing ? (
+          <button
+            type="button"
+            className="project-details-overlay-close"
+            onClick={closeOverlay}
+            aria-label="Close overlay"
+          >
+            <img src="/icons/close.svg" alt="" />
+          </button>
+        ) : null}
         <div className="project-details-overlay-panel">
           <div className="project-details-overlay-panel-scroll">
-            <button
-              type="button"
-              className="project-details-overlay-edit"
-              onClick={overlayEditing ? finishOverlayEdit : startOverlayEdit}
-            >
-              {overlayEditing ? 'Done' : 'Edit'}
-            </button>
             {overlayEditing ? (
-              <input
-                ref={overlayTitleRef}
-                type="text"
-                className="project-title-input project-details-overlay-title-input"
-                value={overlayTitleDraft}
-                onChange={(e) => setOverlayTitleDraft(e.target.value)}
-                aria-label="Project title"
-              />
+              <>
+                <label className="project-details-overlay-field">
+                  <span className="project-details-overlay-field-label">Project Name</span>
+                  <input
+                    ref={overlayTitleRef}
+                    type="text"
+                    className="project-details-overlay-field-input project-details-overlay-title-input"
+                    value={overlayTitleDraft}
+                    onChange={(e) => setOverlayTitleDraft(e.target.value)}
+                  />
+                </label>
+                <label className="project-details-overlay-field">
+                  <span className="project-details-overlay-field-label">Purpose</span>
+                  <input
+                    type="text"
+                    className="project-details-overlay-field-input"
+                    value={overlayPurposeDraft}
+                    onChange={(e) => setOverlayPurposeDraft(e.target.value)}
+                  />
+                </label>
+                <label className="project-details-overlay-field">
+                  <span className="project-details-overlay-field-label">Description</span>
+                  <textarea
+                    ref={overlayDescriptionRef}
+                    className="project-details-overlay-field-input project-details-overlay-description-input"
+                    value={overlayDescriptionDraft}
+                    rows={3}
+                    placeholder="Add a description"
+                    onChange={(e) => setOverlayDescriptionDraft(e.target.value)}
+                  />
+                </label>
+              </>
             ) : (
-              <h3 className="project-details-overlay-title">{title}</h3>
-            )}
-            {overlayEditing ? (
-              <textarea
-                ref={overlayDescriptionRef}
-                className="project-description-input project-details-overlay-description-input"
-                value={overlayDescriptionDraft}
-                rows={3}
-                onChange={(e) => setOverlayDescriptionDraft(e.target.value)}
-                aria-label="Project description"
-              />
-            ) : (
-              <p className="project-details-overlay-description">{description}</p>
+              <>
+                <h3 className="project-details-overlay-title">{title}</h3>
+                {description?.trim() ? (
+                  <p className="project-details-overlay-description">{description}</p>
+                ) : null}
+              </>
             )}
             <ProjectKeywords
               keywords={keywords}
@@ -625,8 +649,32 @@ function ProjectCard({
               className="project-details-overlay-keywords"
             />
             <div className="project-details-overlay-metadata metadata">
-              Created by <span className="metadata-value">Matthew</span><span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+              Created by <span className="metadata-value">Matthew</span>
+              {!overlayEditing && purpose?.trim() ? (
+                <>
+                  <span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">{purpose}</span>
+                </>
+              ) : null}
+              {' '}Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
             </div>
+          </div>
+          <div className="project-details-overlay-actions">
+            {overlayEditing ? (
+              <button
+                type="button"
+                className="project-details-overlay-cancel"
+                onClick={cancelOverlayEdit}
+              >
+                CANCEL
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="btn-cta btn-cta--primary project-details-overlay-edit"
+              onClick={overlayEditing ? finishOverlayEdit : startOverlayEdit}
+            >
+              {overlayEditing ? 'SAVE' : 'EDIT'}
+            </button>
           </div>
         </div>
       </div>
@@ -708,6 +756,7 @@ function ProjectCard({
                 className="project-description-input project-mobile-hero__desc-input"
                 value={mobileDescriptionEditor.draft}
                 rows={1}
+                placeholder="Add a description"
                 onChange={(e) => {
                   mobileDescriptionEditor.setDraft(e.target.value);
                   e.target.style.height = 'auto';
@@ -731,14 +780,14 @@ function ProjectCard({
                 className={[
                   'project-mobile-hero__desc',
                   mobileDescriptionEditor.editable ? 'project-description--editable' : '',
-                  mobileDescriptionEditor.editable && !description ? 'project-description--placeholder' : '',
+                  !description?.trim() ? 'project-description--placeholder' : '',
                 ].filter(Boolean).join(' ')}
                 onDoubleClick={(e) => {
                   e.preventDefault();
                   mobileDescriptionEditor.startEdit();
                 }}
               >
-                {description || (mobileDescriptionEditor.editable ? 'Double-click to add a description' : '')}
+                {description?.trim() ? description : 'Add a description'}
               </p>
             )}
             <button
@@ -788,7 +837,7 @@ function ProjectCard({
                     </div>
                   </div>
                   <div className="project-description">
-                    <p>{description}</p>
+                    <p>{description?.trim() ? description : 'Add a description'}</p>
                   </div>
                   <ProjectKeywords keywords={keywords} interactive={false} />
                 </div>
