@@ -585,6 +585,83 @@ function TrackCommentCompose({
   );
 }
 
+function TrackDescription({ description, editable, onChange, className = '' }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(description);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (!editing) setDraft(description);
+  }, [description, editing]);
+
+  useEffect(() => {
+    if (!editing) return;
+    inputRef.current?.focus();
+  }, [editing]);
+
+  const stopRowEvent = (event) => {
+    event.stopPropagation();
+  };
+
+  const descClassName = ['track-desc', className].filter(Boolean).join(' ');
+
+  if (!editable) {
+    return <p className={descClassName}>{description}</p>;
+  }
+
+  if (!editing) {
+    return (
+      <p
+        className={`${descClassName} track-desc--editable`}
+        onPointerDown={stopRowEvent}
+        onClick={(event) => {
+          stopRowEvent(event);
+          setDraft(description);
+          setEditing(true);
+        }}
+      >
+        {description}
+      </p>
+    );
+  }
+
+  const commit = () => {
+    const next = draft.trim();
+    setEditing(false);
+    if (next !== description) onChange(next);
+  };
+
+  const cancel = () => {
+    setDraft(description);
+    setEditing(false);
+  };
+
+  return (
+    <textarea
+      ref={inputRef}
+      className={`${descClassName} track-desc-input`}
+      value={draft}
+      rows={2}
+      aria-label="Track description"
+      onPointerDown={stopRowEvent}
+      onClick={stopRowEvent}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        stopRowEvent(event);
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          cancel();
+        }
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, expandableTrackDetails = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, enableHoldDragReorder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, isGrabbed = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
   const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
@@ -673,6 +750,10 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
   const item = album || track;
   const isAlbum = variant === 'album';
+  const [description, setDescription] = useState(item.desc);
+  useEffect(() => {
+    setDescription(item.desc);
+  }, [item.id, item.desc]);
   const thumbStyle = getTrackThumbStyle(item, isAlbum);
   const canDragTrackToFolder = enableTrackDragToFolder && !reorderMode && !isAlbum && Boolean(track?.id);
   const showSortablePlaceholder = isSortableDragging;
@@ -921,16 +1002,16 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
     if (reorderMode) {
       return (
         <div
-          className={`track-row track-row--mobile track-row--reorder-mode${isSelected ? ' track-row--selected' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
+          className={`track-row track-row--mobile track-row--reorder-mode${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
           data-track-num={item.num}
           onClick={handleReorderRowClick}
         >
-          <div className="track-row-mobile-reorder-lead">
-            {renderReorderCheckbox()}
-            {renderReorderTrackNum()}
-          </div>
+          <span className="track-reorder-num--mobile">{item.num}</span>
           {renderTrackThumb('track-thumb track-thumb--mobile')}
-          {renderReorderTrackMeta('track-reorder-content track-reorder-content--mobile')}
+          <div className="track-reorder-content track-reorder-content--mobile">
+            <span className="track-title">{item.title}</span>
+            <span className="track-id">{item.id}</span>
+          </div>
           {renderReorderDotsCol('track-reorder-dots-col track-reorder-dots-col--mobile')}
           {renderReorderLandSweep()}
         </div>
@@ -993,7 +1074,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           ) : (
             <span className="track-title">{item.title}</span>
           )}
-          <p className="track-desc track-desc--mobile-below-title">{item.desc}</p>
+          <p className="track-desc track-desc--mobile-below-title">{description}</p>
           <p className="track-recorded track-recorded--mobile">Recorded {item.recorded}</p>
         </div>
         {reorderMode ? (
@@ -1038,8 +1119,6 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             section={detailsSection}
             onSectionChange={setDetailsSection}
             onPlay={onPlay}
-            onSoundsLikeClick={onSoundsLikeClick}
-            showRemoveFromProject={showRemoveFromProject}
           />
         )}
         {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
@@ -1102,7 +1181,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
               {renderReorderTrackInfo()}
             </div>
           </div>
-          <p className="track-desc">{item.desc}</p>
+          <TrackDescription
+            description={description}
+            editable={!mobileTrackLayout}
+            onChange={setDescription}
+          />
           {renderReorderDotsCol()}
         </>
       ) : (
@@ -1201,7 +1284,12 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
       </div>
       {compact ? (
         isAlbum && compactAlbumTallLayout ? (
-          <p className="track-desc track-desc--compact-album">{item.desc}</p>
+          <TrackDescription
+            description={description}
+            editable={!mobileTrackLayout}
+            onChange={setDescription}
+            className="track-desc--compact-album"
+          />
         ) : (
         <div className="track-waveform-cell">
           <TrackWaveform
@@ -1239,7 +1327,11 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
         )
       ) : (
         <>
-          <p className="track-desc">{item.desc}</p>
+          <TrackDescription
+            description={description}
+            editable={!mobileTrackLayout}
+            onChange={setDescription}
+          />
           <span className="track-label">Main</span>
         </>
       )}

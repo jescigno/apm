@@ -1,7 +1,6 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CompactTrackOverflowMenuItems } from './TrackRow';
-import { getOverflowDropdownStyle, getTrackOverflowMenuHeight } from '../utils/overflowDropdownPosition';
+import { getOverflowDropdownStyle, getSegmentOverflowMenuHeight } from '../utils/overflowDropdownPosition';
 import { useOverflowDropdownMenu } from '../hooks/useOverflowDropdownMenu';
 
 const SECTIONS = [
@@ -37,6 +36,26 @@ const INFO_GROUPS = [
   ],
 ];
 
+const TRACK_FLAGS = [
+  [
+    ['Y', 'Has Lyrics'],
+    ['N', 'Vintage'],
+    ['Y', 'Has Stems'],
+    ['N', 'Instrumental Only'],
+    ['Y', 'Artist Driven'],
+    ['N', 'Amature/Poorly played'],
+    ['N', 'Stems Unavailable'],
+  ],
+  [
+    ['Y', 'Well Known Tune'],
+    ['N', 'Solo'],
+    ['Y', 'Trailer Track'],
+    ['N', 'National Anthem'],
+    ['N', 'Explicit Lyrics'],
+    ['N', 'Archival'],
+  ],
+];
+
 const INSTRUMENTS_PREVIEW = 'Drum Kit, Western Percussion, Bass, Electric, Guitar, Acoustic/Nylon String...';
 const INSTRUMENTS_FULL = 'Drum Kit, Western Percussion, Bass, Electric, Guitar, Acoustic/Nylon String, Piano, Synth';
 
@@ -47,16 +66,8 @@ const STEM_ROWS = ['Accordian', 'Cello', 'Cello Bass'];
 
 function PlayGlyph() {
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M8 5.5v13l11-6.5L8 5.5z" fill="currentColor" />
-    </svg>
-  );
-}
-
-function HeartGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path d="M12 20s-7-4.4-7-9.1C5 8 6.8 6.2 9.1 6.2c1.3 0 2.4.6 2.9 1.6.5-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.7C19 15.6 12 20 12 20z" fill="currentColor" />
     </svg>
   );
 }
@@ -93,27 +104,41 @@ function TrackInfoPanel() {
           ))}
         </div>
       ))}
+      <div className="track-mobile-details__group">
+        <div className="track-mobile-details__flags">
+          {TRACK_FLAGS.map((column) => (
+            <ul key={column[0][1]} className="track-mobile-details__flag-col">
+              {column.map(([mark, label]) => (
+                <li key={label} className="track-mobile-details__flag">
+                  <span className="track-mobile-details__label">{mark}</span>{' '}
+                  <span className="track-mobile-details__value">{label}</span>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-function VersionRow({ version, onPlay, onSoundsLikeClick, showRemoveFromProject }) {
-  const getMenuStyle = (triggerEl) => {
+function VersionRow({ version, onPlay }) {
+  const getMenuStyle = useCallback((triggerEl) => {
     if (!triggerEl) return null;
     return {
       ...getOverflowDropdownStyle(triggerEl.getBoundingClientRect(), {
-        menuHeight: getTrackOverflowMenuHeight({ compact: true, showRemoveFromProject }),
+        menuHeight: getSegmentOverflowMenuHeight(3),
       }),
       zIndex: 1100,
     };
-  };
+  }, []);
   const {
     open,
     style,
     triggerRef,
     toggle,
     close,
-  } = useOverflowDropdownMenu({ getStyle: getMenuStyle, deps: [showRemoveFromProject] });
+  } = useOverflowDropdownMenu({ getStyle: getMenuStyle });
 
   return (
     <div className="track-mobile-details__version">
@@ -144,12 +169,18 @@ function VersionRow({ version, onPlay, onSoundsLikeClick, showRemoveFromProject 
           className="track-actions-overflow-dropdown track-actions-overflow-dropdown--segment-style track-actions-overflow-dropdown--portal"
           style={style ?? { position: 'fixed', zIndex: 1100, visibility: 'hidden' }}
         >
-          <CompactTrackOverflowMenuItems
-            item={version}
-            onSoundsLikeClick={onSoundsLikeClick}
-            onClose={close}
-            showRemoveFromProject={showRemoveFromProject}
-          />
+          <button type="button" className="track-actions-overflow-dropdown-item" onClick={close}>
+            <img src="/icons/Upload.svg" alt="" />
+            Share
+          </button>
+          <button type="button" className="track-actions-overflow-dropdown-item" onClick={close}>
+            <img src="/icons/add.svg" alt="" />
+            Add to a Project
+          </button>
+          <button type="button" className="track-actions-overflow-dropdown-item" onClick={close}>
+            <img src="/icons/download.svg" alt="" />
+            Download
+          </button>
         </div>,
         document.body
       )}
@@ -158,8 +189,6 @@ function VersionRow({ version, onPlay, onSoundsLikeClick, showRemoveFromProject 
 }
 
 function StemRow({ name, onPlay }) {
-  const [liked, setLiked] = useState(true);
-
   return (
     <div className="track-mobile-details__stem">
       <button type="button" className="track-mobile-details__play" aria-label={`Play ${name}`} onClick={onPlay}>
@@ -167,14 +196,6 @@ function StemRow({ name, onPlay }) {
       </button>
       <span className="track-mobile-details__stem-name">{name}</span>
       <div className="track-mobile-details__stem-actions">
-        <button
-          type="button"
-          className={`track-mobile-details__icon track-mobile-details__icon--heart${liked ? ' track-mobile-details__icon--liked' : ''}`}
-          aria-label={liked ? 'Unlike' : 'Like'}
-          onClick={() => setLiked((value) => !value)}
-        >
-          <HeartGlyph />
-        </button>
         <button type="button" className="track-mobile-details__icon" aria-label="Share">
           <img src="/icons/Upload.svg" alt="" />
         </button>
@@ -194,8 +215,6 @@ export default function TrackMobileDetails({
   section,
   onSectionChange,
   onPlay,
-  onSoundsLikeClick,
-  showRemoveFromProject = false,
 }) {
   const versions = [1, 2, 3].map((index) => ({
     id: `${track.id}-version-${index}`,
@@ -229,8 +248,6 @@ export default function TrackMobileDetails({
               key={version.id}
               version={version}
               onPlay={onPlay}
-              onSoundsLikeClick={onSoundsLikeClick}
-              showRemoveFromProject={showRemoveFromProject}
             />
           ))}
         </div>

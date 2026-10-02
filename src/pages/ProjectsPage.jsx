@@ -298,7 +298,7 @@ export default function ProjectsPage({
             </span>
           </h1>
           <button type="button" className="btn-cta btn-cta--primary project-details-mobile-header__invite">
-            Invite
+            INVITE
           </button>
         </header>
       ) : null}

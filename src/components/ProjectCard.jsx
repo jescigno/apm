@@ -414,6 +414,11 @@ function ProjectCard({
   const [mobileTitlePhase, setMobileTitlePhase] = useState('idle');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [overlayEditing, setOverlayEditing] = useState(false);
+  const [overlayTitleDraft, setOverlayTitleDraft] = useState(title);
+  const [overlayDescriptionDraft, setOverlayDescriptionDraft] = useState(description);
+  const overlayTitleRef = useRef(null);
+  const overlayDescriptionRef = useRef(null);
   const [keywords, setKeywords] = useState(KEYWORDS);
   const handleAddKeyword = useCallback((keyword) => {
     setKeywords((prev) => [...prev, keyword]);
@@ -440,13 +445,56 @@ function ProjectCard({
   }, []);
 
   useEffect(() => {
+    if (overlayEditing) return;
+    setOverlayTitleDraft(title);
+    setOverlayDescriptionDraft(description);
+  }, [title, description, overlayEditing]);
+
+  useEffect(() => {
+    if (!overlayEditing) return;
+    overlayTitleRef.current?.focus();
+  }, [overlayEditing]);
+
+  useEffect(() => {
+    if (!overlayEditing) return;
+    const el = overlayDescriptionRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [overlayEditing, overlayDescriptionDraft]);
+
+  const closeOverlay = () => {
+    setOverlayEditing(false);
+    setIsOverlayOpen(false);
+  };
+
+  const startOverlayEdit = () => {
+    setOverlayTitleDraft(title);
+    setOverlayDescriptionDraft(description);
+    setOverlayEditing(true);
+  };
+
+  const finishOverlayEdit = () => {
+    const nextTitle = overlayTitleDraft.trim();
+    const nextDescription = overlayDescriptionDraft.trim();
+    if (nextTitle && nextTitle !== title) onTitleChange?.(nextTitle);
+    if (nextDescription !== description) onDescriptionChange?.(nextDescription);
+    setOverlayEditing(false);
+  };
+
+  useEffect(() => {
     if (!isOverlayOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setIsOverlayOpen(false);
+      if (e.key !== 'Escape') return;
+      if (overlayEditing) {
+        setOverlayEditing(false);
+        return;
+      }
+      setIsOverlayOpen(false);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOverlayOpen]);
+  }, [isOverlayOpen, overlayEditing]);
 
   const updateMobileTitleTruncation = useCallback(() => {
     const c = mobileTitleContainerRef.current;
@@ -518,11 +566,11 @@ function ProjectCard({
     <div className="project-details-overlay">
       <div
         className="project-details-overlay-backdrop"
-        onClick={() => setIsOverlayOpen(false)}
+        onClick={closeOverlay}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            setIsOverlayOpen(false);
+            closeOverlay();
           }
         }}
         role="button"
@@ -533,20 +581,44 @@ function ProjectCard({
         <button
           type="button"
           className="project-details-overlay-close"
-          onClick={() => setIsOverlayOpen(false)}
+          onClick={closeOverlay}
           aria-label="Close overlay"
         >
           <img src="/icons/close.svg" alt="" />
         </button>
         <div className="project-details-overlay-panel">
           <div className="project-details-overlay-panel-scroll">
-            <h3 className="project-details-overlay-title">{title}</h3>
-            <ProjectEditableDescription
-              description={description}
-              onDescriptionChange={onDescriptionChange}
-              paragraphClassName="project-details-overlay-description"
-              unwrapped
-            />
+            <button
+              type="button"
+              className="project-details-overlay-edit"
+              onClick={overlayEditing ? finishOverlayEdit : startOverlayEdit}
+            >
+              {overlayEditing ? 'Done' : 'Edit'}
+            </button>
+            {overlayEditing ? (
+              <input
+                ref={overlayTitleRef}
+                type="text"
+                className="project-title-input project-details-overlay-title-input"
+                value={overlayTitleDraft}
+                onChange={(e) => setOverlayTitleDraft(e.target.value)}
+                aria-label="Project title"
+              />
+            ) : (
+              <h3 className="project-details-overlay-title">{title}</h3>
+            )}
+            {overlayEditing ? (
+              <textarea
+                ref={overlayDescriptionRef}
+                className="project-description-input project-details-overlay-description-input"
+                value={overlayDescriptionDraft}
+                rows={3}
+                onChange={(e) => setOverlayDescriptionDraft(e.target.value)}
+                aria-label="Project description"
+              />
+            ) : (
+              <p className="project-details-overlay-description">{description}</p>
+            )}
             <ProjectKeywords
               keywords={keywords}
               onAdd={handleAddKeyword}

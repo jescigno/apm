@@ -265,7 +265,7 @@ function formatTrackCountLabel(activeTab, tracks, { isEmptyProject = false } = {
   if (activeTab === 'tracks') {
     const trackCount = tracks.length;
     const versionCount = getTotalVersionCount(tracks);
-    return `${trackCount} TITLES ${versionCount} VERSIONS`;
+    return `${trackCount} TITLES | ${versionCount} VERSIONS`;
   }
   if (activeTab === 'albums') {
     return isEmptyProject ? '0 Albums' : `${ALBUMS.length} Albums`;

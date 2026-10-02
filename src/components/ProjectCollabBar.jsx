@@ -64,7 +64,7 @@ function ProjectCollabBar({
           );
         })}
         <button type="button" className="btn-invite project-collabs-invite" onClick={() => onInviteClick?.()}>
-          Invite
+          INVITE
         </button>
       </div>
     </div>
