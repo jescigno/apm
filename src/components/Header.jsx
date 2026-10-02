@@ -214,7 +214,7 @@ function Header({
           {hasSearchTerms ? (
             <div className="search-bar__terms" aria-label="Search terms">
               {searchTerms.map((term, index) => (
-                <span key={`${term}-${index}`} className="search-bar__pill">
+                <span key={`${term}-${index}`} className="search-bar__pill" title={term}>
                   {term}
                 </span>
               ))}

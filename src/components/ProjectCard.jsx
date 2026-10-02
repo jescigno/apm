@@ -10,6 +10,83 @@ const PROJECT_DESCRIPTION =
 
 const KEYWORDS = ['Sound Design', 'Menacing', 'Ponderous/Heavy', 'Ponderous/Heavy', 'Aggressive', 'Flowing'];
 
+function ProjectKeywords({ keywords, onAdd, interactive = true, className = 'keywords' }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef(null);
+  const committingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isAdding) {
+      committingRef.current = false;
+      return;
+    }
+    inputRef.current?.focus();
+  }, [isAdding]);
+
+  const commit = () => {
+    if (committingRef.current) return;
+    committingRef.current = true;
+    const value = draft.trim();
+    if (value) onAdd?.(value);
+    setDraft('');
+    setIsAdding(false);
+  };
+
+  const cancel = () => {
+    if (committingRef.current) return;
+    setDraft('');
+    setIsAdding(false);
+  };
+
+  return (
+    <div className={className}>
+      {keywords.map((kw, i) => (
+        <span key={`${kw}-${i}`} className="keyword">
+          {kw}{' '}
+          <button type="button" className="remove" tabIndex={interactive ? 0 : -1}>
+            ×
+          </button>
+        </span>
+      ))}
+      {interactive && isAdding ? (
+        <input
+          ref={inputRef}
+          type="text"
+          className="add-keyword-input"
+          value={draft}
+          aria-label="New keyword"
+          enterKeyHint="done"
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              cancel();
+            }
+          }}
+          onBlur={() => {
+            if (draft.trim()) commit();
+            else cancel();
+          }}
+        />
+      ) : (
+        <button
+          type="button"
+          className="add-keyword"
+          tabIndex={interactive ? 0 : -1}
+          onClick={interactive ? () => setIsAdding(true) : undefined}
+        >
+          + Add Keyword
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ProjectEditableTitle({
   title,
   onTitleChange,
@@ -337,6 +414,10 @@ function ProjectCard({
   const [mobileTitlePhase, setMobileTitlePhase] = useState('idle');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [keywords, setKeywords] = useState(KEYWORDS);
+  const handleAddKeyword = useCallback((keyword) => {
+    setKeywords((prev) => [...prev, keyword]);
+  }, []);
   const [gridHeight, setGridHeight] = useState(220);
   const mobileTitleEditor = useInlineEditor(title, onTitleChange, { requireNonEmpty: true });
   const mobileDescriptionEditor = useInlineEditor(description, onDescriptionChange);
@@ -466,14 +547,11 @@ function ProjectCard({
               paragraphClassName="project-details-overlay-description"
               unwrapped
             />
-            <div className="project-details-overlay-keywords">
-              {KEYWORDS.map((kw, i) => (
-                <span key={i} className="keyword">
-                  {kw} <button type="button" className="remove">×</button>
-                </span>
-              ))}
-              <button type="button" className="add-keyword">+ Add Keyword</button>
-            </div>
+            <ProjectKeywords
+              keywords={keywords}
+              onAdd={handleAddKeyword}
+              className="project-details-overlay-keywords"
+            />
             <div className="project-details-overlay-metadata metadata">
               Created by <span className="metadata-value">Matthew</span><span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">Netflix</span> Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
             </div>
@@ -640,14 +718,7 @@ function ProjectCard({
                   <div className="project-description">
                     <p>{description}</p>
                   </div>
-                  <div className="keywords">
-                    {KEYWORDS.map((kw, i) => (
-                      <span key={i} className="keyword">
-                        {kw} <button type="button" className="remove">×</button>
-                      </span>
-                    ))}
-                    <button type="button" className="add-keyword">+ Add Keyword</button>
-                  </div>
+                  <ProjectKeywords keywords={keywords} interactive={false} />
                 </div>
                 <div ref={contentRef} className="project-info-content project-info-content-constrained">
                   <div className="project-title-row">
@@ -661,14 +732,7 @@ function ProjectCard({
                     description={description}
                     onDescriptionChange={onDescriptionChange}
                   />
-                  <div className="keywords">
-                    {KEYWORDS.map((kw, i) => (
-                      <span key={i} className="keyword">
-                        {kw} <button type="button" className="remove">×</button>
-                      </span>
-                    ))}
-                    <button type="button" className="add-keyword">+ Add Keyword</button>
-                  </div>
+                  <ProjectKeywords keywords={keywords} onAdd={handleAddKeyword} />
                 </div>
               </div>
             ) : (
@@ -684,14 +748,7 @@ function ProjectCard({
                   description={description}
                   onDescriptionChange={onDescriptionChange}
                 />
-                <div className="keywords">
-                  {KEYWORDS.map((kw, i) => (
-                    <span key={i} className="keyword">
-                      {kw} <button type="button" className="remove">×</button>
-                    </span>
-                  ))}
-                  <button type="button" className="add-keyword">+ Add Keyword</button>
-                </div>
+                <ProjectKeywords keywords={keywords} onAdd={handleAddKeyword} />
               </div>
             )}
             <div className="metadata">

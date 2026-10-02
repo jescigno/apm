@@ -675,16 +675,13 @@ function TrackReorderDragOverlay({ track, selectedCount }) {
   );
 }
 
-function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null, onTracksReorderCancel = null, onFoldersReorder = null, onFoldersReorderCancel = null, showTrackLayoutControls = true, showShuffle = true }) {
+function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSelection, activeTab: controlledTab, onTabChange, tabsInBreadcrumb, selectionBarHostRef, compactTrackRows, trackViewMode, onTrackViewModeChange, searchCustomize, onSearchCustomizeChange, searchSortBy, onSearchSortByChange, customizeViewOptions, headerActionsVariant = 'default', hideTrackComments = false, hideCloseAction = false, showSearchesTab = false, tracks: tracksProp, childFolders, onFolderSelect, projectTrackCount = 0, enableTrackDetailsOverlay = false, trackTitleBadges, enterHighlightTrackNum, scrollToBottomSignal, showVersionsStems = false, hideTracksHeader = false, emptyTracksMessage, emptyState, sectionClassName, disableWaveformHighlights = false, onSelectionActiveChange, enableTrackDragToFolder = false, sourceFolderId = null, activeTrackDragId = null, onTracksReorder = null, onTracksReorderCancel = null, onFoldersReorder = null, onFoldersReorderCancel = null, showTrackLayoutControls = true, showShuffle = true, playAllBeforeCustomize = false, expandableTrackDetails = false }) {
   const tracks = tracksProp ?? FAVORITES_TRACKS;
   const compact = compactTrackRows ?? tabsInBreadcrumb;
   const gridView = trackViewMode === 'grid';
   const defaultListView = trackViewMode === 'default';
   const condensedViewActions = trackViewMode === 'condensed';
   const simplifiedViewActions = trackViewMode === 'simplified';
-  const showRemoveFromProject =
-    simplifiedViewActions ||
-    (condensedViewActions && headerActionsVariant !== 'search');
   const showSelectionRemove = headerActionsVariant !== 'search' && !tabsInBreadcrumb;
   const customizeOptions =
     customizeViewOptions ??
@@ -710,6 +707,9 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
   const { playTrack, playQueue, togglePlayPause, currentTrack, isPlaying } = usePlayer();
   const listEndRef = useRef(null);
   const [mobileTrackLayout, setMobileTrackLayout] = useState(false);
+  const showRemoveFromProject =
+    headerActionsVariant !== 'search' &&
+    (simplifiedViewActions || condensedViewActions || mobileTrackLayout);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [foldersCollapsed, setFoldersCollapsed] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
@@ -1272,6 +1272,26 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     </>
   );
 
+  const playAllButton = (
+    <ToolbarIconButton label="Play All" onClick={handlePlayAll}>
+      <PlayAllIcon />
+    </ToolbarIconButton>
+  );
+
+  const projectIdleActions = playAllBeforeCustomize ? (
+    <>
+      {playAllButton}
+      {projectCustomizeMenu}
+      {reorderButton}
+    </>
+  ) : (
+    <>
+      {projectCustomizeMenu}
+      {reorderButton}
+      {playAllButton}
+    </>
+  );
+
   const tracksActions = headerActionsVariant === 'search' ? (
     <>
       {searchCustomizeMenu ?? (
@@ -1290,15 +1310,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     !showEmptyProjectState && (
       <>
         {reorderMode ? reorderModeActions : null}
-        {!reorderMode && (
-          <>
-            {projectCustomizeMenu}
-            {reorderButton}
-            <ToolbarIconButton label="Play All" onClick={handlePlayAll}>
-              <PlayAllIcon />
-            </ToolbarIconButton>
-          </>
-        )}
+        {!reorderMode && projectIdleActions}
       </>
     )
   );
@@ -1321,6 +1333,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
     simplifiedViewActions,
     showRemoveFromProject,
     mobileTrackLayout,
+    expandableTrackDetails,
     enableTrackDetailsOverlay,
     showVersionsStems,
     hideTrackComments,
@@ -1568,12 +1581,11 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
               <div className="tracks-mobile-toolbar-actions">
                 {headerActionsVariant === 'search' ? (
                   <>
-                    {searchCustomizeMenu ?? (
-                      onTrackViewModeChange ? (
-                        <CustomizeViewMenu viewMode={trackViewMode} onViewModeChange={onTrackViewModeChange} viewOptions={customizeOptions} />
-                      ) : null
-                    )}
-                    {playShuffleActions}
+                    {showShuffle ? (
+                      <ToolbarIconButton label="Shuffle" onClick={handleShuffleAll}>
+                        <ShuffleIcon />
+                      </ToolbarIconButton>
+                    ) : null}
                     {searchSortMenu ?? (
                       <button type="button" className="btn-secondary tracks-mobile-toolbar-sort">
                         SORT
@@ -1592,7 +1604,7 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
                           showCustomizeMenu={false}
                         />
                         {mobileReorderButton}
-                        {playShuffleActions}
+                        {playAllBeforeCustomize ? null : playShuffleActions}
                       </>
                     ) : null}
                   </>

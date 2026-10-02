@@ -79,6 +79,7 @@
   --panel-divider-emphasis: rgba(255, 255, 255, 0.1);
   --shadow-dropdown: 0 12px 32px rgba(0, 0, 0, 0.45);
   --control-close-bg: #565656;
+  --control-back-bg: #444444;
   --scrollbar-thumb: #4d4d4d;
   --carousel-accent-fallback: #3d3d3d;
 
@@ -198,6 +199,7 @@
   --panel-divider: var(--border-divider);
   --panel-divider-emphasis: var(--border-sidebar);
   --shadow-dropdown: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --control-back-bg: #F2F2F2;
   --scrollbar-thumb: #B3B3B3;
   --carousel-accent-fallback: #E0E0E0;
 
@@ -895,8 +897,9 @@ body {
 
 .search-bar__pill {
   display: inline-block;
-  flex-shrink: 0;
-  max-width: none;
+  flex: 0 1 auto;
+  min-width: 4.5em;
+  max-width: 100%;
   padding: 3px 6px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -907,6 +910,8 @@ body {
   line-height: 1.2;
   color: #000000;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 [data-theme="dark"] .search-bar__pill {
@@ -3146,6 +3151,10 @@ html:has(.app-content-wrapper--projects) {
   display: none;
 }
 
+.project-details-mobile-header {
+  display: none;
+}
+
 /* Mobile-only promo; must beat later `.sounds-like-box { display: flex }` or it shows on desktop. */
 .sounds-like-box.project-mobile-hero__sounds-like {
   display: none !important;
@@ -3192,6 +3201,98 @@ html:has(.app-content-wrapper--projects) {
     align-items: center;
     /* Above fixed project title (550) so the menu stays clickable */
     z-index: 600;
+  }
+
+  /* Search results and projects list: logo left, menu upper right centered on the logo, search below. */
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) {
+    --search-mobile-search-row: 48px;
+    --header-stack-height: calc(var(--header-height) + var(--search-mobile-search-row));
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: var(--header-height) var(--search-mobile-search-row);
+    height: var(--header-stack-height);
+    min-height: var(--header-stack-height);
+    align-items: center;
+    column-gap: 4px;
+    row-gap: 0;
+    padding: 0 16px;
+    background: var(--bg-chrome);
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header .logo {
+    display: flex !important;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header-menu-spacer {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header .search-bar {
+    display: flex !important;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: center;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    min-height: 40px;
+    box-sizing: border-box;
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header .search-bar input {
+    text-overflow: ellipsis;
+  }
+
+  html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header-actions-floating {
+    left: auto;
+    right: 16px;
+    top: 0;
+    height: var(--header-height);
+    align-items: center;
+  }
+
+  /* Right panels become a full screen under the header; logo, menu, and search stay put. */
+  .app-content-wrapper.app-content--right-panel-open {
+    padding-right: 0 !important;
+  }
+
+  :is(
+    .projects-panel,
+    .sounds-like-panel,
+    .comments-panel,
+    .clock-panel,
+    .team-member-activity-panel
+  ).open {
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none;
+    border-left: none;
+    top: var(--header-stack-height);
+    height: auto;
+  }
+
+  :is(
+    .projects-panel,
+    .sounds-like-panel,
+    .comments-panel,
+    .clock-panel,
+    .team-member-activity-panel
+  ).open :is(
+    .projects-panel-resize-handle,
+    .sounds-like-panel-resize-handle,
+    .comments-panel-resize-handle,
+    .clock-panel-resize-handle,
+    .team-member-activity-panel-resize-handle
+  ) {
+    display: none;
   }
 
   /* Right drawer ~40% of viewport; slides in from the right (base transform). */
@@ -3343,6 +3444,151 @@ html:has(.app-content-wrapper--projects) {
     cursor: default;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Projects list keeps the shared mobile header; the title scrolls with the page. */
+  html:has(.app-content-wrapper--projects) .projects-page .project-mobile-hero__title {
+    position: static;
+    top: auto;
+    right: auto;
+    left: auto;
+    height: auto;
+    z-index: auto;
+    padding: 0 0 12px;
+    background: transparent;
+    overflow: visible;
+  }
+
+  html:has(.app-content-wrapper--projects) .projects-page .project-mobile-hero::before {
+    content: none;
+  }
+
+  /* Phase 2 project details: back control and project name replace the logo/search header. */
+  .projects-page--phase-2 .project-details-mobile-header {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    z-index: 560;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 0 16px;
+    background: var(--bg-page);
+    border-bottom: 2px solid var(--bg-chrome);
+    box-sizing: border-box;
+  }
+
+  html:has(.projects-panel.open) .projects-page--phase-2 .project-details-mobile-header {
+    display: none;
+  }
+
+  .project-details-mobile-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--control-back-bg);
+    color: var(--text-on-chrome);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .project-details-mobile-back svg {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+
+  .project-details-mobile-header__title {
+    position: absolute;
+    left: 72px;
+    right: 72px;
+    top: 0;
+    height: calc(100% - 2px);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-on-chrome);
+  }
+
+  .project-details-mobile-header__title--truncated {
+    cursor: pointer;
+  }
+
+  .project-details-mobile-header__title-clip {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .project-details-mobile-header__title-text {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .project-details-mobile-header__title-text--scroll,
+  .project-details-mobile-header__title-text--held-end {
+    display: inline-block;
+    width: max-content !important;
+    min-width: max-content;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    text-align: left;
+  }
+
+  .project-details-mobile-header__title-text--scroll {
+    animation: project-mobile-hero-title-scroll-once var(--scroll-duration, 6s) linear forwards;
+  }
+
+  .project-details-mobile-header__title-text--held-end {
+    transform: translateX(var(--marquee-x, 0px));
+  }
+
+  .project-details-mobile-header__title-text--fade-out-anim {
+    animation: project-mobile-hero-title-fade-out 0.32s ease forwards;
+  }
+
+  .project-details-mobile-header__title-text--fade-in-anim {
+    animation: project-mobile-hero-title-fade-in 0.38s ease forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-details-mobile-header__title-text--scroll {
+      animation: none;
+    }
+  }
+
+  .project-details-mobile-header__invite {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding: 6px;
+    border-radius: 4px;
+    text-transform: none;
+  }
+
+  html:has(.projects-page--phase-2) .header-actions-floating {
+    display: none !important;
+  }
+
+  .projects-page--phase-2 .project-mobile-hero__title {
+    display: none;
   }
 
   .account-page-mobile-header-bar {
@@ -3572,7 +3818,7 @@ html:has(.app-content-wrapper--projects) {
     margin: 0;
     font-size: 14px;
     line-height: 1.45;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 5;
@@ -3981,6 +4227,160 @@ html:has(.app-content-wrapper--projects) {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+  }
+
+  .track-row--mobile.track-row--details-open {
+    flex-wrap: wrap;
+  }
+
+  .track-mobile-details {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    margin-top: 12px;
+    color: var(--text-primary);
+  }
+
+  .track-mobile-details__tabs {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0 0 12px;
+  }
+
+  .track-mobile-details__tab {
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 8px 14px;
+    border-radius: 16px;
+    cursor: pointer;
+  }
+
+  .track-mobile-details__tab--active {
+    background: var(--control-back-bg);
+  }
+
+  .track-mobile-details__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--overlay-border);
+  }
+
+  .track-mobile-details__group:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .track-mobile-details__field {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-primary);
+  }
+
+  .track-mobile-details__more {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--text-link);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .track-mobile-details__version,
+  .track-mobile-details__stem {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--overlay-border);
+  }
+
+  .track-mobile-details__version:first-child,
+  .track-mobile-details__stem:first-child {
+    border-top: none;
+  }
+
+  .track-mobile-details__stem {
+    align-items: center;
+  }
+
+  .track-mobile-details__play,
+  .track-mobile-details__more-btn,
+  .track-mobile-details__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .track-mobile-details__play {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+  }
+
+  .track-mobile-details__stem .track-mobile-details__play {
+    margin-top: 0;
+  }
+
+  .track-mobile-details__version-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .track-mobile-details__version-title,
+  .track-mobile-details__stem-name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-primary);
+  }
+
+  .track-mobile-details__version-desc {
+    margin: 4px 0 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+
+  .track-mobile-details__stem-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+  }
+
+  .track-mobile-details__stem-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .track-mobile-details__icon img {
+    width: 18px;
+    height: 18px;
+    display: block;
+    filter: var(--icon-filter);
+  }
+
+  .track-mobile-details__icon--liked {
+    color: var(--accent-red);
   }
 }
 
@@ -4554,10 +4954,12 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .breadcrumb .breadcrumb-sep {
-  font-size: 0.65em;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin: 0 6px;
   opacity: 0.8;
-  margin-left: 2px;
-  margin-right: 6px;
+  color: var(--text-primary);
 }
 
 .breadcrumb .breadcrumb-highlight {
@@ -4649,8 +5051,9 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .breadcrumb-chevron {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
+  display: block;
   flex-shrink: 0;
 }
 
@@ -5269,6 +5672,7 @@ html:has(.app-content-wrapper--projects) {
   cursor: pointer;
   color: var(--text-primary);
   z-index: 1;
+  pointer-events: auto;
 }
 
 @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
@@ -5472,7 +5876,7 @@ html:has(.app-content-wrapper--projects) {
   margin: 0;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.45;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .keywords {
@@ -5524,6 +5928,24 @@ html:has(.app-content-wrapper--projects) {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.add-keyword-input {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  outline: none;
+  min-width: 8em;
+  box-sizing: border-box;
+}
+
+.add-keyword-input:focus {
+  border-color: var(--accent, var(--border));
 }
 
 @media (min-width: 769px) and (hover: hover) and (pointer: fine) {
@@ -9216,6 +9638,34 @@ html:has(.app-content-wrapper--projects) {
   height: 20px;
 }
 
+/* Phase 2 mobile project details: Reorder is a labeled control, not an icon tooltip. */
+.projects-page--phase-2 .tracks-mobile-toolbar-actions .tracks-mobile-toolbar-reorder {
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+.projects-page--phase-2 .tracks-mobile-toolbar-actions .tracks-mobile-toolbar-reorder .tracks-toolbar-btn-label {
+  position: static;
+  display: inline;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: normal;
+  font-size: 12px;
+  font-weight: 400;
+  color: inherit;
+  pointer-events: none;
+}
+
 :is(.tracks-actions, .tracks-mobile-toolbar-actions) :is(.btn-secondary, .btn-invite, .project-customize-menu-trigger, .tracks-toolbar-action-btn) {
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
@@ -11815,7 +12265,8 @@ html:has(.app-content-wrapper--projects) {
   filter: none;
 }
 
-.track-actions-overflow-dropdown-item img[src*="TrackDetails.svg"] {
+.track-actions-overflow-dropdown-item img[src*="TrackDetails.svg"],
+.track-actions-overflow-dropdown-item img[src*="TrackLyrics"] {
   filter: var(--icon-filter);
 }
 

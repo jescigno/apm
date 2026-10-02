@@ -15,7 +15,7 @@ export function getSegmentOverflowMenuHeight(itemCount, hasDivider = false) {
 /** Estimated height for track row overflow menus. */
 export function getTrackOverflowMenuHeight({ compact, showRemoveFromProject = false } = {}) {
   if (!compact) return ICON_ROW_MENU_HEIGHT;
-  return getSegmentOverflowMenuHeight(4 + (showRemoveFromProject ? 1 : 0), showRemoveFromProject);
+  return getSegmentOverflowMenuHeight(5 + (showRemoveFromProject ? 1 : 0), showRemoveFromProject);
 }
 
 /**

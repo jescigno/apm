@@ -10,7 +10,6 @@ import {
   ICON_FAVORITE_OUTLINE,
   ICON_COMMENTS,
   ICON_COMMENTS_ACTIVE,
-  ICON_TRACK_DETAILS,
   ICON_DELETE,
   ICON_REORDER_DOTS,
 } from '../constants/designSystem';
@@ -22,6 +21,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { getTrackDragId } from '../constants/projectsPanelDnD';
 import { TRACK_REORDER_HINT_DELAY_MS } from '../constants/trackReorderDnD';
 import { getTrackThumbStyle } from './trackThumb';
+import TrackMobileDetails from './TrackMobileDetails';
 
 function getMenuDropdownStyle(triggerEl, { compact, showRemoveFromProject = false } = {}) {
   if (!triggerEl) return null;
@@ -63,14 +63,26 @@ const SOUNDS_LIKE_ICON = (
   </svg>
 );
 
-export function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false, isAlbum = false }) {
+export function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose, showRemoveFromProject = false }) {
   const theme = useThemeName();
 
   return (
     <>
       <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-        <img src={ICON_TRACK_DETAILS} alt="" />
-        {isAlbum ? 'Go to Album' : 'Go to Track'}
+        <img src="/icons/Upload.svg" alt="" />
+        Share
+      </button>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/icons/add.svg" alt="" />
+        Add to a Project
+      </button>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/icons/download.svg" alt="" />
+        Download
+      </button>
+      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
+        <img src="/icons/TrackLyrics.svg" alt="" />
+        View Lyrics
       </button>
       <button
         type="button"
@@ -82,14 +94,6 @@ export function CompactTrackOverflowMenuItems({ item, onSoundsLikeClick, onClose
       >
         <img src={resolveThemedAsset('/player-actions/SoundsLike.svg', theme)} alt="" />
         Sounds Like
-      </button>
-      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-        <img src="/icons/Upload.svg" alt="" />
-        Share
-      </button>
-      <button type="button" className="track-actions-overflow-dropdown-item" onClick={onClose}>
-        <img src="/icons/add.svg" alt="" />
-        Add to a Project
       </button>
       {showRemoveFromProject && (
         <>
@@ -581,7 +585,7 @@ function TrackCommentCompose({
   );
 }
 
-function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, enableHoldDragReorder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, isGrabbed = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
+function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpen, onSoundsLikeClick, onPlay, onTogglePause, trackList, isCurrentTrack, isPlaying, compact, compactAlbumTallLayout = false, condensedViewActions = false, simplifiedViewActions = false, showRemoveFromProject = false, mobileTrackLayout = false, expandableTrackDetails = false, enableTrackDetailsOverlay, titleBadge, enterHighlight, showVersionsStems = false, hideTrackComments = false, hideCloseAction = false, disableWaveformHighlights = false, isSelected = false, selectedIds, onSelectChange, enableTrackDragToFolder = false, enableHoldDragReorder = false, sourceFolderId = null, isTrackDragSource = false, reorderMode = false, isSortableDragging = false, isGrabbed = false, onReorderRowClick = null, trackReorderLandAnimation = null }) {
   const theme = useThemeName();
   const [liked, setLiked] = useState(isLiked);
   const [isHovered, setIsHovered] = useState(false);
@@ -595,6 +599,8 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
   const [popoverSavedComment, setPopoverSavedComment] = useState('');
   const [popoverCommentFocused, setPopoverCommentFocused] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsSection, setDetailsSection] = useState('info');
   const commentInputRef = useRef(null);
   const popoverCommentInputRef = useRef(null);
   const commentBtnRef = useRef(null);
@@ -933,7 +939,7 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
 
     return (
       <div
-        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}`}
+        className={`track-row track-row--mobile${isCurrentTrack ? ' track-row-playing' : ''}${isSelected ? ' track-row--selected' : ''}${isGrabbed ? ' track-row--grabbed' : ''}${isAlbum ? ' track-row--album' : ''}${enterHighlight ? ' track-row-enter-highlight' : ''}${showTrackDragPlaceholder ? ' track-row--drag-source' : ''}${reorderMode ? ' track-row--reorder-mode' : ''}${isReorderLanding ? ' track-row--reorder-landed' : ''}${showSortablePlaceholder ? ' track-row--reorder-placeholder' : ''}${detailsOpen ? ' track-row--details-open' : ''}`}
         data-track-num={item.num}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -961,7 +967,19 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
           {renderTrackThumb('track-thumb track-thumb--mobile')}
         </div>
         <div className="track-mobile-text">
-          {enableTrackDetailsOverlay ? (
+          {expandableTrackDetails && !isAlbum ? (
+            <button
+              type="button"
+              className="track-title track-title-clickable"
+              aria-expanded={detailsOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDetailsOpen((open) => !open);
+              }}
+            >
+              {item.title}
+            </button>
+          ) : enableTrackDetailsOverlay ? (
             <button
               type="button"
               className="track-title track-title-clickable"
@@ -1013,6 +1031,16 @@ function TrackRow({ track, album, isLiked, variant = 'track', soundsLikePanelOpe
             document.body
           )}
         </div>
+        )}
+        {expandableTrackDetails && !isAlbum && detailsOpen && !reorderMode && (
+          <TrackMobileDetails
+            track={item}
+            section={detailsSection}
+            onSectionChange={setDetailsSection}
+            onPlay={onPlay}
+            onSoundsLikeClick={onSoundsLikeClick}
+            showRemoveFromProject={showRemoveFromProject}
+          />
         )}
         {enableTrackDetailsOverlay && trackDetailsOverlayOpen && createPortal(
           <div className="track-details-overlay">

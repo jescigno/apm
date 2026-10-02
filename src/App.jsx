@@ -43,6 +43,7 @@ import {
   ROUTE_DESIGN_SYSTEM,
 } from './constants/routes';
 import { buildSearchResultsPath, parseSearchTermsFromSearch } from './utils/searchUrl';
+import { LAYOUT_COMPACT_MAX_WIDTH } from './constants/layout';
 import AdminPage from './pages/AdminPage';
 import {
   CURRENT_PROJECT_FOLDER_ID,
@@ -370,6 +371,9 @@ function AppContent() {
     (folderId) => {
       setActiveProjectFolderId(folderId);
       navigate(ROUTE_PROJECT_DETAILS);
+      if (window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches) {
+        setProjectsPanelOpen(false);
+      }
     },
     [navigate]
   );
@@ -772,6 +776,7 @@ function AppContent() {
                   onFoldersReorderCancel={handleFoldersReorderCancel}
                   onProjectTitleChange={handleProjectTitleChange}
                   onProjectDescriptionChange={handleProjectDescriptionChange}
+                  onMobileBack={openProjectsPanel}
                 />
               }
             />

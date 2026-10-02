@@ -101,6 +101,24 @@ function BreadcrumbSegment({ label }) {
   );
 }
 
+function BreadcrumbSeparator() {
+  return (
+    <span className="breadcrumb-sep" aria-hidden="true">
+      <svg
+        className="breadcrumb-chevron"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </span>
+  );
+}
+
 function BreadcrumbText({ children }) {
   return (
     <span className="breadcrumb-text-wrap">
@@ -135,6 +153,7 @@ export default function ProjectsPage({
   onFoldersReorderCancel,
   onProjectTitleChange,
   onProjectDescriptionChange,
+  onMobileBack,
 }) {
   const [searchParams] = useSearchParams();
   const phase = parseProjectPhase(searchParams);
@@ -158,6 +177,60 @@ export default function ProjectsPage({
   );
   const projectTitle = activeFolder?.name ?? 'Project';
   const projectDescription = activeFolder?.description ?? '';
+  const headerTitleClipRef = useRef(null);
+  const headerTitleTextRef = useRef(null);
+  const [headerTitleTruncated, setHeaderTitleTruncated] = useState(false);
+  const [headerTitlePhase, setHeaderTitlePhase] = useState('idle');
+
+  const updateHeaderTitleTruncation = useCallback(() => {
+    const clip = headerTitleClipRef.current;
+    const text = headerTitleTextRef.current;
+    if (!clip || !text || headerTitlePhase !== 'idle') return;
+    setHeaderTitleTruncated(text.scrollWidth > clip.clientWidth + 1);
+  }, [headerTitlePhase]);
+
+  useEffect(() => {
+    const clip = headerTitleClipRef.current;
+    const text = headerTitleTextRef.current;
+    if (!clip || !text) return;
+    updateHeaderTitleTruncation();
+    const observer = new ResizeObserver(() => updateHeaderTitleTruncation());
+    observer.observe(clip);
+    return () => observer.disconnect();
+  }, [updateHeaderTitleTruncation, projectTitle]);
+
+  const handleHeaderTitleActivate = useCallback(() => {
+    const clip = headerTitleClipRef.current;
+    const text = headerTitleTextRef.current;
+    if (!clip || !text || !headerTitleTruncated || headerTitlePhase !== 'idle') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const overflow = text.scrollWidth - text.clientWidth;
+    if (overflow <= 0) return;
+    const seconds = Math.min(12, Math.max(4, overflow / 55));
+    text.style.setProperty('--marquee-x', `-${overflow}px`);
+    text.style.setProperty('--scroll-duration', `${seconds}s`);
+    setHeaderTitlePhase('scroll');
+  }, [headerTitleTruncated, headerTitlePhase]);
+
+  const handleHeaderTitleAnimEnd = useCallback((event) => {
+    const name = event.animationName ? String(event.animationName) : '';
+    const text = headerTitleTextRef.current;
+    if (name.includes('project-mobile-hero-title-scroll-once')) {
+      setHeaderTitlePhase('fadeOut');
+      return;
+    }
+    if (name.includes('project-mobile-hero-title-fade-out')) {
+      if (text) {
+        text.style.removeProperty('--marquee-x');
+        text.style.removeProperty('--scroll-duration');
+      }
+      setHeaderTitlePhase('fadeIn');
+      return;
+    }
+    if (name.includes('project-mobile-hero-title-fade-in')) {
+      setHeaderTitlePhase('idle');
+    }
+  }, []);
 
   const [hideTracksHeader, setHideTracksHeader] = useState(false);
   const [projectCustomize, setProjectCustomize] = useState(DEFAULT_PROJECT_CUSTOMIZE);
@@ -193,6 +266,42 @@ export default function ProjectsPage({
 
   return (
     <div className={`projects-page${phase === PROJECT_PHASE_2 ? ' projects-page--phase-2' : ''}`}>
+      {phase === PROJECT_PHASE_2 ? (
+        <header className="project-details-mobile-header">
+          <button
+            type="button"
+            className="project-details-mobile-back"
+            aria-label="Back to projects"
+            onClick={onMobileBack}
+          >
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+              <path d="M18 11.5L13 16l5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <h1
+            className={`project-details-mobile-header__title${headerTitleTruncated ? ' project-details-mobile-header__title--truncated' : ''}`}
+            onClick={handleHeaderTitleActivate}
+          >
+            <span ref={headerTitleClipRef} className="project-details-mobile-header__title-clip">
+              <span
+                ref={headerTitleTextRef}
+                className={[
+                  'project-details-mobile-header__title-text',
+                  headerTitlePhase === 'scroll' && 'project-details-mobile-header__title-text--scroll',
+                  headerTitlePhase === 'fadeOut' && 'project-details-mobile-header__title-text--held-end project-details-mobile-header__title-text--fade-out-anim',
+                  headerTitlePhase === 'fadeIn' && 'project-details-mobile-header__title-text--fade-in-anim',
+                ].filter(Boolean).join(' ')}
+                onAnimationEnd={handleHeaderTitleAnimEnd}
+              >
+                {projectTitle}
+              </span>
+            </span>
+          </h1>
+          <button type="button" className="btn-cta btn-cta--primary project-details-mobile-header__invite">
+            Invite
+          </button>
+        </header>
+      ) : null}
       <div className="breadcrumb-row">
         <div className="breadcrumb-wrapper">
           <span className="breadcrumb">
@@ -201,7 +310,7 @@ export default function ProjectsPage({
                 {visibleFolders.length ? (
                   visibleFolders.map((folder, i) => (
                     <span key={folder.id} style={{ display: 'contents' }}>
-                      {i > 0 && <span className="breadcrumb-sep"> / </span>}
+                      {i > 0 && <BreadcrumbSeparator />}
                       <BreadcrumbSegment label={folder.name} />
                     </span>
                   ))
@@ -263,6 +372,8 @@ export default function ProjectsPage({
         onSearchCustomizeChange={handleProjectCustomizeChange}
         showTrackLayoutControls={phaseCapabilities.trackLayoutControls}
         showShuffle={phaseCapabilities.mobileShuffle}
+        playAllBeforeCustomize={phase === PROJECT_PHASE_2}
+        expandableTrackDetails={phase === PROJECT_PHASE_2}
         emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."
         enableTrackDragToFolder={enableTrackDragToFolder}

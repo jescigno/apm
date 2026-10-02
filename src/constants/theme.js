@@ -84,6 +84,7 @@ export const CSS_VARS = {
   },
   control: {
     closeButton: '--control-close-bg',
+    backButton: '--control-back-bg',
     scrollbarThumb: '--scrollbar-thumb',
     selectionBg: '--selection-bg',
   },
@@ -161,6 +162,7 @@ export const THEME_PALETTES = {
     '--overlay-border-medium': 'rgba(255, 255, 255, 0.35)',
     '--shadow-dropdown': '0 12px 32px rgba(0, 0, 0, 0.45)',
     '--control-close-bg': '#565656',
+    '--control-back-bg': '#444444',
     '--scrollbar-thumb': '#4d4d4d',
     '--account-surface': '#2e2e2e',
     '--account-surface-text': '#ffffff',
@@ -231,6 +233,7 @@ export const THEME_PALETTES = {
     '--overlay-border-medium': 'rgba(0, 0, 0, 0.25)',
     '--shadow-dropdown': '0 12px 32px rgba(0, 0, 0, 0.12)',
     '--control-close-bg': '#565656',
+    '--control-back-bg': '#F2F2F2',
     '--scrollbar-thumb': '#B3B3B3',
     '--account-surface': '#ECECEC',
     '--account-surface-text': '#000000',
