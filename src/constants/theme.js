@@ -128,7 +128,7 @@ export const THEME_PALETTES = {
     '--bg-elevated': '#1e1e1e',
     '--bg-panel': '#2e2e2e',
     '--bg-nested': '#262626',
-    '--bg-dropdown': '#000000',
+    '--bg-dropdown': '#232323',
     '--bg-search': 'transparent',
     '--surface-default': '#2e2e2e',
     '--surface-raised': '#2e2e2e',

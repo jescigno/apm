@@ -23,6 +23,14 @@ import {
   PROJECTS_PANEL_FOLDER_TREE,
 } from '../constants/projectsPanelTree';
 import { COMMENTS_PANEL_INITIAL_ITEMS } from '../constants/commentsPanel';
+import {
+  ICON_COLLABS_ACTIVE,
+  ICON_COMMENTS,
+  ICON_COMMENTS_ACTIVE,
+} from '../constants/designSystem';
+import { resolveThemedAsset, useThemeName } from '../utils/theme';
+import ProjectInviteScreen from '../components/ProjectInviteScreen';
+import ProjectTeamMembersScreen from '../components/ProjectTeamMembersScreen';
 
 function BreadcrumbSegment({ label }) {
   const containerRef = useRef(null);
@@ -157,6 +165,9 @@ export default function ProjectsPage({
   onMobileBack,
 }) {
   const [searchParams] = useSearchParams();
+  const theme = useThemeName();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const phase = parseProjectPhase(searchParams);
   const phaseCapabilities = getProjectPhaseCapabilities(phase);
 
@@ -269,7 +280,7 @@ export default function ProjectsPage({
   return (
     <div className={`projects-page${phase === PROJECT_PHASE_2 ? ' projects-page--phase-2' : ''}`}>
       {phase === PROJECT_PHASE_2 ? (
-        <header className="project-details-mobile-header">
+        <header className={`project-details-mobile-header${activeFolder?.collaborative ? ' project-details-mobile-header--collab' : ''}`}>
           <button
             type="button"
             className="project-details-mobile-back"
@@ -299,9 +310,45 @@ export default function ProjectsPage({
               </span>
             </span>
           </h1>
-          <button type="button" className="btn-cta btn-cta--primary project-details-mobile-header__invite">
-            INVITE
-          </button>
+          <div className="project-details-mobile-header__actions">
+            {activeFolder?.collaborative ? (
+              <>
+                <button
+                  type="button"
+                  className="project-details-mobile-header__icon"
+                  aria-label="Comments"
+                  aria-pressed={commentsPanelOpen || undefined}
+                  onClick={onCommentsClick}
+                >
+                  <img
+                    src={
+                      COMMENTS_PANEL_INITIAL_ITEMS.length > 0
+                        ? resolveThemedAsset(ICON_COMMENTS_ACTIVE, theme)
+                        : ICON_COMMENTS
+                    }
+                    alt=""
+                  />
+                </button>
+                <button
+                  type="button"
+                  className="project-details-mobile-header__icon project-details-mobile-header__icon--collab"
+                  aria-label="Collaborators"
+                  aria-pressed={teamMembersOpen || undefined}
+                  onClick={() => setTeamMembersOpen(true)}
+                >
+                  <img src={resolveThemedAsset(ICON_COLLABS_ACTIVE, theme)} alt="" />
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn-cta btn-cta--primary project-details-mobile-header__invite"
+                onClick={() => setInviteOpen(true)}
+              >
+                INVITE
+              </button>
+            )}
+          </div>
         </header>
       ) : null}
       <div className="breadcrumb-row">
@@ -331,8 +378,13 @@ export default function ProjectsPage({
           commentsActive={COMMENTS_PANEL_INITIAL_ITEMS.length > 0}
           onClockClick={onClockClick}
           clockPanelOpen={clockPanelOpen}
-          collabsActive
-          hiddenActionIds={phaseCapabilities.soundsLikeCollab ? [] : ['sounds-like']}
+          collabsActive={Boolean(activeFolder?.collaborative)}
+          onInviteClick={() => setInviteOpen(true)}
+          projectName={projectTitle}
+          hiddenActionIds={[
+            ...(phaseCapabilities.soundsLikeCollab ? [] : ['sounds-like']),
+            ...(activeFolder?.collaborative ? [] : ['comments', 'collabs', 'history']),
+          ]}
         />
       </div>
 
@@ -345,6 +397,8 @@ export default function ProjectsPage({
         soundsLikePanelOpen={soundsLikePanelOpen}
         commentsPanelOpen={commentsPanelOpen}
         clockPanelOpen={clockPanelOpen}
+        onClockClick={onClockClick}
+        collaborative={Boolean(activeFolder?.collaborative)}
         onSoundsLikeClick={onPromoSoundsLikeClick}
         onTitleChange={
           activeFolderId && onProjectTitleChange
@@ -393,6 +447,13 @@ export default function ProjectsPage({
         onFoldersReorder={onFoldersReorder}
         onFoldersReorderCancel={onFoldersReorderCancel}
       />
+      <ProjectTeamMembersScreen
+        open={teamMembersOpen}
+        projectName={projectTitle}
+        onClose={() => setTeamMembersOpen(false)}
+        onInvite={() => setInviteOpen(true)}
+      />
+      <ProjectInviteScreen open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }

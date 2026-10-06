@@ -3,6 +3,7 @@
  */
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { ICON_DELETE } from '../constants/designSystem';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 const COMMENT_EXIT_ANIM_MS = 220;
 
@@ -30,6 +31,9 @@ function CommentsPanel({
   const inputRef = useRef(null);
   const listRef = useRef(null);
   const widthRef = useRef(width);
+  const [isCompact, setIsCompact] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches
+  );
   const [draft, setDraft] = useState('');
   const [commentItems, setCommentItems] = useState(() => [...items]);
   const [enteringIds, setEnteringIds] = useState(() => new Set());
@@ -41,6 +45,14 @@ function CommentsPanel({
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     []
   );
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setIsCompact(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   useEffect(
     () => () => {
@@ -54,13 +66,30 @@ function CommentsPanel({
 
   const syncInputHeight = useCallback(() => {
     const input = inputRef.current;
-    if (!input) return;
+    if (!input || input.offsetWidth === 0) return false;
     input.style.height = 'auto';
     input.style.height = `${input.scrollHeight}px`;
+    return true;
   }, []);
 
   useEffect(() => {
-    syncInputHeight();
+    if (!isOpen) return undefined;
+    const input = inputRef.current;
+    const field = input?.parentElement;
+    if (!input || !field) return undefined;
+
+    let lastWidth = -1;
+    const syncForWidth = () => {
+      const width = field.getBoundingClientRect().width;
+      if (width === 0 || width === lastWidth) return;
+      lastWidth = width;
+      syncInputHeight();
+    };
+
+    syncForWidth();
+    const observer = new ResizeObserver(syncForWidth);
+    observer.observe(field);
+    return () => observer.disconnect();
   }, [draft, isOpen, syncInputHeight]);
 
   useEffect(() => {
@@ -186,7 +215,7 @@ function CommentsPanel({
 
   return (
     <aside
-      className={`comments-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' comments-panel--overlay' : ''}`}
+      className={`comments-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' comments-panel--overlay' : ''}${isCompact ? ' comments-panel--page' : ''}`}
       role="dialog"
       aria-label="Comments"
       style={isOpen ? { width: `${width}px`, minWidth: `${width}px` } : undefined}
@@ -204,8 +233,19 @@ function CommentsPanel({
           <span className="comments-panel-count">{commentItems.length}</span>
         </div>
         <div className="comments-panel-actions">
-          <button type="button" className="comments-panel-icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/icons/close.svg" alt="" />
+          <button
+            type="button"
+            className="comments-panel-icon-btn"
+            onClick={onClose}
+            aria-label={isCompact ? 'Back' : 'Close'}
+          >
+            {isCompact ? (
+              <svg className="comments-panel-back-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                <path d="M18 11.5L13 16l5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <img src="/icons/close.svg" alt="" />
+            )}
           </button>
         </div>
       </div>
@@ -214,7 +254,7 @@ function CommentsPanel({
         <div className="comments-panel-compose-field">
           <textarea
             ref={inputRef}
-            rows={1}
+            rows={isCompact ? 3 : 1}
             className="comments-panel-input"
             placeholder="Add a comment..."
             aria-label="Add a comment"

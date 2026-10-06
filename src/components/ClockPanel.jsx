@@ -1,7 +1,8 @@
 /**
  * Right panel for project history (clock icon). Uses only `clock-panel-*` classes in index.css.
  */
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 
 function ClockPanel({
   isOpen,
@@ -14,7 +15,18 @@ function ClockPanel({
 }) {
   const resizeRef = useRef(null);
   const widthRef = useRef(width);
+  const [isCompact, setIsCompact] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches
+  );
   widthRef.current = width;
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setIsCompact(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     if (!resizeRef.current || !onWidthChange || !isOpen) return;
@@ -49,7 +61,7 @@ function ClockPanel({
 
   return (
     <aside
-      className={`clock-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' clock-panel--overlay' : ''}`}
+      className={`clock-panel ${isOpen ? 'open' : ''}${isOpen && width > minWidth ? ' clock-panel--overlay' : ''}${isCompact ? ' clock-panel--page' : ''}`}
       role="dialog"
       aria-label="History"
       style={isOpen ? { width: `${width}px`, minWidth: `${width}px` } : undefined}
@@ -67,8 +79,19 @@ function ClockPanel({
           <span className="clock-panel-count">{items.length}</span>
         </div>
         <div className="clock-panel-actions">
-          <button type="button" className="clock-panel-icon-btn" onClick={onClose} aria-label="Close">
-            <img src="/icons/close.svg" alt="" />
+          <button
+            type="button"
+            className="clock-panel-icon-btn"
+            onClick={onClose}
+            aria-label={isCompact ? 'Back' : 'Close'}
+          >
+            {isCompact ? (
+              <svg className="clock-panel-back-icon" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                <path d="M18 11.5L13 16l5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : (
+              <img src="/icons/close.svg" alt="" />
+            )}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { PROJECT_DETAIL_ACTIONS } from '../constants/designSystem';
+import { ICON_HISTORY, PROJECT_DETAIL_ACTIONS } from '../constants/designSystem';
 import { TRACK_THUMBNAILS } from './trackThumb';
 
 const PROJECT_IMAGES = TRACK_THUMBNAILS.slice(0, 4);
@@ -362,11 +362,20 @@ const GRID_HEIGHTS = [
   { mq: '', height: 220 },
 ];
 
-function ProjectDetailActions({ className = '' }) {
+function ProjectDetailActions({ className = '', showHistory = false, onHistoryClick }) {
+  const archiveIndex = PROJECT_DETAIL_ACTIONS.findIndex((action) => action.id === 'archive');
+  const actions = showHistory
+    ? [
+        ...PROJECT_DETAIL_ACTIONS.slice(0, archiveIndex),
+        { id: 'history', label: 'History', src: ICON_HISTORY, onClick: onHistoryClick },
+        ...PROJECT_DETAIL_ACTIONS.slice(archiveIndex),
+      ]
+    : PROJECT_DETAIL_ACTIONS;
+
   return (
     <div className={`project-actions${className ? ` ${className}` : ''}`}>
-      {PROJECT_DETAIL_ACTIONS.map(({ id, label, src }) => (
-        <button key={id} type="button" className="project-action-btn" aria-label={label}>
+      {actions.map(({ id, label, src, onClick }) => (
+        <button key={id} type="button" className="project-action-btn" aria-label={label} onClick={onClick}>
           <img src={src} alt="" />
           <span className="project-action-btn-label">{label}</span>
         </button>
@@ -401,11 +410,13 @@ function ProjectCard({
   soundsLikePanelOpen,
   commentsPanelOpen,
   clockPanelOpen,
+  onClockClick,
   onSoundsLikeClick,
   onTitleChange,
   onDescriptionChange,
   purpose = '',
   onPurposeChange,
+  collaborative = false,
   showSoundsLikePromo = true,
 }) {
   const contentRef = useRef(null);
@@ -800,7 +811,7 @@ function ProjectCard({
               View Full Details
             </button>
             <div className="project-mobile-hero__actions">
-              <ProjectDetailActions />
+              <ProjectDetailActions showHistory={collaborative} onHistoryClick={onClockClick} />
             </div>
           </div>
         </div>

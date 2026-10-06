@@ -52,13 +52,14 @@ function moreLikeSubfolder(id, name, trackCount, dateIndex) {
   };
 }
 
-function milanSubfolder(id, name, trackCount, dateIndex, description, purpose) {
+function milanSubfolder(id, name, trackCount, dateIndex, description, purpose, collaborative = false) {
   return {
     id,
     name,
     trackCount,
     description,
     purpose,
+    ...(collaborative ? { collaborative: true } : {}),
     children: [],
     ...folderDates(dateIndex),
   };
@@ -68,6 +69,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'apm-mkt',
     name: 'APM Marketing 2',
+    collaborative: true,
     description:
       'Primary marketing initiatives spanning broadcast, digital, and social. This folder holds seasonal campaigns, event tie-ins, and cross-platform promo packages used across the APM Music client roster.',
     purpose: 'Brand campaigns',
@@ -77,6 +79,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'milan',
         name: '2026 Milan Olympics Updates',
+        collaborative: true,
         description:
           'Olympic-themed promos, athlete features, and ceremony coverage for Milano-Cortina 2026. Subfolders are organized by sport, venue, and broadcast feed.',
         purpose: 'Event tie-ins',
@@ -90,7 +93,8 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
             15,
             0,
             'Duis nibh posuere elit ultrices. Nibh et id elementum et dolor leo. Sit lacus in purus orci. Egestas massa, tincidunt scelerisque lorem. Lacus vitae commodo in vulputate fusce placerat. Sapien quis id ut mattis mattis pharetra, vitae tristique sed.',
-            'Regional broadcast'
+            'Regional broadcast',
+            true
           ),
           milanSubfolder(
             'milan-opening',
@@ -177,6 +181,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'spring-campaign',
         name: 'Spring 2026 Brand Campaign',
+        collaborative: true,
         description:
           'Seasonal brand spots and cross-platform promos for the spring launch window. Includes hero film cues, retail radio tags, and cut-downs for connected TV.',
         purpose: 'Brand awareness',
@@ -257,6 +262,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
   {
     id: 'stadium',
     name: 'Stadium Anthems',
+    collaborative: true,
     description:
       'High-energy tracks for arena and stadium use. Built for jumbotron moments, player intros, and crowd sing-alongs with big drums, chants, and singable hooks cleared for live sports broadcast.',
     purpose: 'Live sports',
@@ -266,6 +272,7 @@ export const PROJECTS_PANEL_FOLDER_TREE = [
       {
         id: 'nfl',
         name: 'NFL Primetime',
+        collaborative: true,
         description:
           'Sunday and primetime football packages with hype opens, touchdown stings, and halftime transitions tailored for network and streaming simulcasts.',
         purpose: 'NFL broadcast',

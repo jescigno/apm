@@ -21,6 +21,7 @@ import {
 } from '../constants/projectsPanelTree';
 import {
   ICON_ARCHIVE,
+  ICON_COLLABS,
   ICON_DELETE,
   ICON_FOLDER_FILLED,
   ICON_FOLDER_NEW,
@@ -238,6 +239,7 @@ function FolderRow({
   const canShowNested = depth < MAX_FOLDER_DEPTH_INDEX;
   const showArrow = hasChildren && canShowNested;
   const isSelected = selectedFolderId === folder.id;
+  const theme = useThemeName();
   const { description: showDescription, lastUpdated: showLastUpdated } = extraCols;
 
   const primaryIndentPx =
@@ -325,7 +327,16 @@ function FolderRow({
             ) : null}
           </span>
           <FolderGlyph />
-          <span className="projects-panel-folder-name">{folder.name}</span>
+          <span className="projects-panel-folder-title">
+            <span className="projects-panel-folder-name">{folder.name}</span>
+            {folder.collaborative ? (
+              <img
+                src={resolveThemedAsset(ICON_COLLABS, theme)}
+                alt="Collaborative"
+                className="projects-panel-folder-collab"
+              />
+            ) : null}
+          </span>
         </div>
         <FolderMetaColumn visible={showDescription} variant="description" text={folder.description} />
         <FolderMetaColumn visible={showLastUpdated} variant="lastUpdated" text={getFolderUpdatedAtLabel(folder)} />
