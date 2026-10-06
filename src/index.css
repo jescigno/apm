@@ -4630,6 +4630,15 @@ html:has(.app-content-wrapper--projects) {
   flex-shrink: 0;
 }
 
+.customize-view-menu-field--checkbox {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.customize-view-menu-checkbox {
+  margin: 0;
+}
+
 .customize-view-menu-segment {
   display: inline-flex;
   align-items: center;
@@ -5799,7 +5808,7 @@ html:has(.app-content-wrapper--projects) {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
 
 .project-details-overlay-field-label {
@@ -5835,7 +5844,7 @@ html:has(.app-content-wrapper--projects) {
   font-weight: 400;
   line-height: 1.15;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 16px 0;
   padding-right: 32px;
 }
 
@@ -5856,7 +5865,7 @@ html:has(.app-content-wrapper--projects) {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
+  margin: 0 0 16px 0;
 }
 
 .project-description-input::placeholder,
@@ -5873,7 +5882,7 @@ html:has(.app-content-wrapper--projects) {
 }
 
 .project-details-overlay-metadata {
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .project-description {

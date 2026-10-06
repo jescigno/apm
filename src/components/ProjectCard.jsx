@@ -648,15 +648,17 @@ function ProjectCard({
               onAdd={handleAddKeyword}
               className="project-details-overlay-keywords"
             />
-            <div className="project-details-overlay-metadata metadata">
-              Created by <span className="metadata-value">Matthew</span>
-              {!overlayEditing && purpose?.trim() ? (
-                <>
-                  <span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">{purpose}</span>
-                </>
-              ) : null}
-              {' '}Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
-            </div>
+            {!overlayEditing ? (
+              <div className="project-details-overlay-metadata metadata">
+                Created by <span className="metadata-value">Matthew</span>
+                {purpose?.trim() ? (
+                  <>
+                    <span className="metadata-label metadata-label--for">For</span> <span className="metadata-value">{purpose}</span>
+                  </>
+                ) : null}
+                {' '}Created on <span className="metadata-value">1/5/22</span> Last updated <span className="metadata-value">8/2/22</span>
+              </div>
+            ) : null}
           </div>
           <div className="project-details-overlay-actions">
             {overlayEditing ? (

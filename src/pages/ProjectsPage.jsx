@@ -381,6 +381,7 @@ export default function ProjectsPage({
         showTrackLayoutControls={phaseCapabilities.trackLayoutControls}
         showShuffle={phaseCapabilities.mobileShuffle}
         playAllBeforeCustomize={phase === PROJECT_PHASE_2}
+        customizeFieldCheckboxes={phase === PROJECT_PHASE_2}
         expandableTrackDetails={phase === PROJECT_PHASE_2}
         emptyState={activeFolderId === EMPTY_PROJECT_FOLDER_ID ? 'empty-project' : undefined}
         emptyTracksMessage="No tracks yet."

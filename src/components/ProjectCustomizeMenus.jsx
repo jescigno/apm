@@ -9,6 +9,7 @@ import {
 } from '../constants/projectTrackCustomize';
 import { ICON_CUSTOMIZE } from '../constants/designSystem';
 import {
+  CustomizeFieldCheckbox,
   CustomizeFieldToggle,
   CustomizeToolbarDropdown,
   LayoutTypeToggle,
@@ -21,6 +22,7 @@ export default function ProjectCustomizeMenus({
   onChange,
   showLayoutControls = true,
   showCustomizeMenu = true,
+  displayFieldCheckboxes = false,
 }) {
   const isGrid = value.layoutType === SEARCH_LAYOUT_TYPES.GRID;
 
@@ -61,14 +63,17 @@ export default function ProjectCustomizeMenus({
               options={PROJECT_LIST_LAYOUT_OPTIONS}
             />
           ) : null}
-          {SEARCH_DISPLAY_FIELD_OPTIONS.map(({ id, label }) => (
-            <CustomizeFieldToggle
-              key={id}
-              label={label}
-              checked={Boolean(value.displayFields?.[id])}
-              onChange={(enabled) => patchDisplayField(id, enabled)}
-            />
-          ))}
+          {SEARCH_DISPLAY_FIELD_OPTIONS.map(({ id, label }) => {
+            const FieldControl = displayFieldCheckboxes ? CustomizeFieldCheckbox : CustomizeFieldToggle;
+            return (
+              <FieldControl
+                key={id}
+                label={label}
+                checked={Boolean(value.displayFields?.[id])}
+                onChange={(enabled) => patchDisplayField(id, enabled)}
+              />
+            );
+          })}
         </CustomizeToolbarDropdown>
       ) : null}
     </>

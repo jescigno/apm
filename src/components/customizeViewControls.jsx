@@ -38,6 +38,20 @@ export function CustomizeFieldToggle({ label, checked, onChange }) {
   );
 }
 
+export function CustomizeFieldCheckbox({ label, checked, onChange }) {
+  return (
+    <label className="customize-view-menu-field customize-view-menu-field--checkbox">
+      <input
+        type="checkbox"
+        className="track-checkbox customize-view-menu-checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="customize-view-menu-field-label">{label}</span>
+    </label>
+  );
+}
+
 export function LayoutTypeToggle({ value, onChange, className = '' }) {
   const isGrid = value === SEARCH_LAYOUT_TYPES.GRID;
 
