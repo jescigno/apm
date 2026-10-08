@@ -15,7 +15,7 @@ import {
   membersFromImportRows,
   membersFromInviteEmails,
 } from '../constants/adminTeam';
-import { ICON_ADD, ICON_ARCHIVE, ICON_MORE_MENU, ICON_SEARCH } from '../constants/designSystem';
+import { ICON_ADD, ICON_ARCHIVE, ICON_CLOSE, ICON_MORE_MENU, ICON_SEARCH } from '../constants/designSystem';
 import { PROFILE_COLOR_CSS_VARS } from '../constants/profileColors';
 import AdminTeamAddOverlay from './AdminTeamAddOverlay';
 import AdminTeamBulkImportOverlay from './AdminTeamBulkImportOverlay';
@@ -181,17 +181,18 @@ export function AdminTeamHeaderActions({ onBulkImport, onAddMembers, showBulkImp
   );
 }
 
-function SortChevron({ active, direction }) {
+function SortArrow({ active, direction }) {
   return (
     <svg
       className={`admin-team-table__sort-icon${active ? ' admin-team-table__sort-icon--active' : ''}${active && direction === 'desc' ? ' admin-team-table__sort-icon--desc' : ''}`}
       width="8"
-      height="5"
-      viewBox="0 0 8 5"
+      height="10"
+      viewBox="0 0 8 10"
       fill="none"
       aria-hidden="true"
     >
-      <path d="M1 1L4 4L7 1" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 1.25V6.25" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M1.5 5.5L4 8.75L6.5 5.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -351,8 +352,10 @@ function AdminTeamRow({
       document.body
     );
 
+  const isPending = member.status === 'Pending';
+
   return (
-    <div className={`admin-team-table__row${selected ? ' admin-team-table__row--selected' : ''}`}>
+    <div className={`admin-team-table__row${selected ? ' admin-team-table__row--selected' : ''}${isPending ? ' admin-team-table__row--pending' : ''}`}>
       <input
         type="checkbox"
         className="track-checkbox admin-team-table__checkbox"
@@ -362,8 +365,12 @@ function AdminTeamRow({
       />
       <div className="admin-team-table__member">
         <span
-          className="admin-team-table__avatar"
-          style={{ backgroundColor: `var(${PROFILE_COLOR_CSS_VARS[member.profileColor]})` }}
+          className={`admin-team-table__avatar${isPending ? ' admin-team-table__avatar--pending' : ''}`}
+          style={
+            isPending
+              ? undefined
+              : { backgroundColor: `var(${PROFILE_COLOR_CSS_VARS[member.profileColor]})` }
+          }
           aria-hidden="true"
         >
           {member.initials}
@@ -371,8 +378,8 @@ function AdminTeamRow({
         <p className="admin-team-table__cell admin-team-table__cell--member">{member.name}</p>
       </div>
       <p className="admin-team-table__cell admin-team-table__cell--muted">{member.email}</p>
-      <p className="admin-team-table__cell admin-team-table__cell--muted">{member.lastActive}</p>
-      <p className="admin-team-table__cell admin-team-table__cell--muted">{member.joinedOn}</p>
+      <p className="admin-team-table__cell admin-team-table__cell--muted">{isPending ? '' : member.lastActive}</p>
+      <p className="admin-team-table__cell admin-team-table__cell--muted">{isPending ? '' : member.joinedOn}</p>
       <p className="admin-team-table__cell admin-team-table__cell--status">{member.status}</p>
       <button
         ref={menuBtnRef}
@@ -398,7 +405,6 @@ export default function AdminTeamTab({
   onAddOpenChange,
   onOpenMemberActivity,
   showBulkImport = true,
-  showInviteMessage = true,
   showMemberActivity = true,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -513,11 +519,11 @@ export default function AdminTeamTab({
 
   const handleEditMember = (updates) => {
     if (!editingMember) return;
+    const nextMember = applyTeamMemberEdits(editingMember, updates);
     setMembers((prev) =>
-      prev.map((member) =>
-        member.id === editingMember.id ? applyTeamMemberEdits(member, updates) : member
-      )
+      prev.map((member) => (member.id === editingMember.id ? nextMember : member))
     );
+    if (updates.resendInvite) showInviteNotice(nextMember);
   };
 
   const dismissInviteNotice = useCallback(() => {
@@ -560,6 +566,16 @@ export default function AdminTeamTab({
             onChange={(event) => setSearchQuery(event.target.value)}
             aria-label="Search team members"
           />
+          {searchQuery.length > 0 ? (
+            <button
+              type="button"
+              className="admin-team-search__clear"
+              aria-label="Clear search"
+              onClick={() => setSearchQuery('')}
+            >
+              <img src={ICON_CLOSE} alt="" />
+            </button>
+          ) : null}
         </label>
       </div>
 
@@ -587,7 +603,7 @@ export default function AdminTeamTab({
                   onClick={() => handleSortChange(column.id)}
                 >
                   {column.label}
-                  <SortChevron active={active} direction={sort.direction} />
+                  <SortArrow active={active} direction={sort.direction} />
                 </button>
               );
             })}
@@ -648,7 +664,6 @@ export default function AdminTeamTab({
         open={addOpen}
         onClose={() => onAddOpenChange?.(false)}
         onAdd={handleAddMembers}
-        showInviteMessage={showInviteMessage}
       />
       <AdminTeamEditOverlay
         member={editingMember}
@@ -672,7 +687,7 @@ export default function AdminTeamTab({
                 aria-label="Dismiss notification"
                 onClick={dismissInviteNotice}
               >
-                ×
+                <img src={ICON_CLOSE} alt="" />
               </button>
             </div>,
             document.body

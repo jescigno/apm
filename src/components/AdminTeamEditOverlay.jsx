@@ -2,9 +2,22 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ADMIN_TEAM_EDIT_STATUSES,
+  formatTeamJoinedOn,
+  getAdminTeamEditStatuses,
   isValidInviteEmail,
   splitMemberName,
 } from '../constants/adminTeam';
+import { ICON_CLOSE } from '../constants/designSystem';
+import AdminActivityDatePicker from './AdminActivityDatePicker';
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+      <rect x="3.5" y="5.5" width="17" height="15" rx="1.5" />
+      <path d="M8 3.5v4M16 3.5v4M3.5 10h17" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function memberToForm(member) {
   const { firstName, lastName } = splitMemberName(member?.name);
@@ -13,6 +26,7 @@ function memberToForm(member) {
     lastName,
     email: member?.email ?? '',
     status: ADMIN_TEAM_EDIT_STATUSES.includes(member?.status) ? member.status : 'Active',
+    expiration: member?.expiration instanceof Date ? member.expiration : null,
   };
 }
 
@@ -22,6 +36,7 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
   const open = Boolean(member);
   const [form, setForm] = useState(() => memberToForm(member));
   const [error, setError] = useState('');
+  const [expirationOpen, setExpirationOpen] = useState(false);
 
   useEffect(() => {
     if (!member) {
@@ -30,6 +45,7 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
     }
     setForm(memberToForm(member));
     setError('');
+    setExpirationOpen(false);
   }, [member]);
 
   useEffect(() => {
@@ -42,10 +58,27 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
 
   const handleEscape = useCallback(
     (event) => {
-      if (event.key === 'Escape') onClose?.();
+      if (event.key !== 'Escape') return;
+      if (expirationOpen) {
+        setExpirationOpen(false);
+        return;
+      }
+      onClose?.();
     },
-    [onClose]
+    [expirationOpen, onClose]
   );
+
+  useEffect(() => {
+    if (!expirationOpen) return undefined;
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (target.closest?.('[data-admin-team-expiration]')) return;
+      if (target.closest?.('[data-admin-activity-date-picker]')) return;
+      setExpirationOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true);
+  }, [expirationOpen]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -82,9 +115,15 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
       lastName,
       email,
       status: form.status,
+      expiration: form.expiration,
+      resendInvite: member?.status === 'Pending' && email !== (member.email || '').trim().toLowerCase(),
     });
     onClose?.();
   };
+
+  const emailChanged =
+    member?.status === 'Pending' &&
+    form.email.trim().toLowerCase() !== (member.email || '').trim().toLowerCase();
 
   if (!open) return null;
 
@@ -167,20 +206,73 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
               />
             </label>
 
-            <label className="admin-team-add-overlay__field">
-              <span className="admin-team-add-overlay__label">Status</span>
-              <select
-                className="admin-team-add-overlay__input admin-team-edit-overlay__select"
-                value={form.status}
-                onChange={handleChange('status')}
-              >
-                {ADMIN_TEAM_EDIT_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="admin-team-edit-overlay__row">
+              <label className="admin-team-add-overlay__field">
+                <span className="admin-team-add-overlay__label">Status</span>
+                <select
+                  className="admin-team-add-overlay__input admin-team-edit-overlay__select"
+                  value={form.status}
+                  onChange={handleChange('status')}
+                >
+                  {getAdminTeamEditStatuses(member?.status).map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="admin-team-add-overlay__field admin-team-add-overlay__expiration-field" data-admin-team-expiration>
+                <span className="admin-team-add-overlay__label">Expiration (Optional)</span>
+                <div
+                  className={`admin-team-add-overlay__input admin-team-add-overlay__expiration${form.expiration ? ' admin-team-add-overlay__expiration--set' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="admin-team-add-overlay__expiration-open"
+                    onClick={() => setExpirationOpen((current) => !current)}
+                    aria-expanded={expirationOpen}
+                    aria-haspopup="dialog"
+                    aria-label="Select expiration date"
+                  >
+                    <CalendarIcon />
+                    {form.expiration ? (
+                      <span className="admin-team-add-overlay__expiration-text">
+                        {formatTeamJoinedOn(form.expiration)}
+                      </span>
+                    ) : null}
+                  </button>
+                  {form.expiration ? (
+                    <button
+                      type="button"
+                      className="admin-team-add-overlay__expiration-clear"
+                      onClick={() => {
+                        setForm((prev) => ({ ...prev, expiration: null }));
+                        setExpirationOpen(false);
+                      }}
+                      aria-label="Clear expiration date"
+                    >
+                      <img src={ICON_CLOSE} alt="" />
+                    </button>
+                  ) : null}
+                </div>
+                {expirationOpen ? (
+                  <div className="admin-team-add-overlay__expiration-popover">
+                    <AdminActivityDatePicker
+                      value={
+                        form.expiration
+                          ? { start: form.expiration, end: form.expiration }
+                          : { start: null, end: null }
+                      }
+                      onChange={(range) => {
+                        if (!range?.start) return;
+                        setForm((prev) => ({ ...prev, expiration: range.start }));
+                        setExpirationOpen(false);
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
 
             {error ? <p className="admin-team-add-overlay__error">{error}</p> : null}
           </div>
@@ -190,7 +282,7 @@ export default function AdminTeamEditOverlay({ member, existingEmails = [], onCl
               Cancel
             </button>
             <button type="button" className="admin-team-btn admin-team-btn--primary" onClick={handleSave}>
-              Save
+              {emailChanged ? 'Resend Invite' : 'Save'}
             </button>
           </footer>
         </div>

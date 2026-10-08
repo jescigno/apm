@@ -11,7 +11,7 @@ export function parseAdminPhase(searchParams) {
 
 /**
  * Phase 1 keeps Team only: no other nav items, no team switcher,
- * no bulk import, no member activity, and no invite subject or message.
+ * no bulk import, and no member activity.
  */
 export function getAdminPhaseCapabilities(phase) {
   const isPhase2 = phase !== ADMIN_PHASE_1;
@@ -19,7 +19,6 @@ export function getAdminPhaseCapabilities(phase) {
     fullNav: isPhase2,
     teamDropdown: isPhase2,
     bulkImport: isPhase2,
-    inviteMessage: isPhase2,
     memberActivity: isPhase2,
   };
 }

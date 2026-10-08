@@ -144,10 +144,19 @@ export function splitMemberName(name) {
 
 export const ADMIN_TEAM_EDIT_STATUSES = ['Active', 'Pending', 'Deactivated'];
 
-export function applyTeamMemberEdits(member, { firstName, lastName, email, status }) {
+/** Active members stay Active or become Deactivated. Other members cannot be set to Active. */
+export function getAdminTeamEditStatuses(currentStatus) {
+  if (currentStatus === 'Active') {
+    return ADMIN_TEAM_EDIT_STATUSES.filter((status) => status !== 'Pending');
+  }
+  return ADMIN_TEAM_EDIT_STATUSES.filter((status) => status !== 'Active');
+}
+
+export function applyTeamMemberEdits(member, { firstName, lastName, email, status, expiration }) {
   const name = [firstName, lastName].map((part) => String(part || '').trim()).filter(Boolean).join(' ');
   const nextEmail = String(email || '').trim().toLowerCase();
-  const nextStatus = ADMIN_TEAM_EDIT_STATUSES.includes(status) ? status : member.status;
+  const allowedStatuses = getAdminTeamEditStatuses(member.status);
+  const nextStatus = allowedStatuses.includes(status) ? status : member.status;
   return {
     ...member,
     name: name || member.name,
@@ -155,6 +164,7 @@ export function applyTeamMemberEdits(member, { firstName, lastName, email, statu
     initials: initialsFromName(name || member.name, nextEmail || member.email),
     status: nextStatus,
     lastActive: nextStatus === 'Pending' ? 'Pending invite' : member.lastActive,
+    expiration: expiration instanceof Date ? expiration : null,
   };
 }
 
@@ -290,11 +300,22 @@ export function isValidInviteEmail(value) {
   return Boolean(local && domain && domain.includes('.') && email.split('@').length === 2);
 }
 
-export function membersFromInviteEmails(emails, existingMembers = []) {
+export function membersFromInviteEmails(invites, existingMembers = []) {
   const seen = new Set();
   const rows = [];
 
-  emails.forEach((value) => {
+  invites.forEach((value) => {
+    if (value && typeof value === 'object') {
+      const email = String(value.email || '').trim().toLowerCase();
+      if (!isValidInviteEmail(email) || seen.has(email)) return;
+      seen.add(email);
+      const firstName = String(value.firstName || '').trim();
+      const lastName = String(value.lastName || '').trim();
+      const name = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+      rows.push({ email, firstName, lastName, name });
+      return;
+    }
+
     splitInviteEmails(value).forEach((email) => {
       if (!isValidInviteEmail(email) || seen.has(email)) return;
       seen.add(email);

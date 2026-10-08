@@ -123,7 +123,6 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
               onAddOpenChange={setAddOpen}
               onOpenMemberActivity={onOpenMemberActivity}
               showBulkImport={phaseCapabilities.bulkImport}
-              showInviteMessage={phaseCapabilities.inviteMessage}
               showMemberActivity={phaseCapabilities.memberActivity}
             />
           )}
