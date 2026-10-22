@@ -17,13 +17,13 @@ function accountTabFromPath(pathname) {
   return null;
 }
 
-function AccountMobileTitlePortal({ headerMenuRef, showMenu = true, headerAction = null }) {
+function AccountMobileTitlePortal({ headerMenuRef, headerAction = null }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!showMenu || !headerMenuRef?.current) return undefined;
+    if (!headerMenuRef?.current) return undefined;
     return headerMenuRef.current.subscribe(setMenuOpen);
-  }, [headerMenuRef, showMenu]);
+  }, [headerMenuRef]);
 
   return createPortal(
     <div className={`account-page-mobile-header-bar${headerAction ? ' account-page-mobile-header-bar--add' : ''}`}>
@@ -33,13 +33,11 @@ function AccountMobileTitlePortal({ headerMenuRef, showMenu = true, headerAction
         </span>
       </h1>
       {headerAction}
-      {showMenu ? (
-        <HeaderMenuButton
-          open={menuOpen}
-          onClick={() => headerMenuRef?.current?.toggleMenu()}
-          className="account-page-mobile-header-bar__menu"
-        />
-      ) : null}
+      <HeaderMenuButton
+        open={menuOpen}
+        onClick={() => headerMenuRef?.current?.toggleMenu()}
+        className="account-page-mobile-header-bar__menu"
+      />
     </div>,
     document.body
   );
@@ -85,15 +83,17 @@ export default function AccountPage({ headerMenuRef }) {
       {mobileLayout && (
         <AccountMobileTitlePortal
           headerMenuRef={headerMenuRef}
-          showMenu={activeTab !== 'admin'}
           headerAction={
             activeTab === 'admin' ? (
               <button
                 type="button"
-                className="btn-cta btn-cta--primary project-details-mobile-header__invite account-page-mobile-header-bar__add"
+                className="account-page-mobile-header-bar__add"
+                aria-label="Add members"
                 onClick={() => setAddOpen(true)}
               >
-                Add Members
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
               </button>
             ) : null
           }

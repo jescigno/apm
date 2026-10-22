@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
-import { ROUTE_ACCOUNT_ADMIN, ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
+import { ROUTE_ACCOUNT_ADMIN, ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS, ROUTE_SEARCH } from '../constants/routes';
 import ThemeModeToggle from './ThemeModeToggle';
 import { useThemeName } from '../utils/theme';
 
@@ -109,6 +109,8 @@ function Header({
   headerMenuRef,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const onSearchResults = location.pathname === ROUTE_SEARCH;
   const hasSearchTerms = searchTerms.length > 0;
   const hasSearchQuery = hasSearchTerms || searchQuery.trim().length > 0;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -186,9 +188,17 @@ function Header({
     return () => mq.removeEventListener('change', closeDrawer);
   }, []);
 
-  return createPortal(
+  const goToSearchResults = () => {
+    setMenuOpen(false);
+    setMyApmOpen(false);
+    navigate(ROUTE_SEARCH);
+  };
+
+  return (
+    <>
+    {createPortal(
     <div className={`header-wrapper${menuOpen ? ' header-wrapper--menu-open' : ''}`} ref={menuRef}>
-      <header className={`header ${menuOpen ? 'header--menu-open' : ''}`}>
+      <header className={`header${menuOpen ? ' header--menu-open' : ''}${onSearchResults ? '' : ' header--can-go-back'}`}>
         <a href="#" className="logo">
           <img
             src={isDark ? '/APMLogo.svg' : '/APMLogo-lightmode.svg'}
@@ -383,7 +393,10 @@ function Header({
                     type="button"
                     className="header-menu-item header-menu-myapm-btn"
                     aria-expanded={isOpen}
-                    onClick={() => setMobileNavOpen((k) => (k === label ? null : label))}
+                    onClick={() => {
+                      setMobileNavOpen((current) => (current === label ? null : label));
+                      setMyApmOpen(false);
+                    }}
                   >
                     <span>{label}</span>
                     <svg
@@ -427,7 +440,10 @@ function Header({
               <button
                 type="button"
                 className="header-menu-item header-menu-myapm-btn"
-                onClick={() => setMyApmOpen((o) => !o)}
+                onClick={() => {
+                  setMyApmOpen((open) => !open);
+                  setMobileNavOpen(null);
+                }}
                 aria-expanded={myApmOpen}
               >
                 <span>My APM</span>
@@ -501,6 +517,7 @@ function Header({
                 onClick={() => {
                   setHamburgerLoggedOut(false);
                   setMyApmOpen(true);
+                  setMobileNavOpen(null);
                 }}
               >
                 Login
@@ -518,6 +535,31 @@ function Header({
       </div>
     </div>,
     document.body
+  )}
+    {!onSearchResults &&
+      createPortal(
+        <button
+          type="button"
+          className="header-back-btn"
+          aria-label="Back to search results"
+          onClick={goToSearchResults}
+        >
+          <span className="header-back-btn__circle">
+            <svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+              <path
+                d="M18 11.5L13 16l5 4.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+        </button>,
+        document.body
+      )}
+    </>
   );
 }
 

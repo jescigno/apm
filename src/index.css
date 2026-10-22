@@ -1074,6 +1074,10 @@ body {
   overflow: visible;
 }
 
+.header-back-btn {
+  display: none;
+}
+
 .header-menu-icon-bar {
   position: absolute;
   left: 5px;
@@ -3196,6 +3200,38 @@ html:has(.app-content-wrapper--projects) {
     display: none !important;
   }
 
+  .header-back-btn {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 16px;
+    z-index: 620;
+    align-items: center;
+    justify-content: center;
+    height: var(--header-height);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-on-chrome);
+    cursor: pointer;
+  }
+
+  .header-back-btn__circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--control-back-bg);
+  }
+
+  .header-back-btn svg {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+
   .header-menu-spacer {
     flex: 1 1 auto;
     min-width: 0;
@@ -3235,6 +3271,10 @@ html:has(.app-content-wrapper--projects) {
     grid-row: 1;
   }
 
+  html:is(:has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header.header--can-go-back .logo {
+    margin-left: 40px;
+  }
+
   html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header-menu-spacer {
     grid-column: 2;
     grid-row: 1;
@@ -3254,6 +3294,14 @@ html:has(.app-content-wrapper--projects) {
 
   html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header .search-bar input {
     text-overflow: ellipsis;
+  }
+
+  html:has(.app-content-wrapper--search .search-results):has(.search-results) {
+    --header-stack-height: calc(var(--header-height) + var(--search-mobile-search-row) + 4px);
+  }
+
+  html:has(.app-content-wrapper--search .search-results):has(.search-results) .header {
+    padding-bottom: 4px;
   }
 
   html:is(:has(.app-content-wrapper--search .search-results), :has(.app-content-wrapper--projects):not(:has(.projects-page--phase-2)), :has(.projects-page--phase-2):has(.projects-panel.open)) .header-actions-floating {
@@ -3302,7 +3350,7 @@ html:has(.app-content-wrapper--projects) {
     display: none;
   }
 
-  /* Right drawer ~40% of viewport; slides in from the right (base transform). */
+  /* Right drawer is half the screen; slides in from the right (base transform). */
   .header-menu-bar {
     z-index: 650;
     background: var(--bg-chrome-menu);
@@ -3310,8 +3358,8 @@ html:has(.app-content-wrapper--projects) {
     right: 0;
     bottom: 0;
     left: auto;
-    width: 40vw;
-    max-width: 85vw;
+    width: 50vw;
+    max-width: 50vw;
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
@@ -3368,8 +3416,8 @@ html:has(.app-content-wrapper--projects) {
   }
 
   .header-menu-bar .header-menu-item.header-menu-myapm-subitem {
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
+    text-align: left;
     padding-left: 24px;
     padding-right: 24px;
   }
@@ -3500,7 +3548,7 @@ html:has(.app-content-wrapper--projects) {
   }
 
   .project-details-mobile-back {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     width: 32px;
@@ -3709,6 +3757,25 @@ html:has(.app-content-wrapper--projects) {
     top: 50%;
     transform: translateY(-50%);
     flex-shrink: 0;
+  }
+
+  .account-page-mobile-header-bar__add {
+    right: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-red);
+    color: var(--cta-text);
+    cursor: pointer;
+  }
+
+  .account-page-mobile-header-bar__add svg {
+    display: block;
   }
 
   .account-page-mobile-header-bar__menu {
@@ -10268,6 +10335,10 @@ html:has(.app-content-wrapper--projects) {
   width: 100%;
 }
 
+.track-list-total {
+  display: none;
+}
+
 .track-list-empty {
   padding: 24px;
   color: var(--text-secondary);
@@ -10334,6 +10405,16 @@ html:has(.app-content-wrapper--projects) {
 }
 
 @media (max-width: 768px) {
+  .track-list-total {
+    display: block;
+    margin: 0;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+  }
+
   .track-list-empty-project {
     padding: 16px;
   }
@@ -14728,6 +14809,25 @@ html:has(.account-page) .sidebar {
     flex-shrink: 0;
   }
 
+  .account-page-mobile-header-bar__add {
+    right: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-red);
+    color: var(--cta-text);
+    cursor: pointer;
+  }
+
+  .account-page-mobile-header-bar__add svg {
+    display: block;
+  }
+
   .account-page-mobile-header-bar__menu {
     color: var(--accent-red);
   }
@@ -18851,11 +18951,12 @@ html:has(.app-content-wrapper--admin) {
   .admin-team-table__header,
   .admin-team-table__row {
     padding-left: 4px;
-    padding-right: 0;
+    padding-right: 4px;
   }
 
   .admin-team-selection-bar {
     left: calc(4px + 26px + 12px);
+    right: 4px;
   }
 
   .admin-team-table__header-wrap,

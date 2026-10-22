@@ -1703,6 +1703,11 @@ function TrackList({ soundsLikePanelOpen, onSoundsLikeClick, onSoundsLikeWithSel
             />
           ))}
         <div ref={listEndRef} className="track-list-scroll-anchor" aria-hidden="true" />
+        {activeTab === 'tracks' && tracks.length > 0 && (
+          <p className="track-list-total">
+            {tracks.length === 1 ? '1 ROW' : `${tracks.length} ROWS`}
+          </p>
+        )}
         {activeTab === 'searches' && (
           <div className="track-list-empty">No saved searches yet.</div>
         )}
