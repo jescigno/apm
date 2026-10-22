@@ -17,7 +17,7 @@ function accountTabFromPath(pathname) {
   return null;
 }
 
-function AccountMobileTitlePortal({ headerMenuRef, showMenu = true }) {
+function AccountMobileTitlePortal({ headerMenuRef, showMenu = true, headerAction = null }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -26,12 +26,13 @@ function AccountMobileTitlePortal({ headerMenuRef, showMenu = true }) {
   }, [headerMenuRef, showMenu]);
 
   return createPortal(
-    <div className="account-page-mobile-header-bar">
+    <div className={`account-page-mobile-header-bar${headerAction ? ' account-page-mobile-header-bar--add' : ''}`}>
       <h1 className="account-page-title project-mobile-hero__title account-page-title--mobile-portal" id="account-mobile-title">
         <span className="project-mobile-hero__title-clip">
           <span className="project-mobile-hero__title-text">My Account</span>
         </span>
       </h1>
+      {headerAction}
       {showMenu ? (
         <HeaderMenuButton
           open={menuOpen}
@@ -85,6 +86,17 @@ export default function AccountPage({ headerMenuRef }) {
         <AccountMobileTitlePortal
           headerMenuRef={headerMenuRef}
           showMenu={activeTab !== 'admin'}
+          headerAction={
+            activeTab === 'admin' ? (
+              <button
+                type="button"
+                className="btn-cta btn-cta--primary project-details-mobile-header__invite account-page-mobile-header-bar__add"
+                onClick={() => setAddOpen(true)}
+              >
+                Add Members
+              </button>
+            ) : null
+          }
         />
       )}
       <div className="account-page-header project-mobile-hero">
@@ -139,7 +151,7 @@ export default function AccountPage({ headerMenuRef }) {
                   onAddOpenChange={setAddOpen}
                   showBulkImport={false}
                   showMemberActivity={false}
-                  showAddInToolbar
+                  showAddInToolbar={!mobileLayout}
                 />
               </>
             )}

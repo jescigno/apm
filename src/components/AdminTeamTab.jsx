@@ -17,6 +17,7 @@ import {
   membersFromInviteEmails,
 } from '../constants/adminTeam';
 import { ICON_ADD, ICON_ARCHIVE, ICON_CLOSE, ICON_MORE_MENU, ICON_SEARCH, ICON_UI_FILTER } from '../constants/designSystem';
+import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import { PROFILE_COLOR_CSS_VARS } from '../constants/profileColors';
 import AdminTeamAddOverlay from './AdminTeamAddOverlay';
 import AdminTeamBulkImportOverlay from './AdminTeamBulkImportOverlay';
@@ -553,7 +554,16 @@ export default function AdminTeamTab({
   const [inviteNotice, setInviteNotice] = useState(null);
   const [statusFilters, setStatusFilters] = useState(() => new Set(['active', 'pending']));
   const [page, setPage] = useState(1);
+  const [mobileLayout, setMobileLayout] = useState(false);
   const selectAllRef = useRef(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`);
+    const sync = () => setMobileLayout(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   const members = membersByTeamId[teamId] ?? [];
 
@@ -599,12 +609,14 @@ export default function AdminTeamTab({
 
   const pageCount = Math.max(1, Math.ceil(filteredMembers.length / ADMIN_TEAM_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
-  const pageMembers = filteredMembers.slice(
-    (currentPage - 1) * ADMIN_TEAM_PAGE_SIZE,
-    currentPage * ADMIN_TEAM_PAGE_SIZE
-  );
+  const pageMembers = mobileLayout
+    ? filteredMembers
+    : filteredMembers.slice(
+        (currentPage - 1) * ADMIN_TEAM_PAGE_SIZE,
+        currentPage * ADMIN_TEAM_PAGE_SIZE
+      );
   const pageRangeStart = filteredMembers.length === 0 ? 0 : (currentPage - 1) * ADMIN_TEAM_PAGE_SIZE + 1;
-  const pageRangeEnd = pageRangeStart + pageMembers.length - 1;
+  const pageRangeEnd = pageRangeStart + Math.min(pageMembers.length, ADMIN_TEAM_PAGE_SIZE) - 1;
 
   useEffect(() => {
     setPage(1);
@@ -773,7 +785,15 @@ export default function AdminTeamTab({
               className="track-checkbox admin-team-table__checkbox"
               checked={allSelected}
               onChange={handleSelectAllToggle}
-              aria-label={allSelected ? 'Deselect team members on this page' : 'Select team members on this page'}
+              aria-label={
+                mobileLayout
+                  ? allSelected
+                    ? 'Deselect all team members'
+                    : 'Select all team members'
+                  : allSelected
+                    ? 'Deselect team members on this page'
+                    : 'Select team members on this page'
+              }
             />
             {ADMIN_TEAM_SORT_COLUMNS.map((column) => {
               const active = sort.field === column.id;
@@ -838,7 +858,7 @@ export default function AdminTeamTab({
         </div>
       </div>
 
-      {filteredMembers.length > 0 ? (
+      {!mobileLayout && filteredMembers.length > 0 ? (
         <nav className="admin-team-pagination" aria-label="Team member pages">
           <p className="admin-team-pagination__summary">
             Showing {pageRangeStart}-{pageRangeEnd} of {filteredMembers.length}
