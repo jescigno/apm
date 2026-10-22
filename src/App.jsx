@@ -128,6 +128,13 @@ const PROJECTS_TRACK_DROP_ANIMATION = {
   easing: 'cubic-bezier(0.2, 0, 0, 1)',
 };
 
+function DefaultHomeRedirect() {
+  const isMobileWeb =
+    typeof window !== 'undefined' &&
+    window.matchMedia(`(max-width: ${LAYOUT_COMPACT_MAX_WIDTH}px)`).matches;
+  return <Navigate to={isMobileWeb ? ROUTE_SEARCH : ROUTE_PROJECT_DETAILS} replace />;
+}
+
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -774,7 +781,7 @@ function AppContent() {
         {isSearchRoute && <SearchFiltersPanel />}
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
+            <Route path="/" element={<DefaultHomeRedirect />} />
             <Route path="/history" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
             <Route path="/projects" element={<Navigate to={ROUTE_PROJECT_DETAILS} replace />} />
             <Route

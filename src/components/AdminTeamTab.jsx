@@ -360,6 +360,15 @@ function AdminTeamMoreMenuIcon({ actionId }) {
     );
   }
 
+  if (actionId === 'view') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+        <path d="M2.5 12S6.5 6.5 12 6.5 21.5 12 21.5 12 17.5 17.5 12 17.5 2.5 12 2.5 12z" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="2.75" />
+      </svg>
+    );
+  }
+
   return <img src={ICON_ARCHIVE} alt="" aria-hidden="true" />;
 }
 
@@ -367,19 +376,141 @@ function isArchivedMember(member) {
   return member.status === 'Deactivated' || member.status === 'Archived';
 }
 
-function memberMoreActions(member, showActivity) {
-  if (isArchivedMember(member)) {
-    return [ADMIN_TEAM_MORE_ACTIONS.find((action) => action.id === 'edit'), ADMIN_TEAM_INVITE_ACTION];
-  }
+function memberMoreActions(member, showActivity, includeView) {
   const actions = [];
-  ADMIN_TEAM_MORE_ACTIONS.forEach((action) => {
-    if (action.id === 'activity' && !showActivity) return;
-    if (action.id === 'archive' && member.status === 'Pending') {
-      actions.push(ADMIN_TEAM_RESEND_ACTION);
-    }
-    actions.push(action);
-  });
+  if (isArchivedMember(member)) {
+    actions.push(ADMIN_TEAM_MORE_ACTIONS.find((action) => action.id === 'edit'), ADMIN_TEAM_INVITE_ACTION);
+  } else {
+    ADMIN_TEAM_MORE_ACTIONS.forEach((action) => {
+      if (action.id === 'activity' && !showActivity) return;
+      if (action.id === 'archive' && member.status === 'Pending') {
+        actions.push(ADMIN_TEAM_RESEND_ACTION);
+      }
+      actions.push(action);
+    });
+  }
+  if (includeView) {
+    actions.unshift({ id: 'view', label: 'View Member' });
+  }
   return actions;
+}
+
+function runMemberMoreAction(action, member, handlers) {
+  if (action.id === 'view') handlers.onView?.(member);
+  if (action.id === 'edit') handlers.onEdit?.(member);
+  if (action.id === 'activity') handlers.onOpenMemberActivity?.(member);
+  if (action.id === 'archive') handlers.onArchive?.(member.id);
+  if (action.id === 'resend' || action.id === 'invite') handlers.onResendInvite?.(member);
+}
+
+function AdminTeamMemberOverlay({
+  member,
+  showActivity = false,
+  onClose,
+  onEdit,
+  onArchive,
+  onOpenMemberActivity,
+  onResendInvite,
+}) {
+  useEffect(() => {
+    if (!member) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') onClose?.();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [member, onClose]);
+
+  if (!member) return null;
+
+  const isPending = member.status === 'Pending';
+  const actions = memberMoreActions(member, showActivity, false);
+  const fields = [
+    { label: 'Email address', value: member.email },
+    { label: 'Last active', value: isPending ? '' : member.lastActive },
+    { label: 'Joined on', value: isPending ? '' : member.joinedOn },
+    { label: 'Status', value: member.status },
+  ];
+
+  return createPortal(
+    <div
+      className="admin-team-add-overlay admin-team-member-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-team-member-overlay-title"
+    >
+      <div
+        className="admin-team-add-overlay__backdrop"
+        onClick={onClose}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClose?.();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Close member details"
+      />
+      <div className="admin-team-add-overlay__panel-wrap">
+        <div className="admin-team-add-overlay__panel">
+          <header className="admin-team-member-overlay__header">
+            <div className="admin-team-member-overlay__identity">
+              <span
+                className={`admin-team-table__avatar admin-team-member-overlay__avatar${isPending ? ' admin-team-table__avatar--pending' : ''}`}
+                style={
+                  isPending
+                    ? undefined
+                    : { backgroundColor: `var(${PROFILE_COLOR_CSS_VARS[member.profileColor]})` }
+                }
+                aria-hidden="true"
+              >
+                {member.initials}
+              </span>
+              <h2 id="admin-team-member-overlay-title" className="admin-team-member-overlay__name">
+                {member.name}
+              </h2>
+            </div>
+            <button type="button" className="admin-team-member-overlay__close" aria-label="Close" onClick={onClose}>
+              <img src={ICON_CLOSE} alt="" />
+            </button>
+          </header>
+          <dl className="admin-team-member-overlay__fields">
+            {fields.map((field) => (
+              <div key={field.label} className="admin-team-member-overlay__field">
+                <dt className="admin-team-member-overlay__label">{field.label}</dt>
+                <dd className="admin-team-member-overlay__value">{field.value || '—'}</dd>
+              </div>
+            ))}
+          </dl>
+          {actions.length > 0 ? (
+            <div className="admin-team-member-overlay__actions">
+              {actions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className="admin-team-member-overlay__action"
+                  onClick={() => {
+                    runMemberMoreAction(action, member, {
+                      onEdit,
+                      onArchive,
+                      onOpenMemberActivity,
+                      onResendInvite,
+                    });
+                    onClose?.();
+                  }}
+                >
+                  <AdminTeamMoreMenuIcon actionId={action.id} />
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 }
 
 function AdminTeamRow({
@@ -389,8 +520,10 @@ function AdminTeamRow({
   onOpenMemberActivity,
   onArchive,
   onEdit,
+  onView,
   onResendInvite,
   showActivity = true,
+  includeView = false,
 }) {
   const menuBtnRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -460,25 +593,20 @@ function AdminTeamRow({
         role="menu"
         aria-label={`Actions for ${member.name}`}
       >
-        {memberMoreActions(member, showActivity).map((action) => (
+        {memberMoreActions(member, showActivity, includeView).map((action) => (
           <button
             key={action.id}
             type="button"
             role="menuitem"
             className="admin-team-more-menu__item"
             onClick={() => {
-              if (action.id === 'edit') {
-                onEdit?.(member);
-              }
-              if (action.id === 'activity') {
-                onOpenMemberActivity?.(member);
-              }
-              if (action.id === 'archive') {
-                onArchive?.(member.id);
-              }
-              if (action.id === 'resend' || action.id === 'invite') {
-                onResendInvite?.(member);
-              }
+              runMemberMoreAction(action, member, {
+                onView,
+                onEdit,
+                onOpenMemberActivity,
+                onArchive,
+                onResendInvite,
+              });
               closeMenu();
             }}
           >
@@ -513,11 +641,14 @@ function AdminTeamRow({
         >
           {member.initials}
         </span>
-        <p className="admin-team-table__cell admin-team-table__cell--member">{member.name}</p>
+        <div className="admin-team-table__member-text">
+          <p className="admin-team-table__cell admin-team-table__cell--member">{member.name}</p>
+          <p className="admin-team-table__email--stacked">{member.email}</p>
+        </div>
       </div>
-      <p className="admin-team-table__cell admin-team-table__cell--muted">{member.email}</p>
-      <p className="admin-team-table__cell admin-team-table__cell--muted">{isPending ? '' : member.lastActive}</p>
-      <p className="admin-team-table__cell admin-team-table__cell--muted">{isPending ? '' : member.joinedOn}</p>
+      <p className="admin-team-table__cell admin-team-table__cell--muted admin-team-table__cell--email">{member.email}</p>
+      <p className="admin-team-table__cell admin-team-table__cell--muted admin-team-table__cell--last-active">{isPending ? '' : member.lastActive}</p>
+      <p className="admin-team-table__cell admin-team-table__cell--muted admin-team-table__cell--joined">{isPending ? '' : member.joinedOn}</p>
       <p className="admin-team-table__cell admin-team-table__cell--status">{member.status}</p>
       <button
         ref={menuBtnRef}
@@ -550,6 +681,7 @@ export default function AdminTeamTab({
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [membersByTeamId, setMembersByTeamId] = useState(ADMIN_TEAM_MEMBERS_BY_ID);
   const [editingMember, setEditingMember] = useState(null);
+  const [viewingMember, setViewingMember] = useState(null);
   const [sort, setSort] = useState(ADMIN_TEAM_DEFAULT_SORT);
   const [inviteNotice, setInviteNotice] = useState(null);
   const [statusFilters, setStatusFilters] = useState(() => new Set(['active', 'pending']));
@@ -801,7 +933,7 @@ export default function AdminTeamTab({
                 <button
                   key={column.id}
                   type="button"
-                  className={`admin-team-table__header-label admin-team-table__header-label--sortable${active ? ' admin-team-table__header-label--sorted' : ''}`}
+                  className={`admin-team-table__header-label admin-team-table__header-label--sortable admin-team-table__header-label--${column.id}${active ? ' admin-team-table__header-label--sorted' : ''}`}
                   tabIndex={hasSelection ? -1 : 0}
                   aria-hidden={hasSelection}
                   aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -851,8 +983,10 @@ export default function AdminTeamTab({
               onOpenMemberActivity={onOpenMemberActivity}
               onArchive={handleArchiveIds}
               onEdit={setEditingMember}
+              onView={setViewingMember}
               onResendInvite={showInviteNotice}
               showActivity={showMemberActivity}
+              includeView={mobileLayout}
             />
           ))}
         </div>
@@ -909,6 +1043,15 @@ export default function AdminTeamTab({
         open={addOpen}
         onClose={() => onAddOpenChange?.(false)}
         onAdd={handleAddMembers}
+      />
+      <AdminTeamMemberOverlay
+        member={viewingMember}
+        showActivity={showMemberActivity}
+        onClose={() => setViewingMember(null)}
+        onEdit={setEditingMember}
+        onArchive={handleArchiveIds}
+        onOpenMemberActivity={onOpenMemberActivity}
+        onResendInvite={showInviteNotice}
       />
       <AdminTeamEditOverlay
         member={editingMember}

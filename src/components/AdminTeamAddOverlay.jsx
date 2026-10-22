@@ -316,8 +316,10 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
                         <span className="admin-team-add-overlay__added-avatar" aria-hidden="true">
                           {initialsFromName(name, member.email)}
                         </span>
-                        <span className="admin-team-add-overlay__added-name">{name}</span>
-                        <span className="admin-team-add-overlay__added-email">{member.email}</span>
+                        <span className="admin-team-add-overlay__added-identity">
+                          <span className="admin-team-add-overlay__added-name">{name}</span>
+                          <span className="admin-team-add-overlay__added-email">{member.email}</span>
+                        </span>
                         {member.expiration ? (
                           <span className="admin-team-add-overlay__added-expiration">
                             {`Expires ${formatTeamJoinedOn(member.expiration)}`}
