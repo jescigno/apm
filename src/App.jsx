@@ -34,6 +34,7 @@ import {
   ROUTE_ACCOUNT,
   ROUTE_NOTIFICATIONS,
   ROUTE_ACCOUNT_NOTIFICATIONS,
+  ROUTE_ACCOUNT_ADMIN,
   ADMIN_ROUTES,
   ROUTE_ADMIN,
   ROUTE_ADMIN_TEAM,
@@ -45,6 +46,7 @@ import {
 import { buildSearchResultsPath, parseSearchTermsFromSearch } from './utils/searchUrl';
 import { LAYOUT_COMPACT_MAX_WIDTH } from './constants/layout';
 import AdminPage from './pages/AdminPage';
+import { ADMIN_PHASE_2, parseAdminPhase } from './constants/adminPhases';
 import {
   CURRENT_PROJECT_FOLDER_ID,
   folderHasProjectTracks,
@@ -688,8 +690,11 @@ function AppContent() {
   const isSearchRoute = location.pathname === ROUTE_SEARCH;
   const isProjectsRoute = location.pathname === ROUTE_PROJECT_DETAILS;
   const isAccountRoute =
-    location.pathname === ROUTE_ACCOUNT || location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS;
+    location.pathname === ROUTE_ACCOUNT ||
+    location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS ||
+    location.pathname === ROUTE_ACCOUNT_ADMIN;
   const isAdminRoute = ADMIN_ROUTES.includes(location.pathname);
+  const isAdminConsole = isAdminRoute && parseAdminPhase(location.search) === ADMIN_PHASE_2;
   const isNotificationsRoute = location.pathname === ROUTE_NOTIFICATIONS;
   const isDesignSystemRoute = location.pathname === ROUTE_DESIGN_SYSTEM;
   const isFullBleedRoute =
@@ -750,7 +755,7 @@ function AppContent() {
       onDragCancel={handleProjectsDragCancel}
     >
     <div className={currentTrack || isPlayerClosing ? 'app-root player-visible' : 'app-root'}>
-      {!isAdminRoute && (
+      {!isAdminConsole && (
         <Header
           onOpenProjectsPanel={openProjectsPanel}
           searchQuery={searchBarValue}
@@ -761,9 +766,9 @@ function AppContent() {
           headerMenuRef={headerMenuRef}
         />
       )}
-      {!isAdminRoute && <Sidebar onHomeClick={handleHomeNavClick} />}
+      {!isAdminConsole && <Sidebar onHomeClick={handleHomeNavClick} />}
       <div
-        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isAdminRoute ? ' app-content-wrapper--admin' : ''}${isFullBleedRoute && !isAdminRoute ? ' app-content-wrapper--account' : ''}`}
+        className={`app-content-wrapper${rightPanelOpen ? ' app-content--right-panel-open' : ''}${isSearchRoute ? ' app-content-wrapper--search' : ''}${isProjectsRoute ? ' app-content-wrapper--projects' : ''}${isAdminConsole ? ' app-content-wrapper--admin' : ''}${isFullBleedRoute && !isAdminConsole ? ' app-content-wrapper--account' : ''}`}
         style={rightPanelOpen ? { paddingRight: `${mainPaddingRight}px` } : undefined}
       >
         {isSearchRoute && <SearchFiltersPanel />}
@@ -835,6 +840,7 @@ function AppContent() {
             />
             <Route path={ROUTE_NOTIFICATIONS} element={<NotificationsPage />} />
             <Route path={ROUTE_ACCOUNT_NOTIFICATIONS} element={<AccountPage headerMenuRef={headerMenuRef} />} />
+            <Route path={ROUTE_ACCOUNT_ADMIN} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route path={ROUTE_ACCOUNT} element={<AccountPage headerMenuRef={headerMenuRef} />} />
             <Route
               path={ROUTE_ADMIN_NOTIFICATIONS}

@@ -3,19 +3,27 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LAYOUT_COMPACT_MAX_WIDTH } from '../constants/layout';
 import { ACCOUNT_TABS } from '../constants/accountPage';
-import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
+import { ADMIN_TEAM_DEFAULT_ID } from '../constants/adminTeam';
+import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_ADMIN, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
 import AccountPersonalTab from '../components/AccountPersonalTab';
+import AdminTeamTab from '../components/AdminTeamTab';
 import { HeaderMenuButton } from '../components/Header';
 import AccountNotificationSettingsContent from '../components/AccountNotificationSettingsContent';
 import AccountSettingsTab from '../components/AccountSettingsTab';
 
-function AccountMobileTitlePortal({ headerMenuRef }) {
+function accountTabFromPath(pathname) {
+  if (pathname === ROUTE_ACCOUNT_NOTIFICATIONS) return 'notifications';
+  if (pathname === ROUTE_ACCOUNT_ADMIN) return 'admin';
+  return null;
+}
+
+function AccountMobileTitlePortal({ headerMenuRef, showMenu = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    if (!headerMenuRef?.current) return undefined;
+    if (!showMenu || !headerMenuRef?.current) return undefined;
     return headerMenuRef.current.subscribe(setMenuOpen);
-  }, [headerMenuRef]);
+  }, [headerMenuRef, showMenu]);
 
   return createPortal(
     <div className="account-page-mobile-header-bar">
@@ -24,11 +32,13 @@ function AccountMobileTitlePortal({ headerMenuRef }) {
           <span className="project-mobile-hero__title-text">My Account</span>
         </span>
       </h1>
-      <HeaderMenuButton
-        open={menuOpen}
-        onClick={() => headerMenuRef?.current?.toggleMenu()}
-        className="account-page-mobile-header-bar__menu"
-      />
+      {showMenu ? (
+        <HeaderMenuButton
+          open={menuOpen}
+          onClick={() => headerMenuRef?.current?.toggleMenu()}
+          className="account-page-mobile-header-bar__menu"
+        />
+      ) : null}
     </div>,
     document.body
   );
@@ -38,14 +48,12 @@ export default function AccountPage({ headerMenuRef }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileLayout, setMobileLayout] = useState(false);
-  const [activeTab, setActiveTab] = useState(() =>
-    location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS ? 'notifications' : 'personal'
-  );
+  const [activeTab, setActiveTab] = useState(() => accountTabFromPath(location.pathname) ?? 'personal');
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
-    if (location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS) {
-      setActiveTab('notifications');
-    }
+    const tabFromPath = accountTabFromPath(location.pathname);
+    if (tabFromPath) setActiveTab(tabFromPath);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -62,14 +70,23 @@ export default function AccountPage({ headerMenuRef }) {
       navigate(ROUTE_ACCOUNT_NOTIFICATIONS);
       return;
     }
-    if (location.pathname === ROUTE_ACCOUNT_NOTIFICATIONS) {
+    if (id === 'admin') {
+      navigate(ROUTE_ACCOUNT_ADMIN);
+      return;
+    }
+    if (location.pathname !== ROUTE_ACCOUNT) {
       navigate(ROUTE_ACCOUNT);
     }
   };
 
   return (
     <div className="account-page">
-      {mobileLayout && <AccountMobileTitlePortal headerMenuRef={headerMenuRef} />}
+      {mobileLayout && (
+        <AccountMobileTitlePortal
+          headerMenuRef={headerMenuRef}
+          showMenu={activeTab !== 'admin'}
+        />
+      )}
       <div className="account-page-header project-mobile-hero">
         {!mobileLayout && (
           <h1 className="account-page-title project-mobile-hero__title" id="account-mobile-title">
@@ -113,6 +130,18 @@ export default function AccountPage({ headerMenuRef }) {
             {id === 'settings' && <AccountSettingsTab />}
             {id === 'notifications' && (
               <AccountNotificationSettingsContent className="account-notification-settings-tab" />
+            )}
+            {id === 'admin' && (
+              <>
+                <AdminTeamTab
+                  teamId={ADMIN_TEAM_DEFAULT_ID}
+                  addOpen={addOpen}
+                  onAddOpenChange={setAddOpen}
+                  showBulkImport={false}
+                  showMemberActivity={false}
+                  showAddInToolbar
+                />
+              </>
             )}
           </div>
         ))}

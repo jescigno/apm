@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ADMIN_ACTIVITY_DEFAULT_DATE_FILTER, ADMIN_ACTIVITY_DEFAULT_TEAM_ID } from '../constants/adminActivity';
-import { getAdminPhaseCapabilities, parseAdminPhase } from '../constants/adminPhases';
+import { ADMIN_PHASE_2, getAdminPhaseCapabilities, parseAdminPhase } from '../constants/adminPhases';
 import { ADMIN_TEAM_DEFAULT_ID } from '../constants/adminTeam';
 import { ADMIN_TABS, adminPageTitleFromPath, adminTabIdFromPath } from '../constants/adminPage';
-import { ROUTE_ADMIN_TEAM } from '../constants/routes';
+import { ROUTE_ACCOUNT_ADMIN } from '../constants/routes';
 import AccountPersonalTab from '../components/AccountPersonalTab';
 import AdminActivityTab, { AdminActivityFilters } from '../components/AdminActivityTab';
 import AdminLayout from '../components/AdminLayout';
@@ -43,7 +43,6 @@ function AdminNotificationsTab() {
 
 export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav }) {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const phaseCapabilities = getAdminPhaseCapabilities(parseAdminPhase(searchParams));
   const [activeTab, setActiveTab] = useState(() => adminTabIdFromPath(location.pathname));
@@ -53,15 +52,11 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
   const [addOpen, setAddOpen] = useState(false);
   const [activityDateFilter, setActivityDateFilter] = useState(ADMIN_ACTIVITY_DEFAULT_DATE_FILTER);
   const [activityCustomDateRange, setActivityCustomDateRange] = useState({ start: null, end: null });
+  const isPhase2 = parseAdminPhase(searchParams) === ADMIN_PHASE_2;
 
   useEffect(() => {
     setActiveTab(adminTabIdFromPath(location.pathname));
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (phaseCapabilities.fullNav || location.pathname === ROUTE_ADMIN_TEAM) return;
-    navigate({ pathname: ROUTE_ADMIN_TEAM, search: location.search }, { replace: true });
-  }, [location.pathname, location.search, navigate, phaseCapabilities.fullNav]);
 
   const activePageTitle =
     activeTab === 'team' ? (
@@ -91,6 +86,10 @@ export default function AdminPage({ onOpenMemberActivity, onAdminDashboardNav })
         showBulkImport={phaseCapabilities.bulkImport}
       />
     ) : null;
+
+  if (!isPhase2) {
+    return <Navigate to={ROUTE_ACCOUNT_ADMIN} replace />;
+  }
 
   return (
     <AdminLayout

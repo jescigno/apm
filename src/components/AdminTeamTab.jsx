@@ -5,6 +5,7 @@ import {
   ADMIN_TEAM_DEFAULT_ID,
   ADMIN_TEAM_MEMBERS_BY_ID,
   ADMIN_TEAM_DEFAULT_SORT,
+  ADMIN_TEAM_INVITE_ACTION,
   ADMIN_TEAM_MORE_ACTIONS,
   ADMIN_TEAM_RESEND_ACTION,
   ADMIN_TEAM_SORT_COLUMNS,
@@ -15,11 +16,27 @@ import {
   membersFromImportRows,
   membersFromInviteEmails,
 } from '../constants/adminTeam';
-import { ICON_ADD, ICON_ARCHIVE, ICON_CLOSE, ICON_MORE_MENU, ICON_SEARCH } from '../constants/designSystem';
+import { ICON_ADD, ICON_ARCHIVE, ICON_CLOSE, ICON_MORE_MENU, ICON_SEARCH, ICON_UI_FILTER } from '../constants/designSystem';
 import { PROFILE_COLOR_CSS_VARS } from '../constants/profileColors';
 import AdminTeamAddOverlay from './AdminTeamAddOverlay';
 import AdminTeamBulkImportOverlay from './AdminTeamBulkImportOverlay';
 import AdminTeamEditOverlay from './AdminTeamEditOverlay';
+
+const ADMIN_TEAM_PAGE_SIZE = 10;
+
+function PaginationChevron({ direction }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d={direction === 'left' ? 'M10 3.5L5.5 8L10 12.5' : 'M6 3.5L10.5 8L6 12.5'}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function TitleChevron({ open }) {
   return (
@@ -164,6 +181,119 @@ function AdminTeamTitleMenu({ selectedTeam, onTeamChange }) {
 
 const ICON_UPLOAD = '/icons/Upload.svg';
 
+const TEAM_STATUS_FILTERS = [
+  { id: 'active', label: 'Active' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'archived', label: 'Archived' },
+];
+
+function memberMatchesStatusFilter(member, statusFilters) {
+  if (member.status === 'Active') return statusFilters.has('active');
+  if (member.status === 'Pending') return statusFilters.has('pending');
+  if (member.status === 'Deactivated' || member.status === 'Archived') return statusFilters.has('archived');
+  return false;
+}
+
+function AdminTeamStatusFilter({ selected, onToggle }) {
+  const triggerRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [menuRect, setMenuRect] = useState(null);
+
+  const updateMenuRect = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setMenuRect({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+  }, []);
+
+  const toggleOpen = useCallback(() => {
+    setOpen((current) => {
+      if (current) return false;
+      updateMenuRect();
+      return true;
+    });
+  }, [updateMenuRect]);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    updateMenuRect();
+    const onUpdate = () => updateMenuRect();
+    window.addEventListener('scroll', onUpdate, true);
+    window.addEventListener('resize', onUpdate);
+    return () => {
+      window.removeEventListener('scroll', onUpdate, true);
+      window.removeEventListener('resize', onUpdate);
+    };
+  }, [open, updateMenuRect]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (event) => {
+      const target = event.target;
+      if (triggerRef.current?.contains(target)) return;
+      if (target.closest?.('[data-admin-team-filter-menu]')) return;
+      setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  const menu = open
+    ? createPortal(
+        <div
+          className="admin-activity-filter-menu admin-team-filter-menu"
+          data-admin-team-filter-menu
+          role="group"
+          aria-label="Status filters"
+          style={{
+            position: 'fixed',
+            top: menuRect?.top ?? 0,
+            right: menuRect?.right ?? 0,
+            visibility: menuRect ? 'visible' : 'hidden',
+            zIndex: 2000,
+          }}
+        >
+          {TEAM_STATUS_FILTERS.map((option) => (
+            <label key={option.id} className="admin-activity-filter-menu__option">
+              <input
+                type="checkbox"
+                className="track-checkbox admin-activity-filter-menu__checkbox"
+                checked={selected.has(option.id)}
+                onChange={() => onToggle(option.id)}
+              />
+              <span className="admin-activity-filter-menu__label">{option.label}</span>
+            </label>
+          ))}
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="admin-team-filter"
+        aria-label="Filter"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={toggleOpen}
+      >
+        <img src={ICON_UI_FILTER} alt="" />
+      </button>
+      {menu}
+    </>
+  );
+}
+
 export function AdminTeamHeaderActions({ onBulkImport, onAddMembers, showBulkImport = true }) {
   return (
     <div className="admin-team-header__actions">
@@ -220,7 +350,7 @@ function AdminTeamMoreMenuIcon({ actionId }) {
     );
   }
 
-  if (actionId === 'resend') {
+  if (actionId === 'resend' || actionId === 'invite') {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
         <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" />
@@ -232,7 +362,14 @@ function AdminTeamMoreMenuIcon({ actionId }) {
   return <img src={ICON_ARCHIVE} alt="" aria-hidden="true" />;
 }
 
+function isArchivedMember(member) {
+  return member.status === 'Deactivated' || member.status === 'Archived';
+}
+
 function memberMoreActions(member, showActivity) {
+  if (isArchivedMember(member)) {
+    return [ADMIN_TEAM_MORE_ACTIONS.find((action) => action.id === 'edit'), ADMIN_TEAM_INVITE_ACTION];
+  }
   const actions = [];
   ADMIN_TEAM_MORE_ACTIONS.forEach((action) => {
     if (action.id === 'activity' && !showActivity) return;
@@ -338,7 +475,7 @@ function AdminTeamRow({
               if (action.id === 'archive') {
                 onArchive?.(member.id);
               }
-              if (action.id === 'resend') {
+              if (action.id === 'resend' || action.id === 'invite') {
                 onResendInvite?.(member);
               }
               closeMenu();
@@ -406,6 +543,7 @@ export default function AdminTeamTab({
   onOpenMemberActivity,
   showBulkImport = true,
   showMemberActivity = true,
+  showAddInToolbar = false,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState(() => new Set());
@@ -413,6 +551,8 @@ export default function AdminTeamTab({
   const [editingMember, setEditingMember] = useState(null);
   const [sort, setSort] = useState(ADMIN_TEAM_DEFAULT_SORT);
   const [inviteNotice, setInviteNotice] = useState(null);
+  const [statusFilters, setStatusFilters] = useState(() => new Set(['active', 'pending']));
+  const [page, setPage] = useState(1);
   const selectAllRef = useRef(null);
 
   const members = membersByTeamId[teamId] ?? [];
@@ -421,6 +561,7 @@ export default function AdminTeamTab({
     setSelectedIds(new Set());
     setSearchQuery('');
     setEditingMember(null);
+    setPage(1);
   }, [teamId]);
 
   const setMembers = (updater) => {
@@ -432,9 +573,18 @@ export default function AdminTeamTab({
   };
 
   const visibleMembers = useMemo(
-    () => members.filter((member) => member.status !== 'Deactivated' && member.status !== 'Archived'),
-    [members]
+    () => members.filter((member) => memberMatchesStatusFilter(member, statusFilters)),
+    [members, statusFilters]
   );
+
+  const toggleStatusFilter = (id) => {
+    setStatusFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const filteredMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -446,6 +596,23 @@ export default function AdminTeamTab({
         );
     return sortTeamMembers(next, sort);
   }, [visibleMembers, searchQuery, sort]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredMembers.length / ADMIN_TEAM_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageMembers = filteredMembers.slice(
+    (currentPage - 1) * ADMIN_TEAM_PAGE_SIZE,
+    currentPage * ADMIN_TEAM_PAGE_SIZE
+  );
+  const pageRangeStart = filteredMembers.length === 0 ? 0 : (currentPage - 1) * ADMIN_TEAM_PAGE_SIZE + 1;
+  const pageRangeEnd = pageRangeStart + pageMembers.length - 1;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilters, sort]);
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount);
+  }, [page, pageCount]);
 
   const handleSortChange = (field) => {
     setSort((prev) =>
@@ -469,9 +636,12 @@ export default function AdminTeamTab({
   );
   const hasSelection = selectedCount > 0;
   const selectionLabel = selectedCount === 1 ? '1 SELECTED' : `${selectedCount} SELECTED`;
-  const allSelected =
-    filteredMembers.length > 0 && filteredMembers.every((member) => selectedIds.has(member.id));
-  const someSelected = hasSelection && !allSelected;
+  const pageSelectedCount = pageMembers.reduce(
+    (count, member) => (selectedIds.has(member.id) ? count + 1 : count),
+    0
+  );
+  const allSelected = pageMembers.length > 0 && pageSelectedCount === pageMembers.length;
+  const someSelected = pageSelectedCount > 0 && !allSelected;
 
   useEffect(() => {
     const el = selectAllRef.current;
@@ -482,14 +652,14 @@ export default function AdminTeamTab({
   const handleSelectAllToggle = () => {
     setSelectedIds((prev) => {
       const everySelected =
-        filteredMembers.length > 0 && filteredMembers.every((member) => prev.has(member.id));
+        pageMembers.length > 0 && pageMembers.every((member) => prev.has(member.id));
       if (everySelected) {
         const next = new Set(prev);
-        filteredMembers.forEach((member) => next.delete(member.id));
+        pageMembers.forEach((member) => next.delete(member.id));
         return next;
       }
       const next = new Set(prev);
-      filteredMembers.forEach((member) => next.add(member.id));
+      pageMembers.forEach((member) => next.add(member.id));
       return next;
     });
   };
@@ -556,27 +726,42 @@ export default function AdminTeamTab({
   return (
     <div className="admin-team">
       <div className="admin-team-toolbar">
-        <label className="admin-team-search">
-          <img src={ICON_SEARCH} alt="" aria-hidden="true" className="admin-team-search__icon" />
-          <input
-            type="search"
-            className="admin-team-search__input"
-            placeholder="Search Team Members"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            aria-label="Search team members"
-          />
-          {searchQuery.length > 0 ? (
+        <div className="admin-team-toolbar__search">
+          <label className="admin-team-search">
+            <img src={ICON_SEARCH} alt="" aria-hidden="true" className="admin-team-search__icon" />
+            <input
+              type="search"
+              className="admin-team-search__input"
+              placeholder="Search Team Members"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search team members"
+            />
+            {searchQuery.length > 0 ? (
+              <button
+                type="button"
+                className="admin-team-search__clear"
+                aria-label="Clear search"
+                onClick={() => setSearchQuery('')}
+              >
+                <img src={ICON_CLOSE} alt="" />
+              </button>
+            ) : null}
+          </label>
+          <AdminTeamStatusFilter selected={statusFilters} onToggle={toggleStatusFilter} />
+        </div>
+        {showAddInToolbar ? (
+          <div className="admin-team-toolbar__actions">
             <button
               type="button"
-              className="admin-team-search__clear"
-              aria-label="Clear search"
-              onClick={() => setSearchQuery('')}
+              className="admin-team-btn admin-team-btn--primary"
+              onClick={() => onAddOpenChange?.(true)}
             >
-              <img src={ICON_CLOSE} alt="" />
+              <img src={ICON_ADD} alt="" aria-hidden="true" />
+              Add Members
             </button>
-          ) : null}
-        </label>
+          </div>
+        ) : null}
       </div>
 
       <div className="admin-team-table" role="table" aria-label="Team members">
@@ -588,7 +773,7 @@ export default function AdminTeamTab({
               className="track-checkbox admin-team-table__checkbox"
               checked={allSelected}
               onChange={handleSelectAllToggle}
-              aria-label={allSelected ? 'Deselect all team members' : 'Select all team members'}
+              aria-label={allSelected ? 'Deselect team members on this page' : 'Select team members on this page'}
             />
             {ADMIN_TEAM_SORT_COLUMNS.map((column) => {
               const active = sort.field === column.id;
@@ -637,7 +822,7 @@ export default function AdminTeamTab({
         </div>
 
         <div className="admin-team-table__body" role="rowgroup">
-          {filteredMembers.map((member) => (
+          {pageMembers.map((member) => (
             <AdminTeamRow
               key={member.id}
               member={member}
@@ -652,6 +837,46 @@ export default function AdminTeamTab({
           ))}
         </div>
       </div>
+
+      {filteredMembers.length > 0 ? (
+        <nav className="admin-team-pagination" aria-label="Team member pages">
+          <p className="admin-team-pagination__summary">
+            Showing {pageRangeStart}-{pageRangeEnd} of {filteredMembers.length}
+          </p>
+          <div className="admin-team-pagination__controls">
+            <button
+              type="button"
+              className="admin-team-pagination__btn"
+              aria-label="Previous page"
+              disabled={currentPage === 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              <PaginationChevron direction="left" />
+            </button>
+            {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                className={`admin-team-pagination__page${pageNumber === currentPage ? ' admin-team-pagination__page--current' : ''}`}
+                aria-label={`Page ${pageNumber}`}
+                aria-current={pageNumber === currentPage ? 'page' : undefined}
+                onClick={() => setPage(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="admin-team-pagination__btn"
+              aria-label="Next page"
+              disabled={currentPage === pageCount}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              <PaginationChevron direction="right" />
+            </button>
+          </div>
+        </nav>
+      ) : null}
 
       {showBulkImport ? (
         <AdminTeamBulkImportOverlay

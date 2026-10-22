@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { LAYOUT_WIDE_MIN_WIDTH } from '../constants/layout';
-import { ROUTE_ADMIN, ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
+import { ROUTE_ACCOUNT_ADMIN, ROUTE_FAVORITES, ROUTE_ACCOUNT, ROUTE_NOTIFICATIONS } from '../constants/routes';
 import ThemeModeToggle from './ThemeModeToggle';
 import { useThemeName } from '../utils/theme';
 
@@ -45,7 +45,7 @@ const HEADER_NAV_DROPDOWNS = {
 
 /** Profile icon menu (wide + mobile My APM section). Set routes as pages exist. */
 const PROFILE_MENU_ITEMS = [
-  { label: 'Admin Console', to: ROUTE_ADMIN },
+  { label: 'Admin Console', to: ROUTE_ACCOUNT_ADMIN },
   { label: 'Projects', action: 'projectsPanel' },
   { label: 'Notifications', to: ROUTE_NOTIFICATIONS },
   { label: 'Favorites', to: ROUTE_FAVORITES },
@@ -56,10 +56,11 @@ const PROFILE_MENU_ITEMS = [
 ];
 
 /**
- * Items under the “My APM” hamburger accordion (logout last). Excludes divider.
+ * Items under the “My APM” hamburger accordion (logout last). Excludes divider
+ * and Admin Console, which stays on the wide-header profile menu.
  */
 const PROFILE_MENU_MY_APM_SUBITEMS = PROFILE_MENU_ITEMS.filter(
-  (o) => o.type !== 'divider'
+  (o) => o.type !== 'divider' && o.label !== 'Admin Console'
 );
 
 function blurMenuOnPointerLeave(event) {

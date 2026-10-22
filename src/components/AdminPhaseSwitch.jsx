@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ADMIN_PHASE_1, ADMIN_PHASE_2, parseAdminPhase } from '../constants/adminPhases';
-import { ROUTE_ADMIN_TEAM } from '../constants/routes';
+import { ADMIN_ROUTES, ROUTE_ACCOUNT_ADMIN, ROUTE_ADMIN_TEAM } from '../constants/routes';
 
 const PHASES = [
   { id: ADMIN_PHASE_1, label: '1' },
@@ -15,21 +15,20 @@ export default function AdminPhaseSwitch() {
   const phase = parseAdminPhase(searchParams);
 
   const setPhase = useCallback((nextPhase) => {
-    const params = new URLSearchParams(searchParams);
     if (nextPhase === ADMIN_PHASE_2) {
+      const onConsole = ADMIN_ROUTES.includes(location.pathname);
+      const params = new URLSearchParams(onConsole ? searchParams : '');
       params.set('phase', '2');
       navigate(
-        { pathname: location.pathname, search: `?${params.toString()}` },
+        {
+          pathname: onConsole ? location.pathname : ROUTE_ADMIN_TEAM,
+          search: `?${params.toString()}`,
+        },
         { replace: true }
       );
       return;
     }
-    params.delete('phase');
-    const search = params.toString();
-    navigate(
-      { pathname: ROUTE_ADMIN_TEAM, search: search ? `?${search}` : '' },
-      { replace: true }
-    );
+    navigate(ROUTE_ACCOUNT_ADMIN, { replace: true });
   }, [location.pathname, navigate, searchParams]);
 
   return (

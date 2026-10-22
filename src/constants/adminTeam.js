@@ -12,6 +12,16 @@ const FILM_101_FALL_2026_ROWS = [
   { id: 'olivia-nguyen', name: 'Olivia Nguyen', email: 'olivianguyen@ucla.edu', lastActive: 'Pending invite', joinedOn: 'Sept 3, 2026', status: 'Pending', initials: 'ON' },
   { id: 'liam-foster', name: 'Liam Foster', email: 'liamfoster@ucla.edu', lastActive: '2 weeks ago', joinedOn: 'Apr 14, 2026', status: 'Active', initials: 'LF' },
   { id: 'hannah-brooks', name: 'Hannah Brooks', email: 'hannahbrooks@ucla.edu', lastActive: '3 weeks ago', joinedOn: 'Mar 27, 2026', status: 'Active', initials: 'HB' },
+  { id: 'ben-carter', name: 'Ben Carter', email: 'bencarter@ucla.edu', lastActive: '4 weeks ago', joinedOn: 'Feb 12, 2026', status: 'Deactivated', initials: 'BC' },
+  { id: 'chloe-adams', name: 'Chloe Adams', email: 'chloeadams@ucla.edu', lastActive: '5 weeks ago', joinedOn: 'Jan 28, 2026', status: 'Deactivated', initials: 'CA' },
+  { id: 'diego-alvarez', name: 'Diego Alvarez', email: 'diegoalvarez@ucla.edu', lastActive: '6 weeks ago', joinedOn: 'Jan 9, 2026', status: 'Deactivated', initials: 'DA' },
+  { id: 'elena-vasquez', name: 'Elena Vasquez', email: 'elenavasquez@ucla.edu', lastActive: '7 weeks ago', joinedOn: 'Dec 16, 2025', status: 'Deactivated', initials: 'EV' },
+  { id: 'felix-nguyen', name: 'Felix Nguyen', email: 'felixnguyen@ucla.edu', lastActive: '8 weeks ago', joinedOn: 'Nov 21, 2025', status: 'Deactivated', initials: 'FN' },
+  { id: 'grace-hall', name: 'Grace Hall', email: 'gracehall@ucla.edu', lastActive: '9 weeks ago', joinedOn: 'Nov 4, 2025', status: 'Deactivated', initials: 'GH' },
+  { id: 'henry-walsh', name: 'Henry Walsh', email: 'henrywalsh@ucla.edu', lastActive: '10 weeks ago', joinedOn: 'Oct 18, 2025', status: 'Deactivated', initials: 'HW' },
+  { id: 'iris-cohen', name: 'Iris Cohen', email: 'iriscohen@ucla.edu', lastActive: '11 weeks ago', joinedOn: 'Oct 2, 2025', status: 'Deactivated', initials: 'IC' },
+  { id: 'jack-moreno', name: 'Jack Moreno', email: 'jackmoreno@ucla.edu', lastActive: '12 weeks ago', joinedOn: 'Sept 14, 2025', status: 'Deactivated', initials: 'JM' },
+  { id: 'kate-sullivan', name: 'Kate Sullivan', email: 'katesullivan@ucla.edu', lastActive: '3 months ago', joinedOn: 'Aug 30, 2025', status: 'Deactivated', initials: 'KS' },
 ];
 
 const UCLA_ATHLETICS_ROWS = [
@@ -42,6 +52,8 @@ export const ADMIN_TEAM_MORE_ACTIONS = [
 ];
 
 export const ADMIN_TEAM_RESEND_ACTION = { id: 'resend', label: 'Resend Invite' };
+
+export const ADMIN_TEAM_INVITE_ACTION = { id: 'invite', label: 'Invite' };
 
 export const ADMIN_TEAM_BULK_ACTIONS = [{ id: 'archive', label: 'Deactivate' }];
 

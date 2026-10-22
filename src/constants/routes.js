@@ -7,6 +7,7 @@ export const ROUTE_SEARCH = '/search';
 export const ROUTE_ACCOUNT = '/account';
 export const ROUTE_NOTIFICATIONS = '/notifications';
 export const ROUTE_ACCOUNT_NOTIFICATIONS = '/account/notifications';
+export const ROUTE_ACCOUNT_ADMIN = '/account/admin';
 export const ROUTE_ADMIN = '/admin';
 export const ROUTE_ADMIN_TEAM = '/admin/team';
 export const ROUTE_ADMIN_ACCOUNT = '/admin/account';

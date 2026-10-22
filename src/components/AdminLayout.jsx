@@ -105,10 +105,10 @@ export default function AdminLayout({ children, pageTitle, headerActions, onAdmi
             ) : null}
           </header>
           {children}
+          <div className="admin-layout__phase">
+            <AdminPhaseSwitch />
+          </div>
         </div>
-      </div>
-      <div className="admin-layout__phase">
-        <AdminPhaseSwitch />
       </div>
     </div>
   );

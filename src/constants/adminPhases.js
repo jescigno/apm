@@ -1,4 +1,4 @@
-/** Admin console release phases. Phase 2 is the current console; Phase 1 is the reduced cut. */
+/** Admin release phases. Phase 1 is the team table in My Account → Admin. Phase 2 is the current standalone console. */
 
 export const ADMIN_PHASE_1 = 1;
 export const ADMIN_PHASE_2 = 2;
@@ -10,8 +10,9 @@ export function parseAdminPhase(searchParams) {
 }
 
 /**
- * Phase 1 keeps Team only: no other nav items, no team switcher,
+ * Phase 1 is the team table under My Account: no team switcher,
  * no bulk import, and no member activity.
+ * Phase 2 is the current console, with the full admin navigation.
  */
 export function getAdminPhaseCapabilities(phase) {
   const isPhase2 = phase !== ADMIN_PHASE_1;

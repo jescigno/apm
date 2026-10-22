@@ -2,6 +2,7 @@ export const ACCOUNT_TABS = [
   { id: 'personal', label: 'Personal' },
   { id: 'settings', label: 'Settings' },
   { id: 'notifications', label: 'Notifications' },
+  { id: 'admin', label: 'Admin' },
 ];
 
 export const ACCOUNT_CONTACT_INFO = {
