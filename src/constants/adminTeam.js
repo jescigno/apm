@@ -1,45 +1,100 @@
-const FILM_101_FALL_2026_ROWS = [
-  { id: 'matthew-robinson', name: 'Matthew Robinson', email: 'matthewrobinson@ucla.edu', lastActive: '16 minutes ago', joinedOn: 'Sept 1, 2026', status: 'Active', initials: 'MR' },
-  { id: 'sarah-reed', name: 'Sarah Reed', email: 'sarahreed@ucla.edu', lastActive: '42 minutes ago', joinedOn: 'Aug 28, 2026', status: 'Active', initials: 'SR' },
-  { id: 'jordan-lee', name: 'Jordan Lee', email: 'jordanlee@ucla.edu', lastActive: '1 hour ago', joinedOn: 'Aug 15, 2026', status: 'Active', initials: 'JL' },
-  { id: 'daniel-kim', name: 'Daniel Kim', email: 'danielkim@ucla.edu', lastActive: '2 hours ago', joinedOn: 'Jul 30, 2026', status: 'Active', initials: 'DK' },
-  { id: 'ava-wright', name: 'Ava Wright', email: 'avawright@ucla.edu', lastActive: 'Yesterday', joinedOn: 'Jul 12, 2026', status: 'Active', initials: 'AW' },
-  { id: 'taylor-ross', name: 'Taylor Ross', email: 'taylorross@ucla.edu', lastActive: 'Yesterday', joinedOn: 'Jun 24, 2026', status: 'Active', initials: 'TR' },
-  { id: 'emily-chen', name: 'Emily Chen', email: 'emilychen@ucla.edu', lastActive: '3 days ago', joinedOn: 'Jun 8, 2026', status: 'Active', initials: 'EC' },
-  { id: 'marcus-johnson', name: 'Marcus Johnson', email: 'marcusjohnson@ucla.edu', lastActive: 'Pending invite', joinedOn: 'Sept 4, 2026', status: 'Pending', initials: 'MJ' },
-  { id: 'priya-patel', name: 'Priya Patel', email: 'priyapatel@ucla.edu', lastActive: '5 days ago', joinedOn: 'May 19, 2026', status: 'Active', initials: 'PP' },
-  { id: 'noah-martinez', name: 'Noah Martinez', email: 'noahmartinez@ucla.edu', lastActive: '1 week ago', joinedOn: 'May 2, 2026', status: 'Active', initials: 'NM' },
-  { id: 'olivia-nguyen', name: 'Olivia Nguyen', email: 'olivianguyen@ucla.edu', lastActive: 'Pending invite', joinedOn: 'Sept 3, 2026', status: 'Pending', initials: 'ON' },
-  { id: 'liam-foster', name: 'Liam Foster', email: 'liamfoster@ucla.edu', lastActive: '2 weeks ago', joinedOn: 'Apr 14, 2026', status: 'Active', initials: 'LF' },
-  { id: 'hannah-brooks', name: 'Hannah Brooks', email: 'hannahbrooks@ucla.edu', lastActive: '3 weeks ago', joinedOn: 'Mar 27, 2026', status: 'Active', initials: 'HB' },
-  { id: 'ben-carter', name: 'Ben Carter', email: 'bencarter@ucla.edu', lastActive: '4 weeks ago', joinedOn: 'Feb 12, 2026', status: 'Deactivated', initials: 'BC' },
-  { id: 'chloe-adams', name: 'Chloe Adams', email: 'chloeadams@ucla.edu', lastActive: '5 weeks ago', joinedOn: 'Jan 28, 2026', status: 'Deactivated', initials: 'CA' },
-  { id: 'diego-alvarez', name: 'Diego Alvarez', email: 'diegoalvarez@ucla.edu', lastActive: '6 weeks ago', joinedOn: 'Jan 9, 2026', status: 'Deactivated', initials: 'DA' },
-  { id: 'elena-vasquez', name: 'Elena Vasquez', email: 'elenavasquez@ucla.edu', lastActive: '7 weeks ago', joinedOn: 'Dec 16, 2025', status: 'Deactivated', initials: 'EV' },
-  { id: 'felix-nguyen', name: 'Felix Nguyen', email: 'felixnguyen@ucla.edu', lastActive: '8 weeks ago', joinedOn: 'Nov 21, 2025', status: 'Deactivated', initials: 'FN' },
-  { id: 'grace-hall', name: 'Grace Hall', email: 'gracehall@ucla.edu', lastActive: '9 weeks ago', joinedOn: 'Nov 4, 2025', status: 'Deactivated', initials: 'GH' },
-  { id: 'henry-walsh', name: 'Henry Walsh', email: 'henrywalsh@ucla.edu', lastActive: '10 weeks ago', joinedOn: 'Oct 18, 2025', status: 'Deactivated', initials: 'HW' },
-  { id: 'iris-cohen', name: 'Iris Cohen', email: 'iriscohen@ucla.edu', lastActive: '11 weeks ago', joinedOn: 'Oct 2, 2025', status: 'Deactivated', initials: 'IC' },
-  { id: 'jack-moreno', name: 'Jack Moreno', email: 'jackmoreno@ucla.edu', lastActive: '12 weeks ago', joinedOn: 'Sept 14, 2025', status: 'Deactivated', initials: 'JM' },
-  { id: 'kate-sullivan', name: 'Kate Sullivan', email: 'katesullivan@ucla.edu', lastActive: '3 months ago', joinedOn: 'Aug 30, 2025', status: 'Deactivated', initials: 'KS' },
+const ACTIVE_MEMBER_NAMES = [
+  ['Maya', 'Chen'],
+  ['Andre', 'Williams'],
+  ['Sofia', 'Alvarez'],
+  ['Ravi', 'Mehta'],
+  ['Claire', 'Dunn'],
+  ['Noah', 'Martinez'],
+  ['Priya', 'Patel'],
+  ['Liam', 'Foster'],
+  ['Hannah', 'Brooks'],
+  ['Emily', 'Chen'],
+  ['Daniel', 'Kim'],
+  ['Ava', 'Wright'],
+  ['Taylor', 'Ross'],
+  ['Jordan', 'Lee'],
+  ['Sarah', 'Reed'],
+  ['Matthew', 'Robinson'],
+  ['Keisha', 'Ward'],
+  ['Chris', 'Park'],
+  ['Mia', 'Santos'],
+  ['Owen', 'Brady'],
+  ['Nina', 'Cole'],
+  ['Lucia', 'Ramirez'],
+  ['Isaac', 'Brown'],
+  ['Lena', 'Hoffman'],
+  ['Gabe', 'Myers'],
+  ['Olivia', 'Nguyen'],
+  ['Marcus', 'Johnson'],
+  ['Ethan', 'Moore'],
+  ['Sophia', 'Turner'],
+  ['Lucas', 'Gray'],
 ];
 
-const UCLA_ATHLETICS_ROWS = [
-  { id: 'keisha-ward', name: 'Keisha Ward', email: 'keishaward@ucla.edu', lastActive: '8 minutes ago', joinedOn: 'Aug 20, 2026', status: 'Active', initials: 'KW' },
-  { id: 'chris-park', name: 'Chris Park', email: 'chrispark@ucla.edu', lastActive: '25 minutes ago', joinedOn: 'Aug 18, 2026', status: 'Active', initials: 'CP' },
-  { id: 'mia-santos', name: 'Mia Santos', email: 'miasantos@ucla.edu', lastActive: '3 hours ago', joinedOn: 'Jul 9, 2026', status: 'Active', initials: 'MS' },
-  { id: 'owen-brady', name: 'Owen Brady', email: 'owenbrady@ucla.edu', lastActive: 'Yesterday', joinedOn: 'Jun 16, 2026', status: 'Active', initials: 'OB' },
-  { id: 'nina-cole', name: 'Nina Cole', email: 'ninacole@ucla.edu', lastActive: '2 days ago', joinedOn: 'May 28, 2026', status: 'Active', initials: 'NC' },
-  { id: 'gabe-myers', name: 'Gabe Myers', email: 'gabemyers@ucla.edu', lastActive: 'Pending invite', joinedOn: 'Sept 8, 2026', status: 'Pending', initials: 'GM' },
-  { id: 'lucia-ramirez', name: 'Lucia Ramirez', email: 'luciaramirez@ucla.edu', lastActive: '4 days ago', joinedOn: 'Apr 22, 2026', status: 'Active', initials: 'LR' },
+const PENDING_MEMBER_NAMES = [
+  ['Nora', 'Bennett'],
+  ['Caleb', 'Ortiz'],
+  ['Lily', 'Washington'],
+  ['Zoe', 'Mitchell'],
+  ['Andrew', 'Hayes'],
 ];
 
-const DOCUMENTARY_WORKSHOP_ROWS = [
-  { id: 'sofia-alvarez', name: 'Sofia Alvarez', email: 'sofia.alvarez@nyu.edu', lastActive: '11 minutes ago', joinedOn: 'Sept 2, 2026', status: 'Active', initials: 'SA' },
-  { id: 'ravi-mehta', name: 'Ravi Mehta', email: 'ravi.mehta@nyu.edu', lastActive: '1 hour ago', joinedOn: 'Aug 21, 2026', status: 'Active', initials: 'RM' },
-  { id: 'claire-dunn', name: 'Claire Dunn', email: 'claire.dunn@nyu.edu', lastActive: 'Yesterday', joinedOn: 'Aug 4, 2026', status: 'Active', initials: 'CD' },
-  { id: 'isaac-brown', name: 'Isaac Brown', email: 'isaac.brown@nyu.edu', lastActive: 'Pending invite', joinedOn: 'Sept 9, 2026', status: 'Pending', initials: 'IB' },
-  { id: 'lena-hoffman', name: 'Lena Hoffman', email: 'lena.hoffman@nyu.edu', lastActive: 'Pending invite', joinedOn: 'Sept 10, 2026', status: 'Pending', initials: 'LH' },
+const INACTIVE_MEMBER_NAMES = [
+  ['Leo', 'Martinez'],
+  ['Ben', 'Carter'],
+  ['Chloe', 'Adams'],
+  ['Diego', 'Alvarez'],
+  ['Elena', 'Vasquez'],
+  ['Felix', 'Nguyen'],
+  ['Grace', 'Hall'],
+  ['Henry', 'Walsh'],
+  ['Iris', 'Cohen'],
+  ['Jack', 'Moreno'],
+];
+
+const DEACTIVATED_MEMBER_NAMES = [
+  ['Hana', 'Brooks'],
+  ['Kate', 'Sullivan'],
+  ['Ryan', 'Cooper'],
+  ['Naomi', 'Price'],
+  ['Quinn', 'Harper'],
+  ['Rosa', 'Delgado'],
+  ['Samir', 'Khan'],
+  ['Tessa', 'Nguyen'],
+];
+
+const ACTIVE_LAST_SEEN = ['12 minutes ago', '42 minutes ago', '1 hour ago', '3 hours ago', 'Yesterday', '2 days ago', '5 days ago'];
+const INACTIVE_LAST_SEEN = ['2 weeks ago', '3 weeks ago', '4 weeks ago', '6 weeks ago', '8 weeks ago'];
+const DEACTIVATED_LAST_SEEN = ['2 months ago', '3 months ago', '4 months ago', '5 months ago'];
+const JOINED_DATES = ['Sept 6, 2026', 'Aug 11, 2026', 'Jul 2, 2026', 'May 19, 2026', 'Mar 4, 2026', 'Jan 9, 2026', 'Nov 18, 2025', 'Sept 14, 2025'];
+
+function teamMember([first, last], status, index) {
+  const name = `${first} ${last}`;
+  const slug = `${first}-${last}`.toLowerCase();
+  const lastActive =
+    status === 'Pending'
+      ? 'Pending invite'
+      : status === 'Inactive'
+        ? INACTIVE_LAST_SEEN[index % INACTIVE_LAST_SEEN.length]
+        : status === 'Deactivated'
+          ? DEACTIVATED_LAST_SEEN[index % DEACTIVATED_LAST_SEEN.length]
+          : ACTIVE_LAST_SEEN[index % ACTIVE_LAST_SEEN.length];
+  return {
+    id: `uc-${slug}`,
+    name,
+    email: `${first}.${last}@uc.edu`.toLowerCase(),
+    lastActive,
+    joinedOn: JOINED_DATES[index % JOINED_DATES.length],
+    status,
+    initials: `${first[0]}${last[0]}`.toUpperCase(),
+  };
+}
+
+const UNIVERSITY_OF_CALIFORNIA_ROWS = [
+  ...ACTIVE_MEMBER_NAMES.map((name, index) => teamMember(name, 'Active', index)),
+  ...PENDING_MEMBER_NAMES.map((name, index) => teamMember(name, 'Pending', index)),
+  ...INACTIVE_MEMBER_NAMES.map((name, index) => teamMember(name, 'Inactive', index)),
+  ...DEACTIVATED_MEMBER_NAMES.map((name, index) => teamMember(name, 'Deactivated', index)),
 ];
 
 /** Cycle design-system profile colors so demo rows are visually distinct. */
@@ -54,6 +109,8 @@ export const ADMIN_TEAM_MORE_ACTIONS = [
 export const ADMIN_TEAM_RESEND_ACTION = { id: 'resend', label: 'Resend Invite' };
 
 export const ADMIN_TEAM_INVITE_ACTION = { id: 'invite', label: 'Invite' };
+
+export const ADMIN_TEAM_SEND_INVITE_ACTION = { id: 'invite', label: 'Send Invite' };
 
 export const ADMIN_TEAM_BULK_ACTIONS = [{ id: 'archive', label: 'Deactivate' }];
 
@@ -82,17 +139,13 @@ function decorateTeamMembers(rows) {
 }
 
 export const ADMIN_TEAMS = [
-  { id: 'film-101-fall-2026', label: 'Film 101 Fall 2026' },
-  { id: 'ucla-athletics', label: 'UCLA Athletics' },
-  { id: 'documentary-workshop', label: 'Documentary Workshop' },
+  { id: 'university-of-california', label: 'University of California' },
 ];
 
-export const ADMIN_TEAM_DEFAULT_ID = 'film-101-fall-2026';
+export const ADMIN_TEAM_DEFAULT_ID = 'university-of-california';
 
 export const ADMIN_TEAM_MEMBERS_BY_ID = {
-  'film-101-fall-2026': decorateTeamMembers(FILM_101_FALL_2026_ROWS),
-  'ucla-athletics': decorateTeamMembers(UCLA_ATHLETICS_ROWS),
-  'documentary-workshop': decorateTeamMembers(DOCUMENTARY_WORKSHOP_ROWS),
+  'university-of-california': decorateTeamMembers(UNIVERSITY_OF_CALIFORNIA_ROWS),
 };
 
 export const ADMIN_TEAM_MEMBERS = ADMIN_TEAM_MEMBERS_BY_ID[ADMIN_TEAM_DEFAULT_ID];
@@ -154,7 +207,7 @@ export function splitMemberName(name) {
   return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
 }
 
-export const ADMIN_TEAM_EDIT_STATUSES = ['Active', 'Pending', 'Deactivated'];
+export const ADMIN_TEAM_EDIT_STATUSES = ['Active', 'Pending', 'Inactive', 'Deactivated'];
 
 /** Active members stay Active or become Deactivated. Other members cannot be set to Active. */
 export function getAdminTeamEditStatuses(currentStatus) {

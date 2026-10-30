@@ -22,7 +22,7 @@ export const ADMIN_ACTIVITY_DATE_FILTERS = [
 
 export const ADMIN_ACTIVITY_DEFAULT_DATE_FILTER = 'last-30-days';
 
-/** Same teams as Admin → Team title dropdown (`ADMIN_TEAMS`). */
+/** Same team as the Admin section title (`ADMIN_TEAMS`). */
 export const ADMIN_ACTIVITY_TEAMS = ADMIN_TEAMS;
 
 export const ADMIN_ACTIVITY_DEFAULT_TEAM_ID = ADMIN_TEAM_DEFAULT_ID;

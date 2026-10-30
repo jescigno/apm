@@ -27,14 +27,23 @@ function CalendarIcon() {
   );
 }
 
-function readMember(row) {
+function readMember(row, existingEmails = []) {
   const firstName = row.firstName.trim();
   const lastName = row.lastName.trim();
   const email = row.email.trim().toLowerCase();
-  if (!firstName && !lastName && !email) return { empty: true };
-  if (!firstName || !lastName || !isValidInviteEmail(email)) {
-    return { error: 'Enter a first name, last name, and email address for each member.' };
+  const errors = {};
+
+  if (!firstName) errors.firstName = 'Enter a first name.';
+  if (!lastName) errors.lastName = 'Enter a last name.';
+  if (!email) errors.email = 'Enter an email address.';
+  else if (!isValidInviteEmail(email)) errors.email = 'Enter a valid email address.';
+  else if (existingEmails.includes(email)) {
+    errors.email = 'Each member needs a unique email address.';
   }
+
+  const empty = !firstName && !lastName && !email;
+  if (empty || Object.keys(errors).length) return { empty, errors };
+
   return {
     member: {
       id: row.id,
@@ -43,21 +52,27 @@ function readMember(row) {
       email,
       expiration: row.expiration,
     },
+    errors: {},
   };
+}
+
+function firstInvalidField(errors) {
+  return ['firstName', 'lastName', 'email'].find((field) => errors?.[field]) ?? null;
 }
 
 export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
   const titleId = useId();
+  const formRef = useRef(null);
   const firstInputRef = useRef(null);
   const [draft, setDraft] = useState(createMemberRow);
   const [added, setAdded] = useState([]);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [expirationOpen, setExpirationOpen] = useState(false);
 
   const resetState = useCallback(() => {
     setDraft(createMemberRow());
     setAdded([]);
-    setError('');
+    setFieldErrors({});
     setExpirationOpen(false);
   }, []);
 
@@ -99,25 +114,35 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
     return () => document.removeEventListener('pointerdown', handlePointerDown, true);
   }, [expirationOpen]);
 
+  const showFieldErrors = (errors) => {
+    setFieldErrors(errors);
+    const field = firstInvalidField(errors);
+    if (!field) return;
+    window.requestAnimationFrame(() => {
+      formRef.current?.querySelector(`[data-team-field="${field}"]`)?.focus();
+    });
+  };
+
   const handleFieldChange = (field, value) => {
-    setError('');
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
 
   const commitDraft = () => {
-    const result = readMember(draft);
-    if (result.empty || result.error) {
-      setError(result.error || 'Enter a first name, last name, and email address for each member.');
-      return false;
-    }
-    if (added.some((member) => member.email === result.member.email)) {
-      setError('Each member needs a unique email address.');
+    const result = readMember(draft, added.map((member) => member.email));
+    if (result.empty || Object.keys(result.errors).length) {
+      showFieldErrors(result.errors);
       return false;
     }
     setAdded((prev) => [...prev, result.member]);
     setDraft(createMemberRow());
     setExpirationOpen(false);
-    setError('');
+    setFieldErrors({});
     window.requestAnimationFrame(() => {
       firstInputRef.current?.focus();
     });
@@ -126,7 +151,7 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
 
   const handleRemoveAdded = (id) => {
     setAdded((prev) => prev.filter((member) => member.id !== id));
-    setError('');
+    setFieldErrors({});
   };
 
   const handleExpirationChange = (range) => {
@@ -141,21 +166,14 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
   };
 
   const handleAdd = () => {
-    const result = readMember(draft);
-    if (result.error) {
-      setError(result.error);
+    const result = readMember(draft, added.map((member) => member.email));
+    const draftHasErrors = !result.member && (result.empty ? added.length === 0 : true);
+    if (draftHasErrors) {
+      showFieldErrors(result.errors);
       return;
     }
     const pending = result.member ? [...added, result.member] : added;
-    if (!pending.length) {
-      setError('Enter a first name, last name, and email address for each member.');
-      return;
-    }
-    const emails = pending.map((member) => member.email);
-    if (new Set(emails).size !== emails.length) {
-      setError('Each member needs a unique email address.');
-      return;
-    }
+    if (!pending.length) return;
     onAdd?.(pending.map(({ firstName, lastName, email }) => ({ firstName, lastName, email })));
     onClose?.();
   };
@@ -191,6 +209,7 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
           </header>
 
           <form
+            ref={formRef}
             className="admin-team-add-overlay__body"
             autoComplete="off"
             onSubmit={(event) => {
@@ -201,8 +220,10 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
             <div className="admin-team-add-overlay__members">
               <div className="admin-team-add-overlay__member">
                 <div className="admin-team-add-overlay__name-row">
-                  <label className="admin-team-add-overlay__field">
-                    <span className="admin-team-add-overlay__label">First name</span>
+                  <div className="admin-team-add-overlay__field">
+                    <label className="admin-team-add-overlay__label" htmlFor={`admin-team-add-first-${draft.id}`}>
+                      First name
+                    </label>
                     <input
                       ref={firstInputRef}
                       id={`admin-team-add-first-${draft.id}`}
@@ -211,14 +232,23 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
                       autoComplete="off"
                       data-1p-ignore="true"
                       data-lpignore="true"
-                      className="admin-team-add-overlay__input"
+                      data-team-field="firstName"
+                      className={`admin-team-add-overlay__input${fieldErrors.firstName ? ' admin-team-add-overlay__input--error' : ''}`}
                       value={draft.firstName}
                       onChange={(event) => handleFieldChange('firstName', event.target.value)}
-                      aria-label="First name"
+                      aria-invalid={fieldErrors.firstName ? true : undefined}
+                      aria-describedby={fieldErrors.firstName ? `admin-team-add-first-error-${draft.id}` : undefined}
                     />
-                  </label>
-                  <label className="admin-team-add-overlay__field">
-                    <span className="admin-team-add-overlay__label">Last name</span>
+                    {fieldErrors.firstName ? (
+                      <p id={`admin-team-add-first-error-${draft.id}`} className="admin-team-add-overlay__field-error" role="alert">
+                        {fieldErrors.firstName}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="admin-team-add-overlay__field">
+                    <label className="admin-team-add-overlay__label" htmlFor={`admin-team-add-last-${draft.id}`}>
+                      Last name
+                    </label>
                     <input
                       id={`admin-team-add-last-${draft.id}`}
                       name={`team-last-${draft.id}`}
@@ -226,16 +256,25 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
                       autoComplete="off"
                       data-1p-ignore="true"
                       data-lpignore="true"
-                      className="admin-team-add-overlay__input"
+                      data-team-field="lastName"
+                      className={`admin-team-add-overlay__input${fieldErrors.lastName ? ' admin-team-add-overlay__input--error' : ''}`}
                       value={draft.lastName}
                       onChange={(event) => handleFieldChange('lastName', event.target.value)}
-                      aria-label="Last name"
+                      aria-invalid={fieldErrors.lastName ? true : undefined}
+                      aria-describedby={fieldErrors.lastName ? `admin-team-add-last-error-${draft.id}` : undefined}
                     />
-                  </label>
+                    {fieldErrors.lastName ? (
+                      <p id={`admin-team-add-last-error-${draft.id}`} className="admin-team-add-overlay__field-error" role="alert">
+                        {fieldErrors.lastName}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="admin-team-add-overlay__contact-row">
-                  <label className="admin-team-add-overlay__field">
-                    <span className="admin-team-add-overlay__label">Email address</span>
+                  <div className="admin-team-add-overlay__field">
+                    <label className="admin-team-add-overlay__label" htmlFor={`admin-team-add-invite-${draft.id}`}>
+                      Email address
+                    </label>
                     <input
                       id={`admin-team-add-invite-${draft.id}`}
                       name={`team-invite-${draft.id}`}
@@ -249,12 +288,19 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
                       data-lpignore="true"
                       data-form-type="other"
                       data-bwignore="true"
-                      className="admin-team-add-overlay__input"
+                      data-team-field="email"
+                      className={`admin-team-add-overlay__input${fieldErrors.email ? ' admin-team-add-overlay__input--error' : ''}`}
                       value={draft.email}
                       onChange={(event) => handleFieldChange('email', event.target.value)}
-                      aria-label="Email address"
+                      aria-invalid={fieldErrors.email ? true : undefined}
+                      aria-describedby={fieldErrors.email ? `admin-team-add-email-error-${draft.id}` : undefined}
                     />
-                  </label>
+                    {fieldErrors.email ? (
+                      <p id={`admin-team-add-email-error-${draft.id}`} className="admin-team-add-overlay__field-error" role="alert">
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
+                  </div>
                   <div className="admin-team-add-overlay__field admin-team-add-overlay__expiration-field" data-admin-team-expiration>
                     <span className="admin-team-add-overlay__label">Expiration (Optional)</span>
                     <div
@@ -339,8 +385,6 @@ export default function AdminTeamAddOverlay({ open, onClose, onAdd }) {
                 </ul>
               ) : null}
             </div>
-
-            {error ? <p className="admin-team-add-overlay__error">{error}</p> : null}
           </form>
 
           <footer className="admin-team-add-overlay__footer">

@@ -8,6 +8,7 @@ import {
   ADMIN_TEAM_INVITE_ACTION,
   ADMIN_TEAM_MORE_ACTIONS,
   ADMIN_TEAM_RESEND_ACTION,
+  ADMIN_TEAM_SEND_INVITE_ACTION,
   ADMIN_TEAM_SORT_COLUMNS,
   ADMIN_TEAMS,
   applyTeamMemberEdits,
@@ -39,145 +40,9 @@ function PaginationChevron({ direction }) {
   );
 }
 
-function TitleChevron({ open }) {
-  return (
-    <svg
-      className={`admin-team-title-dropdown__chevron${open ? ' admin-team-title-dropdown__chevron--open' : ''}`}
-      width="12"
-      height="8"
-      viewBox="0 0 12 8"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path d="M1.5 2L6 6.5L10.5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function AdminTeamTitleDropdown({ teamId, onTeamChange, interactive = true }) {
+export function AdminTeamTitleDropdown({ teamId }) {
   const selectedTeam = ADMIN_TEAMS.find((team) => team.id === teamId) ?? ADMIN_TEAMS[0];
-  if (!interactive) {
-    return <h1 className="admin-page-title">{selectedTeam.label}</h1>;
-  }
-  return (
-    <AdminTeamTitleMenu selectedTeam={selectedTeam} onTeamChange={onTeamChange} />
-  );
-}
-
-function AdminTeamTitleMenu({ selectedTeam, onTeamChange }) {
-  const triggerRef = useRef(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuRect, setMenuRect] = useState(null);
-
-  const closeMenu = useCallback(() => {
-    setMenuOpen(false);
-  }, []);
-
-  const updateMenuRect = useCallback(() => {
-    const el = triggerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setMenuRect({ left: rect.left, bottom: rect.bottom });
-  }, []);
-
-  const toggleMenu = useCallback(() => {
-    if (menuOpen) {
-      closeMenu();
-      return;
-    }
-    updateMenuRect();
-    setMenuOpen(true);
-  }, [menuOpen, closeMenu, updateMenuRect]);
-
-  useLayoutEffect(() => {
-    if (!menuOpen) return;
-    updateMenuRect();
-    const onUpdate = () => updateMenuRect();
-    window.addEventListener('scroll', onUpdate, true);
-    window.addEventListener('resize', onUpdate);
-    return () => {
-      window.removeEventListener('scroll', onUpdate, true);
-      window.removeEventListener('resize', onUpdate);
-    };
-  }, [menuOpen, updateMenuRect]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (event) => {
-      const target = event.target;
-      if (triggerRef.current?.contains(target)) return;
-      if (target.closest?.('[data-admin-team-title-menu]')) return;
-      closeMenu();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [menuOpen, closeMenu]);
-
-  const menu =
-    menuOpen &&
-    createPortal(
-      <div
-        className="admin-activity-filter-menu admin-team-title-dropdown__menu"
-        data-admin-team-title-menu
-        style={{
-          position: 'fixed',
-          left: menuRect?.left ?? 0,
-          top: menuRect ? menuRect.bottom + 6 : 0,
-          visibility: menuRect ? 'visible' : 'hidden',
-          zIndex: 2000,
-        }}
-        role="listbox"
-        aria-label="Select team"
-      >
-        {ADMIN_TEAMS.map((team) => {
-          const checked = team.id === selectedTeam.id;
-          return (
-            <label
-              key={team.id}
-              className="admin-activity-filter-menu__option admin-activity-filter-menu__option--radio account-settings-radio"
-            >
-              <input
-                type="radio"
-                className="account-settings-radio__input"
-                name="admin-team-title"
-                value={team.id}
-                checked={checked}
-                onChange={() => {
-                  onTeamChange?.(team.id);
-                  closeMenu();
-                }}
-              />
-              <span
-                className={`account-settings-radio-indicator${checked ? ' account-settings-radio-indicator--selected' : ''}`}
-                aria-hidden="true"
-              >
-                <span className="account-settings-radio-indicator-dot" />
-              </span>
-              <span className="admin-activity-filter-menu__label">{team.label}</span>
-            </label>
-          );
-        })}
-      </div>,
-      document.body
-    );
-
-  return (
-    <h1 className="admin-page-title admin-team-title-dropdown">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="admin-team-title-dropdown__trigger"
-        aria-haspopup="listbox"
-        aria-expanded={menuOpen}
-        aria-label="Select team"
-        onClick={toggleMenu}
-      >
-        <span>{selectedTeam.label}</span>
-        <TitleChevron open={menuOpen} />
-      </button>
-      {menu}
-    </h1>
-  );
+  return <h1 className="admin-page-title admin-team-title">{selectedTeam.label}</h1>;
 }
 
 const ICON_UPLOAD = '/icons/Upload.svg';
@@ -185,13 +50,15 @@ const ICON_UPLOAD = '/icons/Upload.svg';
 const TEAM_STATUS_FILTERS = [
   { id: 'active', label: 'Active' },
   { id: 'pending', label: 'Pending' },
-  { id: 'archived', label: 'Archived' },
+  { id: 'inactive', label: 'Inactive' },
+  { id: 'archived', label: 'Deactivated' },
 ];
 
 function memberMatchesStatusFilter(member, statusFilters) {
   if (member.status === 'Active') return statusFilters.has('active');
   if (member.status === 'Pending') return statusFilters.has('pending');
   if (member.status === 'Deactivated' || member.status === 'Archived') return statusFilters.has('archived');
+  if (member.status === 'Inactive') return statusFilters.has('inactive');
   return false;
 }
 
@@ -289,6 +156,7 @@ function AdminTeamStatusFilter({ selected, onToggle }) {
         onClick={toggleOpen}
       >
         <img src={ICON_UI_FILTER} alt="" />
+        <span className="admin-team-filter__label">Filter</span>
       </button>
       {menu}
     </>
@@ -378,13 +246,16 @@ function isArchivedMember(member) {
 
 function memberMoreActions(member, showActivity, includeView) {
   const actions = [];
-  if (isArchivedMember(member)) {
+  if (member.status === 'Inactive') {
+    actions.push(ADMIN_TEAM_MORE_ACTIONS.find((action) => action.id === 'edit'), ADMIN_TEAM_SEND_INVITE_ACTION);
+  } else if (isArchivedMember(member)) {
     actions.push(ADMIN_TEAM_MORE_ACTIONS.find((action) => action.id === 'edit'), ADMIN_TEAM_INVITE_ACTION);
   } else {
     ADMIN_TEAM_MORE_ACTIONS.forEach((action) => {
       if (action.id === 'activity' && !showActivity) return;
       if (action.id === 'archive' && member.status === 'Pending') {
         actions.push(ADMIN_TEAM_RESEND_ACTION);
+        return;
       }
       actions.push(action);
     });
@@ -684,7 +555,7 @@ export default function AdminTeamTab({
   const [viewingMember, setViewingMember] = useState(null);
   const [sort, setSort] = useState(ADMIN_TEAM_DEFAULT_SORT);
   const [inviteNotice, setInviteNotice] = useState(null);
-  const [statusFilters, setStatusFilters] = useState(() => new Set(['active', 'pending']));
+  const [statusFilters, setStatusFilters] = useState(() => new Set(['active', 'pending', 'inactive', 'archived']));
   const [page, setPage] = useState(1);
   const [mobileLayout, setMobileLayout] = useState(false);
   const selectAllRef = useRef(null);
@@ -990,6 +861,11 @@ export default function AdminTeamTab({
             />
           ))}
         </div>
+        {mobileLayout && filteredMembers.length > 0 ? (
+          <p className="admin-team-total">
+            {filteredMembers.length} {filteredMembers.length === 1 ? 'Result' : 'Results'}
+          </p>
+        ) : null}
       </div>
 
       {!mobileLayout && filteredMembers.length > 0 ? (

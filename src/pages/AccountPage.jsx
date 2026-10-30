@@ -6,7 +6,7 @@ import { ACCOUNT_TABS } from '../constants/accountPage';
 import { ADMIN_TEAM_DEFAULT_ID } from '../constants/adminTeam';
 import { ROUTE_ACCOUNT, ROUTE_ACCOUNT_ADMIN, ROUTE_ACCOUNT_NOTIFICATIONS } from '../constants/routes';
 import AccountPersonalTab from '../components/AccountPersonalTab';
-import AdminTeamTab from '../components/AdminTeamTab';
+import AdminTeamTab, { AdminTeamHeaderActions, AdminTeamTitleDropdown } from '../components/AdminTeamTab';
 import { HeaderMenuButton } from '../components/Header';
 import AccountNotificationSettingsContent from '../components/AccountNotificationSettingsContent';
 import AccountSettingsTab from '../components/AccountSettingsTab';
@@ -145,13 +145,22 @@ export default function AccountPage({ headerMenuRef }) {
             )}
             {id === 'admin' && (
               <>
+                <div className="account-admin-team-title">
+                  <AdminTeamTitleDropdown teamId={ADMIN_TEAM_DEFAULT_ID} />
+                  {!mobileLayout ? (
+                    <AdminTeamHeaderActions
+                      onAddMembers={() => setAddOpen(true)}
+                      showBulkImport={false}
+                    />
+                  ) : null}
+                </div>
                 <AdminTeamTab
                   teamId={ADMIN_TEAM_DEFAULT_ID}
                   addOpen={addOpen}
                   onAddOpenChange={setAddOpen}
                   showBulkImport={false}
                   showMemberActivity={false}
-                  showAddInToolbar={!mobileLayout}
+                  showAddInToolbar={false}
                 />
               </>
             )}
